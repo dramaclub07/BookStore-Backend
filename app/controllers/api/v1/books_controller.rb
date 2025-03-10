@@ -32,7 +32,7 @@ class Api::V1::BooksController < ApplicationController
       suggestions = books.map { |book| { id: book.id, book_name: book.book_name, author_name: book.author_name } }
       render json: { success: true, suggestions: suggestions }
     else
-      render json: { success: true, suggestions: [] } # ✅ Return empty array instead of error
+      render json: { success: true, suggestions: [] } 
     end
   end
 

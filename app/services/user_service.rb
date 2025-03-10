@@ -10,6 +10,7 @@ class UserService
   end
 
 
+  
   def self.login(email,password)
     user = User.find_by(email:email)
     if user&.authenticate(password)

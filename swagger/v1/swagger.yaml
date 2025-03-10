@@ -37,9 +37,9 @@ paths:
                     mobile_number:
                       type: string
       responses:
-        '201':
+        "201":
           description: User registered successfully
-        '422':
+        "422":
           description: Email has already been taken
 
   /login:
@@ -61,9 +61,9 @@ paths:
                   type: string
                   format: password
       responses:
-        '200':
+        "200":
           description: Login successful
-        '401':
+        "401":
           description: Invalid email or password
 
   /forgot_password:
@@ -82,9 +82,9 @@ paths:
                   type: string
                   format: email
       responses:
-        '200':
+        "200":
           description: OTP sent to your email
-        '422':
+        "422":
           description: User not found
 
   /reset_password:
@@ -108,21 +108,56 @@ paths:
                   type: string
                   format: password
       responses:
-        '200':
+        "200":
           description: Password reset successfully
-        '422':
+        "422":
           description: Invalid OTP or User not found
 
   ############################
   # Books Routes
   ############################
+  /books/search_suggestions:
+    get:
+      summary: Get book search suggestions
+      tags:
+        - Books
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns book search suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        book_name:
+                          type: string
+                        author_name:
+                          type: string
+        "400":
+          description: Invalid search query
+
   /books:
     get:
       summary: Get all books
       tags:
         - Books
       responses:
-        '200':
+        "200":
           description: Returns all books
 
   /books/{id}:
@@ -137,7 +172,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Returns the book details
 
     put:
@@ -176,7 +211,7 @@ paths:
                 is_deleted:
                   type: boolean
       responses:
-        '200':
+        "200":
           description: Book updated successfully
 
   /books/create:
@@ -208,7 +243,7 @@ paths:
                 book_image:
                   type: string
       responses:
-        '201':
+        "201":
           description: Book created successfully
 
   /books/{id}/is_deleted:
@@ -223,5 +258,5 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Book marked as deleted
