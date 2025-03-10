@@ -27,7 +27,14 @@ Rails.application.routes.draw do
       get 'addresses/:id', to: 'addresses#show'       
       put 'addresses/:id', to: 'addresses#update'     
       patch 'addresses/:id', to: 'addresses#update'   
-      delete 'addresses/:id', to: 'addresses#destroy' 
+      delete 'addresses/:id', to: 'addresses#destroy'
+      
+      # Order Management Routes (Only for Logged-in Users)
+      get 'orders', to: 'orders#user_orders'              # Get all orders for logged-in user
+      post 'orders', to: 'orders#create'                  # Create an order
+      get 'orders/:id', to: 'orders#show'                 # Get details of a specific order
+      patch 'orders/:id/cancel', to: 'orders#cancel'      # Cancel an order
+      patch 'orders/:id/update_status', to: 'orders#update_status'  # Update order status
     end
   end
 end
