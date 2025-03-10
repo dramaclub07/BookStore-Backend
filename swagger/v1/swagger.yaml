@@ -225,3 +225,40 @@ paths:
       responses:
         '200':
           description: Book marked as deleted
+  ############################
+  # Wishlist Routes
+  ############################
+  /wishlist:
+    get:
+      summary: Get all books in the wishlist
+      tags:
+        - Wishlist
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Returns all books in the wishlist
+        '401':
+          description: Unauthorized access
+
+  /wishlist/toggle:
+    post:
+      summary: Add or remove book from wishlist (Toggle)
+      tags:
+        - Wishlist
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Book added/removed from wishlist
+        '401':
+          description: Unauthorized access
