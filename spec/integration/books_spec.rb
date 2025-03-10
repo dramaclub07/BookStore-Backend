@@ -78,7 +78,7 @@ RSpec.describe 'Books API', type: :request do
       json_response = JSON.parse(response.body)
 
       # Debugging: Print response if test fails
-      puts "API Response: #{json_response}" if json_response['suggestions'].empty?
+      # puts "API Response: #{json_response}" if json_response['suggestions'].empty?
 
       expect(json_response['success']).to eq(true)
       expect(json_response['suggestions']).not_to be_empty
