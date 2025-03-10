@@ -17,6 +17,14 @@ Rails.application.routes.draw do
       put 'books/:id', to: 'books#update'
       patch 'books/:id', to: 'books#destroy'
       patch 'books/:id/is_deleted', to: 'books#is_deleted'
+
+      # Address Management Routes
+      get 'addresses', to: 'addresses#index'         
+      post 'addresses/create', to: 'addresses#create' 
+      get 'addresses/:id', to: 'addresses#show'       
+      put 'addresses/:id', to: 'addresses#update'     
+      patch 'addresses/:id', to: 'addresses#update'   
+      delete 'addresses/:id', to: 'addresses#destroy' 
     end
   end
 end
