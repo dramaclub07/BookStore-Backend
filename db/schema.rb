@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_07_080358) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_10_122708) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "addresses", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "street", null: false
+    t.string "city", null: false
+    t.string "state", null: false
+    t.string "zip_code", null: false
+    t.string "country", null: false
+    t.string "address_type", default: "home", null: false
+    t.boolean "is_default", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_addresses_on_user_id"
+  end
 
   create_table "books", force: :cascade do |t|
     t.string "book_name"
@@ -36,4 +50,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_07_080358) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
+
+  add_foreign_key "addresses", "users"
 end

@@ -14,4 +14,8 @@ class ApplicationController < ActionController::API
 
     head :unauthorized unless @current_user
   end
+
+  def current_user
+    @current_user
+  end
 end
