@@ -225,3 +225,338 @@ paths:
       responses:
         '200':
           description: Book marked as deleted
+
+
+############################
+  # Addresses Routes
+  ############################
+  /addresses:
+    get:
+      summary: Get all addresses for the authenticated user
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Returns a list of the user's addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  addresses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+
+  /addresses/create:
+    post:
+      summary: Create a new address for the authenticated user
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '201':
+          description: Address created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '422':
+          description: Validation failed (e.g., missing required fields)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /addresses/{id}:
+    get:
+      summary: Get a specific address by ID
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns the address details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+
+    put:
+      summary: Update an existing address (full update)
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+        '422':
+          description: Validation failed (e.g., invalid address_type)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+    patch:
+      summary: Update an existing address (partial update)
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+        '422':
+          description: Validation failed (e.g., invalid address_type)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+    delete:
+      summary: Delete an address
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Address deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Address:
+      type: object
+      properties:
+        id:
+          type: integer
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+        address_type:
+          type: string
+          enum:
+            - home
+            - work
+            - other
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AddressInput:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - zip_code
+        - country
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+        address_type:
+          type: string
+          enum:
+            - home
+            - work
+            - other
+        is_default:
+          type: boolean
