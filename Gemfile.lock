@@ -125,6 +125,7 @@ GEM
       railties (>= 5.0.0)
     faker (3.5.1)
       i18n (>= 1.8.11, < 2)
+    fiddle (1.1.6)
     fugit (1.11.1)
       et-orbi (~> 1, >= 1.2.11)
       raabro (~> 1.4)
@@ -420,6 +421,7 @@ DEPENDENCIES
   dotenv-rails
   factory_bot_rails
   faker
+  fiddle
   importmap-rails
   jbuilder
   jwt (~> 2.10)

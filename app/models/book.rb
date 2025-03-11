@@ -1,4 +1,5 @@
 class Book < ApplicationRecord
+  has_many :orders, dependent: :destroy
   validates :book_name, presence: true
   validates :author_name, presence: true
   validates :book_mrp, presence: true, numericality: { greater_than: 0 }

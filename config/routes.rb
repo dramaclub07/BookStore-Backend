@@ -21,13 +21,23 @@ Rails.application.routes.draw do
       patch 'books/:id', to: 'books#destroy'
       patch 'books/:id/is_deleted', to: 'books#is_deleted'
 
+      # Wishlist Routes 
+      get 'wishlists/fetch', to: 'wishlists#index'
+      post 'wishlists/toggle/:book_id', to: 'wishlists#toggle'
       # Address Management Routes
       get 'addresses', to: 'addresses#index'         
       post 'addresses/create', to: 'addresses#create' 
       get 'addresses/:id', to: 'addresses#show'       
       put 'addresses/:id', to: 'addresses#update'     
       patch 'addresses/:id', to: 'addresses#update'   
-      delete 'addresses/:id', to: 'addresses#destroy' 
+      delete 'addresses/:id', to: 'addresses#destroy'
+      
+      # Order Management Routes (Only for Logged-in Users)
+      get 'orders', to: 'orders#user_orders'              # Get all orders for logged-in user
+      post 'orders', to: 'orders#create'                  # Create an order
+      get 'orders/:id', to: 'orders#show'                 # Get details of a specific order
+      patch 'orders/:id/cancel', to: 'orders#cancel'      # Cancel an order
+      patch 'orders/:id/update_status', to: 'orders#update_status'  # Update order status
     end
   end
 end

@@ -1,4 +1,5 @@
 class Address < ApplicationRecord
+  has_many :orders, dependent: :nullify
   belongs_to :user
 
   validates :street, :city, :state, :zip_code, :country, presence: true
