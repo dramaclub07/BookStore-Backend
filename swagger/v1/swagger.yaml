@@ -7,6 +7,16 @@ servers:
   - url: http://localhost:3000/api/v1
     description: Local server
 
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
 paths:
   ############################
   # Users Routes
@@ -62,7 +72,7 @@ paths:
                   format: password
       responses:
         '200':
-          description: Login successful
+          description: Login successful, returns access token
         '401':
           description: Invalid email or password
 
@@ -121,6 +131,8 @@ paths:
       summary: Get all books
       tags:
         - Books
+      security:
+        - BearerAuth: []
       responses:
         '200':
           description: Returns all books
@@ -130,6 +142,8 @@ paths:
       summary: Get book by ID
       tags:
         - Books
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -144,6 +158,8 @@ paths:
       summary: Update book details
       tags:
         - Books
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -184,6 +200,8 @@ paths:
       summary: Create a new book
       tags:
         - Books
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -211,17 +229,61 @@ paths:
         '201':
           description: Book created successfully
 
-  /books/{id}/is_deleted:
-    patch:
-      summary: Mark book as deleted
+  /cart:
+    get:
+      summary: Get cart details
       tags:
-        - Books
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+        - Cart
+      security:
+        - BearerAuth: []
       responses:
         '200':
-          description: Book marked as deleted
+          description: Cart items retrieved successfully
+        '401':
+          description: Unauthorized
+
+  /cart/add:
+    post:
+      summary: Add item to cart
+      tags:
+        - Cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: integer
+                quantity:
+                  type: integer
+      responses:
+        '201':
+          description: Item added to cart successfully
+        '401':
+          description: Unauthorized
+
+  /cart/toggle_remove:
+    patch:
+      summary: Toggle item removal from cart
+      tags:
+        - Cart
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Item removal toggled successfully
+        '401':
+          description: Unauthorized
