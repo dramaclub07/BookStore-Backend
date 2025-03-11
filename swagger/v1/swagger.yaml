@@ -333,8 +333,8 @@ paths:
           description: Book added/removed from wishlist
         '401':
           description: Unauthorized access
-                address:
-                  $ref: '#/components/schemas/AddressInput'
+                address
+                  $ref '#/components/schemas/AddressInput'
       responses:
         '201':
           description: Address created successfully

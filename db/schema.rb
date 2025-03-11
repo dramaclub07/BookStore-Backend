@@ -10,11 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-<<<<<<< HEAD
-ActiveRecord::Schema[8.0].define(version: 2025_03_10_054517) do
-=======
 ActiveRecord::Schema[8.0].define(version: 2025_03_10_180200) do
->>>>>>> b86cfa097f72841d39a91f4df90abada63ebdde2
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,7 +67,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_10_180200) do
     t.datetime "updated_at", null: false
   end
 
-<<<<<<< HEAD
   create_table "wishlists", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "book_id", null: false
@@ -82,12 +77,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_10_180200) do
     t.index ["user_id"], name: "index_wishlists_on_user_id"
   end
 
-  add_foreign_key "wishlists", "books"
-  add_foreign_key "wishlists", "users"
-=======
   add_foreign_key "addresses", "users"
   add_foreign_key "orders", "addresses"
   add_foreign_key "orders", "books"
   add_foreign_key "orders", "users"
->>>>>>> b86cfa097f72841d39a91f4df90abada63ebdde2
+  add_foreign_key "wishlists", "books"
+  add_foreign_key "wishlists", "users"
 end

@@ -1,5 +1,6 @@
-require 'rails_helper'
+# require 'rails_helper'
 
-RSpec.describe Wishlist, type: :model do
-  pending "add some examples to (or delete) #{__FILE__}"
-end
+# RSpec.describe Wishlist, type: :model do
+#   pending "add some examples to (or delete) #{__FILE__}"
+# end
+# #
