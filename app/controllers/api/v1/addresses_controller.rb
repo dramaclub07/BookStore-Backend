@@ -4,36 +4,35 @@ module Api
       before_action :authenticate_request
       before_action :set_address, only: [:show, :update, :destroy]
 
+
       def index
-        addresses = @current_user.addresses
-        render json: { success: true, addresses: addresses }, status: :ok
+        result = AddressService.get_addresses(@current_user)
+        render json: result, status: :ok
       end
+
 
       def create
-        address = @current_user.addresses.new(address_params)
-
-        if address.save
-          render json: { success: true, address: address }, status: :created
-        else
-          render json: { success: false, errors: address.errors.full_messages }, status: :unprocessable_entity
-        end
+        result = AddressService.create_address(@current_user, address_params)
+        status = result[:success] ? :created : :unprocessable_entity
+        render json: result, status: status
       end
+
 
       def show
         render json: { success: true, address: @address }, status: :ok
       end
 
+
       def update
-        if @address.update(address_params)
-          render json: { success: true, address: @address }, status: :ok
-        else
-          render json: { success: false, errors: @address.errors.full_messages }, status: :unprocessable_entity
-        end
+        result = AddressService.update_address(@address, address_params)
+        status = result[:success] ? :ok : :unprocessable_entity
+        render json: result, status: status
       end
 
+
       def destroy
-        @address.destroy
-        render json: { success: true, message: "Address deleted successfully" }, status: :ok
+        result = AddressService.destroy_address(@address)
+        render json: result, status: :ok
       end
 
       private
