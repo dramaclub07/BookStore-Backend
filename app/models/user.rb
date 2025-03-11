@@ -1,6 +1,7 @@
 class User < ApplicationRecord
 
 has_secure_password
+  has_many :carts, dependent: :destroy
 
   validates :full_name, presence: true, length: { minimum: 3, maximum: 50 }
 
@@ -11,5 +12,6 @@ has_secure_password
   validates :mobile_number, presence: true, uniqueness: true, format: { with: VALID_MOBILE_REGEX }
 
   validates :password, presence: true, length: { minimum: 6 }
+  
 
 end
