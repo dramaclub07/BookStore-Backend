@@ -1,13 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe 'Books API', type: :request do
-  let!(:books) { create_list(:book, 5) }
+  let!(:books) { create_list(:book, 10) }
   let(:book_id) { books.first.id }
 
   describe 'GET /api/v1/books' do
-    it 'returns all books' do
-      get '/api/v1/books'
+    it 'returns paginated books' do
+      get '/api/v1/books', params: { page: 1, per_page: 5 }
       expect(response).to have_http_status(200)
+      expect(JSON.parse(response.body)['books'].size).to eq(5)
     end
   end
 
@@ -66,4 +67,23 @@ RSpec.describe 'Books API', type: :request do
       expect(response).to have_http_status(200)
     end
   end
+
+  describe 'GET /api/v1/books/search_suggestions' do
+    let(:query) { books.first.book_name[0..3] } 
+
+    it 'returns book search suggestions' do
+      get "/api/v1/books/search_suggestions?query=#{query}"
+
+      expect(response).to have_http_status(200)
+      json_response = JSON.parse(response.body)
+
+      # Debugging: Print response if test fails
+      # puts "API Response: #{json_response}" if json_response['suggestions'].empty?
+
+      expect(json_response['success']).to eq(true)
+      expect(json_response['suggestions']).not_to be_empty
+      expect(json_response['suggestions'].first).to include('book_name', 'author_name')
+    end
+  end
+
 end

@@ -37,9 +37,9 @@ paths:
                     mobile_number:
                       type: string
       responses:
-        '201':
+        "201":
           description: User registered successfully
-        '422':
+        "422":
           description: Email has already been taken
 
   /login:
@@ -61,9 +61,9 @@ paths:
                   type: string
                   format: password
       responses:
-        '200':
+        "200":
           description: Login successful
-        '401':
+        "401":
           description: Invalid email or password
 
   /forgot_password:
@@ -82,9 +82,9 @@ paths:
                   type: string
                   format: email
       responses:
-        '200':
+        "200":
           description: OTP sent to your email
-        '422':
+        "422":
           description: User not found
 
   /reset_password:
@@ -108,21 +108,56 @@ paths:
                   type: string
                   format: password
       responses:
-        '200':
+        "200":
           description: Password reset successfully
-        '422':
+        "422":
           description: Invalid OTP or User not found
 
   ############################
   # Books Routes
   ############################
+  /books/search_suggestions:
+    get:
+      summary: Get book search suggestions
+      tags:
+        - Books
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Returns book search suggestions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  suggestions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        book_name:
+                          type: string
+                        author_name:
+                          type: string
+        "400":
+          description: Invalid search query
+
   /books:
     get:
       summary: Get all books
       tags:
         - Books
       responses:
-        '200':
+        "200":
           description: Returns all books
 
   /books/{id}:
@@ -137,7 +172,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Returns the book details
 
     put:
@@ -176,7 +211,7 @@ paths:
                 is_deleted:
                   type: boolean
       responses:
-        '200':
+        "200":
           description: Book updated successfully
 
   /books/create:
@@ -208,7 +243,7 @@ paths:
                 book_image:
                   type: string
       responses:
-        '201':
+        "201":
           description: Book created successfully
 
   /books/{id}/is_deleted:
@@ -223,7 +258,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Book marked as deleted
   ############################
   # Wishlist Routes
@@ -248,6 +283,42 @@ paths:
         - Wishlist
       security:
         - bearerAuth: []
+
+
+############################
+  # Addresses Routes
+  ############################
+  /addresses:
+    get:
+      summary: Get all addresses for the authenticated user
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Returns a list of the user's addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  addresses:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+
+  /addresses/create:
+    post:
+      summary: Create a new address for the authenticated user
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -262,3 +333,465 @@ paths:
           description: Book added/removed from wishlist
         '401':
           description: Unauthorized access
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '201':
+          description: Address created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '422':
+          description: Validation failed (e.g., missing required fields)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+  /addresses/{id}:
+    get:
+      summary: Get a specific address by ID
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Returns the address details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+
+    put:
+      summary: Update an existing address (full update)
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+        '422':
+          description: Validation failed (e.g., invalid address_type)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+    patch:
+      summary: Update an existing address (partial update)
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  $ref: '#/components/schemas/AddressInput'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  address:
+                    $ref: '#/components/schemas/Address'
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+        '422':
+          description: Validation failed (e.g., invalid address_type)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+
+    delete:
+      summary: Delete an address
+      tags:
+        - Addresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Address deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+
+############################
+  # Orders Routes
+############################
+  /orders:
+    get:
+      summary: "Get all orders for the logged-in user"
+      tags:
+        - "Orders"
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: "Orders retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+        "401":
+          description: "Unauthorized"
+
+    post:
+      summary: "Create a new order"
+      tags:
+        - "Orders"
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                total_price:
+                  type: number
+                  example: 100.50
+                order_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product_id:
+                        type: integer
+                        example: 1
+                      quantity:
+                        type: integer
+                        example: 2
+      responses:
+        "201":
+          description: "Order created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: "Bad request"
+        "401":
+          description: "Unauthorized"
+
+  /orders/{id}:
+    get:
+      summary: "Get order details by ID"
+      tags:
+        - "Orders"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Order details retrieved"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: "Order not found"
+        "401":
+          description: "Unauthorized"
+
+  /orders/{id}/cancel:
+    patch:
+      summary: "Cancel an order"
+      tags:
+        - "Orders"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: "Order canceled successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: "Order not found"
+        "401":
+          description: "Unauthorized"
+
+  /orders/{id}/update_status:
+    patch:
+      summary: "Update the status of an order"
+      tags:
+        - "Orders"
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: ["pending", "confirmed", "shipped", "delivered", "canceled"]
+                  example: "shipped"
+      responses:
+        "200":
+          description: "Order status updated successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: "Order not found"
+        "401":
+          description: "Unauthorized"
+
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Address:
+      type: object
+      properties:
+        id:
+          type: integer
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+        address_type:
+          type: string
+          enum:
+            - home
+            - work
+            - other
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AddressInput:
+      type: object
+      required:
+        - street
+        - city
+        - state
+        - zip_code
+        - country
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        zip_code:
+          type: string
+        country:
+          type: string
+        address_type:
+          type: string
+          enum:
+            - home
+            - work
+            - other
+        is_default:
+          type: boolean
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 2
+        total_price:
+          type: number
+          example: 100.50
+        status:
+          type: string
+          enum: ["pending", "confirmed", "shipped", "delivered", "canceled"]
+          example: "pending"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time      
