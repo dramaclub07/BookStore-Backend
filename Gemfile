@@ -17,9 +17,6 @@ gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
-# Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
-# gem "bcrypt", "~> 3.1.7"
-
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
@@ -37,27 +34,23 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
-# Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-# gem "image_processing", "~> 1.2"
-
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
-
-  gem 'rspec-rails'
-  gem 'rswag-specs'
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Added for RSpec testing
+  gem "rspec-rails"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
- 
 end
 
 group :test do
@@ -65,21 +58,23 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 
-  gem 'rspec-rails'          # RSpec for testing
   gem 'factory_bot_rails'    # Factory Bot for test data
   gem 'faker'                # Faker for generating random data
   gem 'database_cleaner-active_record'  # Clean test database after tests
-  gem 'shoulda-matchers'  
-  gem 'rswag-specs'
+  gem 'shoulda-matchers'
+
+  # Added for RSpec testing
+  gem "rspec-rails"
 end
 
 gem "bcrypt", "~> 3.1"
-
 gem "jwt", "~> 2.10"
-gem 'dotenv-rails', groups: [:development,:test]
+gem 'dotenv-rails', groups: [:development, :test]
 
 gem 'rswag'
 gem 'rswag-api'
 gem 'rswag-ui'
 
 gem "kaminari", "~> 1.2" # Pagination for Cart Content
+gem "kaminari", "~> 1.2"
+gem 'fiddle'

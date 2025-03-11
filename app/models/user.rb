@@ -1,7 +1,12 @@
 class User < ApplicationRecord
+  has_many :wishlists
+
 
 has_secure_password
   has_many :carts, dependent: :destroy
+  has_many :orders, dependent: :destroy
+  has_many :addresses, dependent: :destroy
+  has_secure_password
 
   validates :full_name, presence: true, length: { minimum: 3, maximum: 50 }
 
