@@ -17,6 +17,13 @@ Rails.application.routes.draw do
       put 'books/:id', to: 'books#update'
       patch 'books/:id', to: 'books#destroy'
       patch 'books/:id/is_deleted', to: 'books#is_deleted'
+
+       # Review Routes
+       post 'books/:book_id/reviews', to: 'reviews#create' # Add a review
+       get 'books/:book_id/reviews', to: 'reviews#index' # Get all reviews for a book
+       get 'books/:book_id/reviews/:id', to: 'reviews#show' # Get a specific review
+       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' # Delete a review
+      
     end
   end
 end
