@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::API
   before_action :authenticate_request
 
+  attr_reader :current_user  # ✅ Make `current_user` accessible in all controllers
+
   private
 
   def authenticate_request
