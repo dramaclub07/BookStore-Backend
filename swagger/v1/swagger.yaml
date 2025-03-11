@@ -285,9 +285,10 @@ paths:
     post:
       summary: Add item to cart
       tags:
-        - Cart
+        - Cart 
+      responses:
         "200":
-          description: Book marked as deleted
+           description:  Book marked as deleted
           
   ############################
   # Reviews Routes
@@ -731,10 +732,10 @@ paths:
           description: Item removal toggled successfully
         '401':
           description: Unauthorized
-                total_price:
-                  type: number
-                  example: 100.50
-                order_items:
+          total_price:
+            type: number
+          example: 100.50
+          order_items:
                   type: array
                   items:
                     type: object
