@@ -434,7 +434,6 @@ DEPENDENCIES
   rspec-rails
   rswag
   rswag-api
-  rswag-specs
   rswag-ui
   rubocop-rails-omakase
   selenium-webdriver

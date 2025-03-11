@@ -43,6 +43,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Added for RSpec testing
+  gem "rspec-rails"
 end
 
 group :development do
@@ -59,6 +62,9 @@ group :test do
   gem 'faker'                # Faker for generating random data
   gem 'database_cleaner-active_record'  # Clean test database after tests
   gem 'shoulda-matchers'
+
+  # Added for RSpec testing
+  gem "rspec-rails"
 end
 
 gem "bcrypt", "~> 3.1"
