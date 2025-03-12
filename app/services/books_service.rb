@@ -1,30 +1,33 @@
 class BooksService
+ 
   def self.get_books(page, per_page)
     redis = Redis.new
     redis_key = "books_page_#{page}"
     cached_books = redis.get(redis_key)
-
+  
     if cached_books
-      Rails.logger.info "✅ Fetching books from Redis for page #{page}"
+      Rails.logger.info "Fetching books from Redis for page "
+      
+      # Ensure it always returns a hash
       books_data = JSON.parse(cached_books, symbolize_names: true)
-      books = books_data[:books]
-    else
-      Rails.logger.info "⚠️ Fetching books from Database for page #{page}"
-      books = Book.page(page).per(per_page)
-
-      # Store both books and pagination info in Redis
-      books_data = {
-        books: books.as_json,
-        current_page: books.current_page,
-        next_page: books.next_page,
-        prev_page: books.prev_page,
-        total_pages: books.total_pages,
-        total_count: books.total_count
-      }
-
-      redis.set(redis_key, books_data.to_json)
+      return books_data if books_data.is_a?(Hash) && books_data.key?(:books)
     end
+  
+    # Fetch from Database
+    Rails.logger.info " Fetching books from Database for page "
+    books = Book.page(page).per(per_page)
+  
+    books_data = {
+      books: books.as_json,
+      current_page: books.current_page,
+      next_page: books.next_page,
+      prev_page: books.prev_page,
+      total_pages: books.total_pages,
+      total_count: books.total_count
+    }
 
+    redis.set(redis_key, books_data.to_json)
+  
     books_data
   end
 
