@@ -283,7 +283,7 @@ paths:
       tags:
         - Wishlist
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         '200':
           description: Returns all books in the wishlist
@@ -296,7 +296,7 @@ paths:
       tags:
         - Wishlist
       security:
-        - bearerAuth: []
+        - BearerAuth: []
 
 
 ############################
