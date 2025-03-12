@@ -23,5 +23,5 @@ class Api::V1::WishlistsController < ApplicationController
     rescue ActiveRecord::RecordNotFound, JWT::DecodeError
       render json: { errors: 'Unauthorized access' }, status: :unauthorized
     end
-  end
+end
   

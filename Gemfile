@@ -63,8 +63,7 @@ group :test do
   gem 'database_cleaner-active_record'  # Clean test database after tests
   gem 'shoulda-matchers'
 
-  # Added for RSpec testing
-  gem "rspec-rails"
+  
 end
 
 gem "bcrypt", "~> 3.1"
