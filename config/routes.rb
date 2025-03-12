@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
 
+      # Book Routes
       # Book Routes (Consistent with Authentication Style)
        # Search & Suggestions
       get 'books/search_suggestions', to: 'books#search_suggestions'
@@ -18,9 +19,19 @@ Rails.application.routes.draw do
       get 'books', to: 'books#index'  # Supports pagination (e.g., ?page=1&per_page=10)
       get 'books/:id', to: 'books#show'
       put 'books/:id', to: 'books#update'
-      patch 'books/:id', to: 'books#destroy'
+      delete 'books/:id', to: 'books#destroy'
       patch 'books/:id/is_deleted', to: 'books#is_deleted'
 
+      # Cart Routes
+      post   'cart/add', to: 'carts#add'         
+      patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
+      get    'cart', to: 'carts#index'  
+       # Review Routes
+       post 'books/:book_id/reviews', to: 'reviews#create' # Add a review
+       get 'books/:book_id/reviews', to: 'reviews#index' # Get all reviews for a book
+       get 'books/:book_id/reviews/:id', to: 'reviews#show' # Get a specific review
+       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' # Delete a review
+      
       # Wishlist Routes 
       get 'wishlists/fetch', to: 'wishlists#index'
       post 'wishlists/toggle/:book_id', to: 'wishlists#toggle'
