@@ -324,10 +324,6 @@ paths:
       tags:
         - Wishlist
       security:
-<<<<<<< HEAD
-        - BearerAuth: []
-
-=======
         - BearerAuth: []  # Correct casing (should be `bearerAuth`, not `BearerAuth`)
       parameters:
         - name: id
@@ -353,7 +349,6 @@ paths:
           description: Unauthorized (Invalid or missing JWT)
         "404":
           description: Book not found
->>>>>>> 84f434926fe4c8eb5d0116530b19ed2103c6e75d
 
 ############################
   # Addresses Routes
