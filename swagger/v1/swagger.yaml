@@ -7,6 +7,16 @@ servers:
   - url: http://localhost:3000/api/v1
     description: Local server
 
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - BearerAuth: []
+
 paths:
   ############################
   # Users Routes
@@ -61,6 +71,9 @@ paths:
                   type: string
                   format: password
       responses:
+        '200':
+          description: Login successful, returns access token
+        '401':
         "200":
           description: Login successful
         "401":
@@ -157,6 +170,8 @@ paths:
       summary: Get all books
       tags:
         - Books
+      security:
+        - BearerAuth: []
       responses:
         "200":
           description: Returns all books
@@ -166,6 +181,8 @@ paths:
       summary: Get book by ID
       tags:
         - Books
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -180,6 +197,8 @@ paths:
       summary: Update book details
       tags:
         - Books
+      security:
+        - BearerAuth: []
       parameters:
         - name: id
           in: path
@@ -220,6 +239,8 @@ paths:
       summary: Create a new book
       tags:
         - Books
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -247,20 +268,27 @@ paths:
         "201":
           description: Book created successfully
 
-  /books/{id}/is_deleted:
-    patch:
-      summary: Mark book as deleted
+  /cart:
+    get:
+      summary: Get cart details
       tags:
-        - Books
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+        - Cart
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cart items retrieved successfully
+        '401':
+          description: Unauthorized
+
+  /cart/add:
+    post:
+      summary: Add item to cart
+      tags:
+        - Cart 
       responses:
         "200":
-          description: Book marked as deleted
+           description:  Book marked as deleted
           
   ############################
   # Reviews Routes
@@ -277,7 +305,7 @@ paths:
   ############################
   # Wishlist Routes
   ############################
-  /wishlist:
+  /wishlists/fetch:
     get:
       summary: Get all books in the wishlist
       tags:
@@ -290,14 +318,42 @@ paths:
         '401':
           description: Unauthorized access
 
-  /wishlist/toggle:
+  /wishlists/toggle/{id}:
     post:
       summary: Add or remove book from wishlist (Toggle)
       tags:
         - Wishlist
       security:
+<<<<<<< HEAD
         - BearerAuth: []
 
+=======
+        - BearerAuth: []  # Correct casing (should be `bearerAuth`, not `BearerAuth`)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book to add or remove from wishlist
+      responses:
+        "200":
+          description: Successfully toggled wishlist status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Book added to wishlist"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized (Invalid or missing JWT)
+        "404":
+          description: Book not found
+>>>>>>> 84f434926fe4c8eb5d0116530b19ed2103c6e75d
 
 ############################
   # Addresses Routes
@@ -342,13 +398,26 @@ paths:
               properties:
                 book_id:
                   type: integer
+                quantity:
+                  type: integer
+      responses:
+        '201':
+          description: Item added to cart successfully
+        '401':
+          description: Unauthorized
+
+  /cart/toggle_remove:
+    patch:
+      summary: Toggle item removal from cart
+      tags:
+        - Cart
       responses:
         '200':
           description: Book added/removed from wishlist
         '401':
           description: Unauthorized access
-                address
-                  $ref '#/components/schemas/AddressInput'
+          address:
+          $ref: '#/components/schemas/AddressInput'
       responses:
         '201':
           description: Address created successfully
@@ -684,10 +753,17 @@ paths:
             schema:
               type: object
               properties:
-                total_price:
-                  type: number
-                  example: 100.50
-                order_items:
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Item removal toggled successfully
+        '401':
+          description: Unauthorized
+          total_price:
+            type: number
+          example: 100.50
+          order_items:
                   type: array
                   items:
                     type: object

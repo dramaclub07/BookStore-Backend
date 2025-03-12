@@ -74,6 +74,8 @@ gem 'dotenv-rails', groups: [:development, :test]
 gem 'rswag'
 gem 'rswag-api'
 gem 'rswag-ui'
+
+gem "kaminari", "~> 1.2" # Pagination for Cart Content
 gem "kaminari", "~> 1.2"
 
 gem 'fiddle'

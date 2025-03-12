@@ -1,6 +1,10 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :wishlists
+
+
+has_secure_password
+  has_many :carts, dependent: :destroy
   has_many :orders, dependent: :destroy
   has_many :addresses, dependent: :destroy
 
@@ -14,5 +18,6 @@ class User < ApplicationRecord
   validates :mobile_number, presence: true, uniqueness: true, format: { with: VALID_MOBILE_REGEX }
 
   validates :password, presence: true, length: { minimum: 6 }
+  
 
 end
