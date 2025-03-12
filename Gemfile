@@ -45,7 +45,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # Added for RSpec testing
-  gem "rspec-rails"
+  # gem "rspec-rails"
 end
 
 group :development do
@@ -76,7 +76,7 @@ gem 'rswag-api'
 gem 'rswag-ui'
 
 gem "kaminari", "~> 1.2" # Pagination for Cart Content
-gem "kaminari", "~> 1.2"
+
 
 gem 'fiddle'
 
