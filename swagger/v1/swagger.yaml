@@ -263,27 +263,50 @@ paths:
   ############################
   # Wishlist Routes
   ############################
-  /wishlist:
+  /wishlists/fetch:
     get:
       summary: Get all books in the wishlist
       tags:
         - Wishlist
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         '200':
           description: Returns all books in the wishlist
         '401':
           description: Unauthorized access
 
-  /wishlist/toggle:
+  /wishlists/toggle/{id}:
     post:
       summary: Add or remove book from wishlist (Toggle)
       tags:
         - Wishlist
       security:
-        - bearerAuth: []
-
+        - BearerAuth: []  # Correct casing (should be `bearerAuth`, not `BearerAuth`)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the book to add or remove from wishlist
+      responses:
+        "200":
+          description: Successfully toggled wishlist status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Book added to wishlist"
+        "400":
+          description: Bad request
+        "401":
+          description: Unauthorized (Invalid or missing JWT)
+        "404":
+          description: Book not found
 
 ############################
   # Addresses Routes
@@ -333,8 +356,8 @@ paths:
           description: Book added/removed from wishlist
         '401':
           description: Unauthorized access
-                address
-                  $ref '#/components/schemas/AddressInput'
+          address:
+          $ref: '#/components/schemas/AddressInput'
       responses:
         '201':
           description: Address created successfully
