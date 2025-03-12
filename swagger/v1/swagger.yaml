@@ -268,6 +268,11 @@ paths:
         "201":
           description: Book created successfully
 
+          
+  ############################
+  # Cart Routes
+  ############################
+
   /cart:
     get:
       summary: Get cart details
@@ -279,17 +284,60 @@ paths:
         '200':
           description: Cart items retrieved successfully
         '401':
-          description: Unauthorized
+          description: Unauthorized access
 
   /cart/add:
     post:
-      summary: Add item to cart
+      summary: Add item to the cart
       tags:
-        - Cart 
+        - Cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: integer
+                quantity:
+                  type: integer 
       responses:
         "200":
-           description:  Book marked as deleted
-          
+           description:  Book added to cart successfully
+        "401":
+          description: Unauthorized
+        "400":
+          description: Invalid request, Missing Book ID or Quantity
+  
+  /cart/toggle_remove:
+    patch:
+      summary: Toggle item removal from cart
+      tags: 
+        - Cart
+      description: Mark an item for removal from the cart or undo removal
+      operationId: toggleRemoveFromCart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - book_id
+              properties:
+                book_id:
+                  type: integer
+      responses:
+        '200':
+          description: Book toggled (added/removed) from cart
+        '401':
+          description: Unauthorized access
+        '401':
+          description: Invalid request, Missing Book ID
+        '500':
+          description: Server error
+
   ############################
   # Reviews Routes
   ############################
@@ -302,6 +350,7 @@ paths:
         - name: book_id
           in: path
           description: ID of the book to review
+          
   ############################
   # Wishlist Routes
   ############################
@@ -378,45 +427,45 @@ paths:
         '401':
           description: Unauthorized
 
-  /cart/toggle_remove:
-    patch:
-      summary: Toggle item removal from cart
-      tags:
-        - Cart
-      responses:
-        '200':
-          description: Book added/removed from wishlist
-        '401':
-          description: Unauthorized access
-                address
-                  $ref '#/components/schemas/AddressInput'
-      responses:
-        '201':
-          description: Address created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  address:
-                    $ref: '#/components/schemas/Address'
-        '401':
-          description: Unauthorized - Invalid or missing authentication token
-        '422':
-          description: Validation failed (e.g., missing required fields)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
+  # /cart/toggle_remove:
+  #   patch:
+  #     summary: Toggle item removal from cart
+  #     tags:
+  #       - Cart
+  #     responses:
+  #       '200':
+  #         description: Book added/removed from wishlist
+  #       '401':
+  #         description: Unauthorized access
+  #               address
+  #                 $ref '#/components/schemas/AddressInput'
+  #     responses:
+  #       '201':
+  #         description: Address created successfully
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 success:
+  #                   type: boolean
+  #                 address:
+  #                   $ref: '#/components/schemas/Address'
+  #       '401':
+  #         description: Unauthorized - Invalid or missing authentication token
+  #       '422':
+  #         description: Validation failed (e.g., missing required fields)
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: object
+  #               properties:
+  #                 success:
+  #                   type: boolean
+  #                 errors:
+  #                   type: array
+  #                   items:
+  #                     type: string
 
   /addresses/{id}:
     get:
