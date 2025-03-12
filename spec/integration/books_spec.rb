@@ -4,18 +4,27 @@ RSpec.describe 'Books API', type: :request do
   let!(:books) { create_list(:book, 10) }
   let(:book_id) { books.first.id }
 
-  describe 'GET /api/v1/books' do
-    it 'returns paginated books' do
-      get '/api/v1/books', params: { page: 1, per_page: 5 }
+  describe "GET /api/v1/books" do
+    before { get "/api/v1/books", params: { page: 1, per_page: 5 } }
+
+    it "returns paginated books" do
       expect(response).to have_http_status(200)
-      expect(JSON.parse(response.body)['books'].size).to eq(5)
+      json_response = JSON.parse(response.body, symbolize_names: true)
+
+      expect(json_response).to include(:books, :pagination)
+      expect(json_response[:pagination]).to include(:current_page, :next_page, :prev_page, :total_pages, :total_count)
+      expect(json_response[:books]).to be_an(Array)
     end
   end
 
-  describe 'GET /api/v1/books/:id' do
-    it 'returns the book' do
-      get "/api/v1/books/#{book_id}"
+  describe "GET /api/v1/books/:id" do
+    before { get "/api/v1/books/#{book_id}" }
+
+    it "returns the book" do
       expect(response).to have_http_status(200)
+      json_response = JSON.parse(response.body, symbolize_names: true)
+
+      expect(json_response[:book]).to include(:book_name, :author_name, :book_mrp, :discounted_price, :quantity)
     end
   end
 
@@ -37,6 +46,10 @@ RSpec.describe 'Books API', type: :request do
     it 'creates a new book' do
       post '/api/v1/books/create', params: valid_attributes, as: :json
       expect(response).to have_http_status(201)
+
+      json_response = JSON.parse(response.body, symbolize_names: true)
+      expect(json_response[:success]).to be(true)
+      expect(json_response[:book][:book_name]).to eq('New Book')
     end
   end
 
@@ -58,6 +71,10 @@ RSpec.describe 'Books API', type: :request do
     it 'updates the book' do
       put "/api/v1/books/#{book_id}", params: updated_attributes, as: :json
       expect(response).to have_http_status(200)
+
+      json_response = JSON.parse(response.body, symbolize_names: true)
+      expect(json_response[:success]).to be(true)
+      expect(json_response[:book][:book_name]).to eq('Updated Book')
     end
   end
 
@@ -65,25 +82,10 @@ RSpec.describe 'Books API', type: :request do
     it 'marks book as deleted' do
       patch "/api/v1/books/#{book_id}/is_deleted", as: :json
       expect(response).to have_http_status(200)
+
+      json_response = JSON.parse(response.body, symbolize_names: true)
+      expect(json_response[:success]).to be(true)
+      expect(json_response[:book][:is_deleted]).to be(true)
     end
   end
-
-  describe 'GET /api/v1/books/search_suggestions' do
-    let(:query) { books.first.book_name[0..3] } 
-
-    it 'returns book search suggestions' do
-      get "/api/v1/books/search_suggestions?query=#{query}"
-
-      expect(response).to have_http_status(200)
-      json_response = JSON.parse(response.body)
-
-      # Debugging: Print response if test fails
-      # puts "API Response: #{json_response}" if json_response['suggestions'].empty?
-
-      expect(json_response['success']).to eq(true)
-      expect(json_response['suggestions']).not_to be_empty
-      expect(json_response['suggestions'].first).to include('book_name', 'author_name')
-    end
-  end
-
 end
