@@ -19,7 +19,7 @@ security:
 
 paths:
   ############################
-  # Users Routes
+  # Users Routes (Unchanged)
   ############################
   /signup:
     post:
@@ -74,9 +74,6 @@ paths:
         '200':
           description: Login successful, returns access token
         '401':
-        "200":
-          description: Login successful
-        "401":
           description: Invalid email or password
 
   /forgot_password:
@@ -127,9 +124,8 @@ paths:
           description: Invalid OTP or User not found
 
   ############################
-  # Books Routes
+  # Books Routes (Unchanged)
   ############################
-  
   /books/search_suggestions:
     get:
       summary: Get book search suggestions
@@ -288,22 +284,162 @@ paths:
         - Cart 
       responses:
         "200":
-           description:  Book marked as deleted
-          
+           description: Book marked as deleted
+
   ############################
-  # Reviews Routes
+  # Reviews Routes (Corrected and Consolidated)
   ############################
   /books/{book_id}/reviews:
     post:
       summary: Add a review for a book
       tags:
         - Reviews
+      security:
+        - BearerAuth: []
       parameters:
         - name: book_id
           in: path
           description: ID of the book to review
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rating
+              properties:
+                rating:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Rating from 1-5
+                comment:
+                  type: string
+                  description: Review comment
+      responses:
+        "201":
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  review:
+                    $ref: '#/components/schemas/Review'
+        "401":
+          description: Unauthorized - Invalid or missing authentication token
+        "422":
+          description: Validation error (e.g., invalid rating)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: string
+    get:
+      summary: Get all reviews for a book
+      tags:
+        - Reviews
+      parameters:
+        - name: book_id
+          in: path
+          description: ID of the book
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+        "404":
+          description: Book not found
+
+  /books/{book_id}/reviews/{id}:
+    get:
+      summary: Get a specific review
+      tags:
+        - Reviews
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: book_id
+          in: path
+          description: ID of the book
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: ID of the review
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Review details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+    delete:
+      summary: Delete a review
+      tags:
+        - Reviews
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: book_id
+          in: path
+          description: ID of the book
+          required: true
+          schema:
+            type: integer
+        - name: id
+          in: path
+          description: ID of the review to delete
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Review deleted successfully
+        "401":
+          description: Unauthorized - Invalid or missing authentication token
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
   ############################
-  # Wishlist Routes
+  # Wishlist Routes (Unchanged)
   ############################
   /wishlist:
     get:
@@ -326,9 +462,8 @@ paths:
       security:
         - bearerAuth: []
 
-
-############################
-  # Addresses Routes
+  ############################
+  # Addresses Routes (Fixed)
   ############################
   /addresses:
     get:
@@ -377,46 +512,6 @@ paths:
           description: Item added to cart successfully
         '401':
           description: Unauthorized
-
-  /cart/toggle_remove:
-    patch:
-      summary: Toggle item removal from cart
-      tags:
-        - Cart
-      responses:
-        '200':
-          description: Book added/removed from wishlist
-        '401':
-          description: Unauthorized access
-                address
-                  $ref '#/components/schemas/AddressInput'
-      responses:
-        '201':
-          description: Address created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  address:
-                    $ref: '#/components/schemas/Address'
-        '401':
-          description: Unauthorized - Invalid or missing authentication token
-        '422':
-          description: Validation failed (e.g., missing required fields)
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  errors:
-                    type: array
-                    items:
-                      type: string
 
   /addresses/{id}:
     get:
@@ -474,66 +569,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - review
-              properties:
-                review:
-                  type: object
-                  required:
-                    - rating
-                  properties:
-                    rating:
-                      type: integer
-                      minimum: 1
-                      maximum: 5
-                      description: Rating from 1-5
-                    comment:
-                      type: string
-                      description: Review comment
-      responses:
-        '201':
-          description: Review created successfully
-        '404':
-          description: Book not found
-        '422':
-          description: Validation error
-    
-    get:
-      summary: Get all reviews for a book
-      tags:
-        - Reviews
-      parameters:
-        - name: book_id
-          in: path
-          description: ID of the book
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: List of reviews
-        '404':
-          description: Book not found
-
-  /books/{book_id}/reviews/{id}:
-    get:
-      summary: Get a specific review
-      tags:
-        - Reviews
-      parameters:
-        - name: book_id
-          in: path
-          description: ID of the book
-          required: true
-          schema:
-            type: integer
-        - name: id
-          in: path
-          description: ID of the review
-              properties
-                address
-                  $ref '#/components/schemas/AddressInput'
+              $ref: '#/components/schemas/AddressInput'
       responses:
         '200':
           description: Address updated successfully
@@ -647,24 +683,6 @@ paths:
             type: integer
       responses:
         '200':
-          description: Review details
-        '404':
-          description: Review not found
-    
-    delete:
-      summary: Delete a review
-      tags:
-        - Reviews
-      parameters:
-        - name: book_id
-          in: path
-          description: ID of the book
-          required: true
-          schema:
-            type: integer
-        - name: id
-          in: path
-          description: ID of the review to delete
           description: Address deleted successfully
           content:
             application/json:
@@ -675,7 +693,6 @@ paths:
                     type: boolean
                   message:
                     type: string
-      responses:
         '401':
           description: Unauthorized - Invalid or missing authentication token
         '404':
@@ -690,9 +707,23 @@ paths:
                   error:
                     type: string
 
-############################
-  # Orders Routes
-############################
+  ############################
+  # Cart Routes (Unchanged)
+  ############################
+  /cart/toggle_remove:
+    patch:
+      summary: Toggle item removal from cart
+      tags:
+        - Cart
+      responses:
+        '200':
+          description: Book added/removed from wishlist
+        '401':
+          description: Unauthorized access
+
+  ############################
+  # Orders Routes (Unchanged)
+  ############################
   /orders:
     get:
       summary: "Get all orders for the logged-in user"
@@ -728,25 +759,6 @@ paths:
                 book_id:
                   type: integer
       responses:
-        '200':
-          description: Item removal toggled successfully
-        '401':
-          description: Unauthorized
-          total_price:
-            type: number
-          example: 100.50
-          order_items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      product_id:
-                        type: integer
-                        example: 1
-                      quantity:
-                        type: integer
-                        example: 2
-      responses:
         "201":
           description: "Order created successfully"
           content:
@@ -772,10 +784,6 @@ paths:
           schema:
             type: integer
       responses:
-        '204':
-          description: Review deleted successfully
-        '404':
-          description: Review not found
         "200":
           description: "Order details retrieved"
           content:
@@ -848,7 +856,6 @@ paths:
         "401":
           description: "Unauthorized"
 
-
 components:
   securitySchemes:
     BearerAuth:
@@ -914,6 +921,27 @@ components:
             - other
         is_default:
           type: boolean
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        book_id:
+          type: integer
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     Order:
       type: object
       properties:
@@ -935,4 +963,4 @@ components:
           format: date-time
         updated_at:
           type: string
-          format: date-time      
+          format: date-time
