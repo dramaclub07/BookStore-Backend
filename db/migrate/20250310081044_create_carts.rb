@@ -4,7 +4,7 @@ class CreateCarts < ActiveRecord::Migration[8.0]
       t.references :user, null: false, foreign_key: true
       t.references :book, null: false, foreign_key: true
       t.integer :quantity
-      t.boolean :is_deleted
+      t.boolean :is_deletedcls
 
       t.timestamps
     end

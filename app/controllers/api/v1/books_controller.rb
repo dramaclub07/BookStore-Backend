@@ -4,19 +4,21 @@ class Api::V1::BooksController < ApplicationController
 
   # GET /api/v1/books?page=1&per_page=10
   def index
-    books = Book.page(params[:page]).per(params[:per_page] || 10)
+    books_data = BooksService.get_books(params[:page], params[:per_page] || 10)
+
     render json: {
       success: true,
-      books: books,
+      books: books_data[:books],
       pagination: {
-        current_page: books.current_page,
-        next_page: books.next_page,
-        prev_page: books.prev_page,
-        total_pages: books.total_pages,
-        total_count: books.total_count
+        current_page: books_data[:current_page],
+        next_page: books_data[:next_page],
+        prev_page: books_data[:prev_page],
+        total_pages: books_data[:total_pages],
+        total_count: books_data[:total_count]
       }
     }, status: :ok
   end
+ 
 
   # GET /api/v1/books/search_suggestions?query=book_name
   def search_suggestions
