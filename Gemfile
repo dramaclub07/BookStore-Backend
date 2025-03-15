@@ -80,5 +80,6 @@ gem "kaminari", "~> 1.2" # Pagination for Cart Content
 gem 'fiddle'
 
 gem 'redis'
+gem 'rack-cors'
 
 
