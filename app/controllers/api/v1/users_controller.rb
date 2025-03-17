@@ -72,8 +72,10 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def login_params
-    params.require(:user).permit(:email, :password)
-  end
+    params.require(:email)
+    params.require(:password)
+    params.permit(:email, :password)
+end
 
   def ensure_json_request
     unless request.content_type == "application/json"
