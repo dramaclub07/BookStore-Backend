@@ -82,3 +82,4 @@ gem 'fiddle'
 gem 'redis'
 
 
+gem 'rack-cors'
