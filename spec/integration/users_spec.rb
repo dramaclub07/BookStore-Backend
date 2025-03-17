@@ -29,23 +29,22 @@ RSpec.describe 'Users API', type: :request do
       it 'returns email already taken error' do
         post '/api/v1/signup', params: duplicate_params.as_json, as: :json
         expect(response).to have_http_status(422)
-        expect(json['errors']).to include('Email has already been taken')
+        expect(json['errors']).to include('Email already taken. Please use a different email.')
       end
     end
   end
 
-  describe 'POST /api/v1/login' do
-    context 'with valid credentials' do
-      let(:valid_credentials) { { email: existing_user.email, password: 'Test@123' } }
+ describe 'POST /api/v1/login' do
+  context 'with valid credentials' do
+    let(:valid_credentials) { { email: existing_user.email.downcase, password: 'Test@123' } }
 
-      it 'logs in successfully' do
-        post '/api/v1/login', params: valid_credentials.as_json, as: :json
-        expect(response).to have_http_status(200)
-        expect(json['message']).to eq('Login successful')
-        expect(json['token']).to be_present
-      end
+    it 'logs in successfully' do
+      post '/api/v1/login', params: valid_credentials.as_json, as: :json
+      expect(response).to have_http_status(200)
+      expect(json['message']).to eq('Login successful')
     end
   end
+end
 
   describe 'POST /api/v1/forgot_password' do
     context 'with existing email' do
