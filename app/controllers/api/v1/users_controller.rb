@@ -11,7 +11,7 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
-  
+
 
   def login
     result = UserService.login(params[:email], params[:password])

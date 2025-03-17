@@ -42,7 +42,6 @@ RSpec.describe UserService, type: :service do
     context "when invalid credentials are provided" do
       it "returns an error" do
         result = UserService.login(existing_user.email, "wrongpassword")
-
         expect(result[:success]).to be false
         expect(result[:error]).to eq("Invalid email or password")
       end
@@ -52,14 +51,11 @@ end
 
 RSpec.describe PasswordService, type: :service do
   let!(:existing_user) { create(:user, email: "testuser@gmail.com", password: "Password@123") }
-
   describe ".forgot_password" do
     context "when email exists" do
       it "sends OTP successfully" do
         allow(UserMailer).to receive_message_chain(:send_otp, :deliver_now)
-        
         result = PasswordService.forgot_password(existing_user.email)
-
         expect(result[:success]).to be true
         expect(result[:message]).to eq("OTP sent to your email")
         expect(PasswordService::OTP_STORAGE).to have_key(existing_user.email)
