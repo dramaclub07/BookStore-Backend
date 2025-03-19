@@ -1,9 +1,6 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :wishlists
-
-
-has_secure_password
   has_many :carts, dependent: :destroy
   has_many :orders, dependent: :destroy
   has_many :addresses, dependent: :destroy

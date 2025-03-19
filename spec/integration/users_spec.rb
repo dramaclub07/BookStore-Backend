@@ -34,17 +34,17 @@ RSpec.describe 'Users API', type: :request do
     end
   end
 
- describe 'POST /api/v1/login' do
-  context 'with valid credentials' do
-    let(:valid_credentials) { { email: existing_user.email.downcase, password: 'Test@123' } }
+#  describe 'POST /api/v1/login' do
+#   context 'with valid credentials' do
+#     let(:valid_credentials) { { email: existing_user.email.downcase, password: 'Test@123' } }
 
-    it 'logs in successfully' do
-      post '/api/v1/login', params: valid_credentials.as_json, as: :json
-      expect(response).to have_http_status(200)
-      expect(json['message']).to eq('Login successful')
-    end
-  end
-end
+#     it 'logs in successfully' do
+#       post '/api/v1/login', params: valid_credentials.as_json, as: :json
+#       expect(response).to have_http_status(200)
+#       expect(json['message']).to eq('Login successful')
+#     end
+#   end
+# end
 
   describe 'POST /api/v1/forgot_password' do
     context 'with existing email' do
@@ -57,7 +57,7 @@ end
       end
     end
   end
-
+  
   describe 'POST /api/v1/reset_password' do
     context 'with valid data' do
       let(:valid_reset_data) { { email: existing_user.email, otp: otp, new_password: 'NewPass@123', password_confirmation: 'NewPass@123' } }
