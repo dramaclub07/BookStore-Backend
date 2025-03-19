@@ -5,7 +5,8 @@ class Api::V1::BooksController < ApplicationController
   
   def index
     sort_by = params[:sort] || 'relevance'
-    books_data = BooksService.get_books(params[:page], params[:per_page] || 12, false, sort_by)
+    force_refresh = params[:force_refresh] == 'true'
+    books_data = BooksService.get_books(params[:page], params[:per_page] || 12, force_refresh, sort_by)
 
     render json: {
       success: true,
@@ -13,7 +14,7 @@ class Api::V1::BooksController < ApplicationController
       pagination: {
         current_page: books_data[:current_page],
         next_page: books_data[:next_page],
-        prev_page: books_data[:prev_page],
+        prev_page: books_data[:prev_page],  
         total_pages: books_data[:total_pages],
         total_count: books_data[:total_count]
       }
