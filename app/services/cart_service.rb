@@ -51,6 +51,7 @@ class CartService
       {
         book_id: book.id,
         book_name: book.book_name || "Unknown Book",
+        author_name: book.author_name,
         quantity: cart_item.quantity,
         unit_price: unit_price,
         total_price: total_price
