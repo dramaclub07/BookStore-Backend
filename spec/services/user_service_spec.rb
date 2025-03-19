@@ -23,7 +23,7 @@ RSpec.describe UserService, type: :service do
         result = UserService.signup(params)
 
         expect(result[:success]).to be false
-        expect(result[:error]).to include("Email has already been taken")
+        expect(result[:error]).to include("Email already taken. Please use a different email.")
       end
     end
   end
