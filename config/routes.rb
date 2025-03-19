@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       post 'reset_password', to: 'users#reset_password'
 
       # Book Routes
+      get 'books/search', to: 'books#search'
       get 'books/search_suggestions', to: 'books#search_suggestions'
       post 'books/create', to: 'books#create'
       get 'books', to: 'books#index'  
