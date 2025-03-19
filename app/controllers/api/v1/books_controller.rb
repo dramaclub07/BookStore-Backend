@@ -2,10 +2,10 @@ class Api::V1::BooksController < ApplicationController
   skip_before_action :authenticate_request, only: [:index, :search, :search_suggestions, :show, :create]
   before_action :set_book, only: [:show, :update, :destroy, :is_deleted]
 
-  
   def index
     sort_by = params[:sort] || 'relevance'
-    books_data = BooksService.get_books(params[:page], params[:per_page] || 12, false, sort_by)
+    force_refresh = params[:force_refresh] == 'true'
+    books_data = BooksService.get_books(params[:page], params[:per_page] || 12, force_refresh, sort_by)
 
     render json: {
       success: true,
@@ -25,7 +25,6 @@ class Api::V1::BooksController < ApplicationController
     books = Book.where("book_name ILIKE ?", "%#{query}%").where(is_deleted: false)
     render json: { books: books.as_json(only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image]) }
   end
-  
 
   def search_suggestions
     query = params[:query]&.strip
