@@ -20,7 +20,4 @@ class UserService
       {success:false,error: "Invalid email or password"}
    end
  end
-
-
-
 end
