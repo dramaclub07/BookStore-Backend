@@ -1,6 +1,7 @@
 class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate_request, only: [:signup, :login, :forgot_password, :reset_password]
 
+
   def signup
     result = UserService.signup(user_params)
 
@@ -14,6 +15,7 @@ class Api::V1::UsersController < ApplicationController
   
 
   def login
+    
     result = UserService.login(params[:email], params[:password])
 
     if result[:success]
@@ -22,6 +24,7 @@ class Api::V1::UsersController < ApplicationController
       render json: { errors: result[:error] }, status: :unauthorized
     end
   end
+
 
   def forgot_password
     result = PasswordService.forgot_password(params[:email])
