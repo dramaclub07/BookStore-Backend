@@ -18,7 +18,7 @@ class WishlistService
     end
   
     def toggle_wishlist(book_id)
-      wishlist = Wishlist.find_by(user_id: @user.id, book_id: book_id)
+       wishlist = Wishlist.find_by(user_id: @user.id, book_id: book_id)
   
       if wishlist
         wishlist.update(is_deleted: !wishlist.is_deleted)
