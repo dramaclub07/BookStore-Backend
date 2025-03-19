@@ -1,15 +1,9 @@
 class ApplicationController < ActionController::API
-  before_action :authenticate_request, :set_cors_headers
+  before_action :authenticate_request
 
   attr_reader :current_user  
 
   private
-  #set cors header (for frontend)
-  def set_cors_headers
-    headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
-    headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-  end
 
   def authenticate_request
     token = request.headers['Authorization']&.split(' ')&.last
