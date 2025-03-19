@@ -9,6 +9,9 @@ Rails.application.configure do
   # Do not eager load code on boot.
   config.eager_load = false
 
+  config.hosts << "localhost"  # Allow the specified host to connect to the server.
+  config.hosts << "localhost:5500"  # Allow the specified host to connect to the server.
+
   # Show full error reports.
   config.consider_all_requests_local = true
 
