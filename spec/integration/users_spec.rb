@@ -1,3 +1,4 @@
+# spec/integration/users_spec.rb
 require 'swagger_helper'
 
 RSpec.describe 'Users API', type: :request do
@@ -24,7 +25,17 @@ RSpec.describe 'Users API', type: :request do
     end
 
     context 'with duplicate email' do
-      let(:duplicate_params) { { user: { full_name: existing_user.full_name, email: existing_user.email, password: 'Test@123', password_confirmation: 'Test@123', mobile_number: existing_user.mobile_number } } }
+      let(:duplicate_params) do
+        {
+          user: {
+            full_name: existing_user.full_name,
+            email: existing_user.email,
+            password: 'Test@123',
+            password_confirmation: 'Test@123',
+            mobile_number: '9876543210' # Use a unique mobile number
+          }
+        }
+      end
 
       it 'returns email already taken error' do
         post '/api/v1/signup', params: duplicate_params.as_json, as: :json
@@ -33,18 +44,6 @@ RSpec.describe 'Users API', type: :request do
       end
     end
   end
-
-#  describe 'POST /api/v1/login' do
-#   context 'with valid credentials' do
-#     let(:valid_credentials) { { email: existing_user.email.downcase, password: 'Test@123' } }
-
-#     it 'logs in successfully' do
-#       post '/api/v1/login', params: valid_credentials.as_json, as: :json
-#       expect(response).to have_http_status(200)
-#       expect(json['message']).to eq('Login successful')
-#     end
-#   end
-# end
 
   describe 'POST /api/v1/forgot_password' do
     context 'with existing email' do

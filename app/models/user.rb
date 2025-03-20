@@ -1,3 +1,4 @@
+# app/models/user.rb
 class User < ApplicationRecord
   has_secure_password
   has_many :wishlists
@@ -10,7 +11,7 @@ class User < ApplicationRecord
   validates :full_name, presence: true, length: { minimum: 3, maximum: 50 }
 
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@(gmail\.com|yahoo\.com|outlook\.com)\z/i
-  validates :email, presence: true, uniqueness: true, format: { with: VALID_EMAIL_REGEX }
+  validates :email, presence: true, uniqueness: { message: 'already taken. Please use a different email.' }, format: { with: VALID_EMAIL_REGEX }
 
   VALID_MOBILE_REGEX = /\A[6789]\d{9}\z/
   validates :mobile_number, presence: true, uniqueness: true, format: { with: VALID_MOBILE_REGEX }, unless: :skip_google_validations?
