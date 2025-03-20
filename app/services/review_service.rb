@@ -10,7 +10,18 @@ class ReviewService
   end
 
   def self.get_reviews(book)
-    book.reviews
+    book.reviews.includes(:user).map do |review|
+      {
+        id: review.id,
+        user_id: review.user_id,
+        user_name: review.user.full_name, # Include username (adjust to your User model field)
+        book_id: review.book_id,
+        rating: review.rating,
+        comment: review.comment,
+        created_at: review.created_at,
+        updated_at: review.updated_at
+      }
+    end
   end
 
   def self.get_review(book, review_id)
