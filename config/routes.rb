@@ -3,7 +3,8 @@ Rails.application.routes.draw do
   mount Rswag::Api::Engine => '/api-docs'
 
   namespace :api do
-    namespace :v1 do 
+    namespace :v1 do
+      post 'google_auth', to: 'google_auth#create'
 
       # User Authentication Routes
       post 'signup', to: 'users#signup'
@@ -26,11 +27,11 @@ Rails.application.routes.draw do
       patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
       get    'cart', to: 'carts#index'  
 
-       # Review Routes
-       post 'books/:book_id/reviews', to: 'reviews#create' 
-       get 'books/:book_id/reviews', to: 'reviews#index' 
-       get 'books/:book_id/reviews/:id', to: 'reviews#show' 
-       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' 
+      # Review Routes
+      post 'books/:book_id/reviews', to: 'reviews#create' 
+      get 'books/:book_id/reviews', to: 'reviews#index' 
+      get 'books/:book_id/reviews/:id', to: 'reviews#show' 
+      delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' 
       
       # Wishlist Routes 
       get 'wishlists/fetch', to: 'wishlists#index'

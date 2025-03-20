@@ -131,6 +131,8 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    google-id-token (1.4.2)
+      jwt (>= 1)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
     importmap-rails (2.1.0)
@@ -428,6 +430,7 @@ DEPENDENCIES
   factory_bot_rails
   faker
   fiddle
+  google-id-token
   importmap-rails
   jbuilder
   jwt (~> 2.10)
