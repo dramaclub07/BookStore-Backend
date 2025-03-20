@@ -59,6 +59,7 @@ class Api::V1::BooksController < ApplicationController
       render json: result, status: :unprocessable_entity
     end
   end
+  
 
   def show
     render json: {

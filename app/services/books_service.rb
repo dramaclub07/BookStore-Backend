@@ -1,6 +1,7 @@
+require 'csv'
+require 'redis'
+
 class BooksService
-  require 'csv'
-  require 'redis'
 
   # Initialize Redis globally (use ENV variables in production)
   REDIS = Redis.new(
