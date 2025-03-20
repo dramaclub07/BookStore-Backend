@@ -4,13 +4,15 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      post 'google_auth', to: 'google_auth#create'
-
       # User Authentication Routes
       post 'signup', to: 'users#signup'
       post 'login', to: 'users#login'
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
+
+      #Facebook and Google SignUp
+      post 'google_auth', to: 'google_auth#create'
+      post 'facebook_auth', to: 'facebook_auth#create'
 
       # Book Routes
       get 'books/search', to: 'books#search'
