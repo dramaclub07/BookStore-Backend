@@ -11,7 +11,7 @@ class BooksService
   )
 
   def self.get_books(page, per_page, force_refresh = false, sort_by = 'relevance')
-    redis_key = "books_page_#{page}_sort_#{sort_by}"
+    redis_key = "books_page_#{page}_sort_#{sort_by}_per_#{per_page}" # Include per_page in key for consistency
 
     if force_refresh || REDIS.get(redis_key).nil?
       Rails.logger.info "Fetching latest books from Database for page #{page} with sort #{sort_by}"
@@ -38,7 +38,10 @@ class BooksService
       books = query.page(page).per(per_page)
 
       books_data = {
-        books: books.as_json,
+        books: books.as_json(
+          only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image],
+          methods: [:rating, :rating_count] # Explicitly include rating and rating_count
+        ),
         current_page: books.current_page,
         next_page: books.next_page,
         prev_page: books.prev_page,
@@ -69,7 +72,7 @@ class BooksService
 
     if book.save
       clear_related_cache
-      get_books(1, 12, true) # Fetch latest books into Redis
+      get_books(1, 12, true) # Use consistent per_page (12) as in BooksController#index
       { success: true, book: book }
     else
       { success: false, errors: book.errors.full_messages }
@@ -98,7 +101,7 @@ class BooksService
 
     if books.any?
       clear_related_cache
-      get_books(1, 12, true) # Refresh Redis cache
+      get_books(1, 12, true) # Use consistent per_page (12)
       { success: true, books: books }
     else
       { success: false, errors: ["Failed to create books from CSV"] }
@@ -108,7 +111,7 @@ class BooksService
   def self.update_book(book, params)
     if book.update(params)
       clear_related_cache
-      get_books(1, 10, true) # Refresh Redis cache
+      get_books(1, 12, true) # Use consistent per_page (12)
       { success: true, book: book }
     else
       { success: false, errors: book.errors.full_messages }
@@ -118,14 +121,14 @@ class BooksService
   def self.toggle_is_deleted(book)
     book.update(is_deleted: !book.is_deleted)
     clear_related_cache
-    get_books(1, 10, true) # Refresh Redis cache
+    get_books(1, 12, true) # Use consistent per_page (12)
     { success: true, book: book }
   end
 
   def self.destroy_book(book)
     book.update(is_deleted: true) # Soft delete
     clear_related_cache
-    get_books(1, 10, true) # Refresh Redis cache
+    get_books(1, 12, true) # Use consistent per_page (12)
     { success: true, message: "Book marked as deleted" }
   end
 
