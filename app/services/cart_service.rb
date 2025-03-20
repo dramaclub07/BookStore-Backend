@@ -53,8 +53,10 @@ class CartService
         book_name: book.book_name || "Unknown Book",
         author_name: book.author_name,
         quantity: cart_item.quantity,
-        unit_price: unit_price,
-        total_price: total_price
+        discounted_price: book.discounted_price,
+        unit_price: book.book_mrp,
+        total_price: total_price,
+        image_url: book.book_image
       }
     end.compact  # Remove nil values
 
@@ -77,6 +79,24 @@ class CartService
   end
 
   # Update quantity of an item in the cart
+  def add_or_update_cart(book_id, quantity)
+    return { success: false, message: "Invalid quantity." } if quantity.to_i <= 0
+
+    book = Book.where(id: book_id).where("is_deleted IS NULL OR is_deleted = ?", false).first
+    return { success: false, message: "Book not found or unavailable." } unless book
+    return { success: false, message: "Not enough stock available." } if book.quantity < quantity 
+    
+    cart_item = @user.carts.find_or_initialize_by(book_id: book.id)
+    cart_item.quantity = quantity
+    cart_item.is_deleted = false
+
+    if cart_item.save
+      { success: true, message: "Cart updated successfully.", cart: cart_item }
+    else
+      { success: false, message: cart_item.errors.full_messages.join(", ") }
+    end
+  end
+
   def update_quantity(book_id, quantity)
     return { success: false, message: "Invalid quantity." } if quantity.to_i <= 0
 
@@ -85,10 +105,9 @@ class CartService
 
     book = cart_item.book
     return { success: false, message: "Book not available." } unless book
-
     return { success: false, message: "Not enough stock available." } if quantity > book.quantity
 
     cart_item.update(quantity: quantity)
-    { success: true, message: "Quantity updated.", cart: cart_item }
+    { success: true, message: "Quantity updated successfully.", cart: cart_item }
   end
 end
