@@ -1,33 +1,60 @@
 class BooksService
- 
-  def self.get_books(page, per_page)
-    redis = Redis.new
-    redis_key = "books_page_#{page}"
-    cached_books = redis.get(redis_key)
-  
-    if cached_books
-      Rails.logger.info "Fetching books from Redis for page "
-      
-      # Ensure it always returns a hash
-      books_data = JSON.parse(cached_books, symbolize_names: true)
-      return books_data if books_data.is_a?(Hash) && books_data.key?(:books)
-    end
-  
-    # Fetch from Database
-    Rails.logger.info " Fetching books from Database for page "
-    books = Book.page(page).per(per_page)
-  
-    books_data = {
-      books: books.as_json,
-      current_page: books.current_page,
-      next_page: books.next_page,
-      prev_page: books.prev_page,
-      total_pages: books.total_pages,
-      total_count: books.total_count
-    }
+  require 'csv'
+  require 'redis'
 
-    redis.set(redis_key, books_data.to_json)
-  
+  # Initialize Redis globally (use ENV variables in production)
+  REDIS = Redis.new(
+    host: ENV['REDIS_HOST'] || 'localhost',
+    port: ENV['REDIS_PORT'] || 6379,
+    password: ENV['REDIS_PASSWORD']
+  )
+
+  def self.get_books(page, per_page, force_refresh = false, sort_by = 'relevance')
+    redis_key = "books_page_#{page}_sort_#{sort_by}_per_#{per_page}" # Include per_page in key for consistency
+
+    if force_refresh || REDIS.get(redis_key).nil?
+      Rails.logger.info "Fetching latest books from Database for page #{page} with sort #{sort_by}"
+      
+      # Base query with is_deleted filter
+      query = Book.where(is_deleted: false)
+
+      # Apply sorting
+      case sort_by
+      when 'price_low_high'
+        query = query.order(discounted_price: :asc)
+      when 'price_high_low'
+        query = query.order(discounted_price: :desc)
+      when 'rating'
+        query = query
+          .select('books.*, COALESCE(AVG(reviews.rating), 0) as avg_rating')
+          .left_joins(:reviews)
+          .group('books.id')
+          .order('avg_rating DESC')
+      else
+        query = query.order(created_at: :desc) # Default to relevance (newest first)
+      end
+
+      books = query.page(page).per(per_page)
+
+      books_data = {
+        books: books.as_json(
+          only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image],
+          methods: [:rating, :rating_count] # Explicitly include rating and rating_count
+        ),
+        current_page: books.current_page,
+        next_page: books.next_page,
+        prev_page: books.prev_page,
+        total_pages: books.total_pages,
+        total_count: books.total_count
+      }
+
+      REDIS.set(redis_key, books_data.to_json)
+      REDIS.expire(redis_key, 1.hour.to_i)
+    else
+      Rails.logger.info "Fetching books from Redis for page #{page} with sort #{sort_by}"
+      books_data = JSON.parse(REDIS.get(redis_key), symbolize_names: true)
+    end
+
     books_data
   end
 
@@ -43,7 +70,8 @@ class BooksService
     book = Book.new(params.except(:file))
 
     if book.save
-      Redis.new.del("books_page_*") # Clear cache after adding a book
+      clear_related_cache
+      get_books(1, 12, true) # Use consistent per_page (12) as in BooksController#index
       { success: true, book: book }
     else
       { success: false, errors: book.errors.full_messages }
@@ -71,7 +99,8 @@ class BooksService
     end
 
     if books.any?
-      Redis.new.del("books_page_*") # Clear cache after adding books
+      clear_related_cache
+      get_books(1, 12, true) # Use consistent per_page (12)
       { success: true, books: books }
     else
       { success: false, errors: ["Failed to create books from CSV"] }
@@ -80,7 +109,8 @@ class BooksService
 
   def self.update_book(book, params)
     if book.update(params)
-      Redis.new.del("books_page_*") # Clear cache after updating
+      clear_related_cache
+      get_books(1, 12, true) # Use consistent per_page (12)
       { success: true, book: book }
     else
       { success: false, errors: book.errors.full_messages }
@@ -89,13 +119,23 @@ class BooksService
 
   def self.toggle_is_deleted(book)
     book.update(is_deleted: !book.is_deleted)
-    Redis.new.del("books_page_*") # Clear cache after delete toggle
+    clear_related_cache
+    get_books(1, 12, true) # Use consistent per_page (12)
     { success: true, book: book }
   end
 
   def self.destroy_book(book)
-    book.update(is_deleted: true) # Soft delete instead of actual delete
-    Redis.new.del("books_page_*") # Clear cache after soft delete
+    book.update(is_deleted: true) # Soft delete
+    clear_related_cache
+    get_books(1, 12, true) # Use consistent per_page (12)
     { success: true, message: "Book marked as deleted" }
+  end
+
+  private
+
+  def self.clear_related_cache
+    keys = REDIS.keys("books_page_*")
+    keys.each { |key| REDIS.del(key) }
+    Rails.logger.info "Cleared all books cache from Redis"
   end
 end

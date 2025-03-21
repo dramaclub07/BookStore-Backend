@@ -4,11 +4,13 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do 
+
       # User Authentication Routes
       post 'signup', to: 'users#signup'
       post 'login', to: 'users#login'
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
+      get 'users/profile', to: 'users#profile'
 
       # User Profile Routes (New)
       get 'user/profile', to: 'users#profile'  # Fetch user profile
@@ -24,6 +26,11 @@ Rails.application.routes.draw do
       get 'books/search_suggestions', to: 'books#search_suggestions'
       post 'books/create', to: 'books#create'
       get 'books', to: 'books#index'
+      # Book Routes
+      get 'books/search', to: 'books#search'
+      get 'books/search_suggestions', to: 'books#search_suggestions'
+      post 'books/create', to: 'books#create'
+      get 'books', to: 'books#index'  
       get 'books/:id', to: 'books#show'
       put 'books/:id', to: 'books#update'
       delete 'books/:id', to: 'books#destroy'
@@ -39,6 +46,17 @@ Rails.application.routes.draw do
       get 'books/:book_id/reviews', to: 'reviews#index'
       get 'books/:book_id/reviews/:id', to: 'reviews#show'
       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy'
+      post   'cart/add', to: 'carts#add'         
+      patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
+      get    'cart', to: 'carts#index'  
+      patch  'cart/update_quantity', to: 'carts#update_quantity'
+      get    'cart/summary', to: 'carts#summary'
+
+       # Review Routes
+       post 'books/:book_id/reviews', to: 'reviews#create' 
+       get 'books/:book_id/reviews', to: 'reviews#index' 
+       get 'books/:book_id/reviews/:id', to: 'reviews#show' 
+       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' 
       
       # Wishlist Routes 
       get 'wishlists/fetch', to: 'wishlists#index'
@@ -47,6 +65,18 @@ Rails.application.routes.draw do
       # Order Management Routes
       get 'orders', to: 'orders#user_orders'
       post 'orders', to: 'orders#create'
+      
+      # Address Management Routes
+      get 'addresses', to: 'addresses#index'         
+      post 'addresses/create', to: 'addresses#create' 
+      get 'addresses/:id', to: 'addresses#show'       
+      put 'addresses/:id', to: 'addresses#update'     
+      patch 'addresses/:id', to: 'addresses#update'   
+      delete 'addresses/:id', to: 'addresses#destroy'
+      
+      # Order Management Routes (Only for Logged-in Users)
+      get 'orders', to: 'orders#user_orders'              
+      post 'orders', to: 'orders#create'                  
       get 'orders/:id', to: 'orders#show'
       patch 'orders/:id/cancel', to: 'orders#cancel'
       patch 'orders/:id/update_status', to: 'orders#update_status'
