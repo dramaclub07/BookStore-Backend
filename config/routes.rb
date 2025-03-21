@@ -3,8 +3,7 @@ Rails.application.routes.draw do
   mount Rswag::Api::Engine => '/api-docs'
 
   namespace :api do
-    namespace :v1 do 
-
+    namespace :v1 do
       # User Authentication Routes
       post 'signup', to: 'users#signup'
       post 'login', to: 'users#login'
@@ -26,6 +25,10 @@ Rails.application.routes.draw do
       get 'books/search_suggestions', to: 'books#search_suggestions'
       post 'books/create', to: 'books#create'
       get 'books', to: 'books#index'
+      #Facebook and Google SignUp
+      post 'google_auth', to: 'google_auth#create'
+      post 'facebook_auth', to: 'facebook_auth#create'
+
       # Book Routes
       get 'books/search', to: 'books#search'
       get 'books/search_suggestions', to: 'books#search_suggestions'
@@ -52,11 +55,11 @@ Rails.application.routes.draw do
       patch  'cart/update_quantity', to: 'carts#update_quantity'
       get    'cart/summary', to: 'carts#summary'
 
-       # Review Routes
-       post 'books/:book_id/reviews', to: 'reviews#create' 
-       get 'books/:book_id/reviews', to: 'reviews#index' 
-       get 'books/:book_id/reviews/:id', to: 'reviews#show' 
-       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' 
+      # Review Routes
+      post 'books/:book_id/reviews', to: 'reviews#create' 
+      get 'books/:book_id/reviews', to: 'reviews#index' 
+      get 'books/:book_id/reviews/:id', to: 'reviews#show' 
+      delete 'books/:book_id/reviews/:id', to: 'reviews#destroy' 
       
       # Wishlist Routes 
       get 'wishlists/fetch', to: 'wishlists#index'

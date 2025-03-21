@@ -83,3 +83,5 @@ gem 'redis'
 gem 'rack-cors'
 
 
+gem 'google-id-token'
+gem 'googleauth'
