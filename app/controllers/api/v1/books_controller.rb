@@ -13,7 +13,7 @@ class Api::V1::BooksController < ApplicationController
       pagination: {
         current_page: books_data[:current_page],
         next_page: books_data[:next_page],
-        prev_page: books_data[:prev_page],
+        prev_page: books_data[:prev_page],  
         total_pages: books_data[:total_pages],
         total_count: books_data[:total_count]
       }
