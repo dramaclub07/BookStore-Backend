@@ -1,6 +1,7 @@
 class AddressService
   CACHE_EXPIRATION_TIME = 10.minutes.to_i
 
+  
 
   def self.get_addresses(user)
     cache_key = "user_#{user.id}_addresses"

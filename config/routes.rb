@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       post 'login', to: 'users#login'
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
+      get 'users/profile', to: 'users#profile'
 
       #Facebook and Google SignUp
       post 'google_auth', to: 'google_auth#create'
@@ -28,6 +29,8 @@ Rails.application.routes.draw do
       post   'cart/add', to: 'carts#add'         
       patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
       get    'cart', to: 'carts#index'  
+      patch  'cart/update_quantity', to: 'carts#update_quantity'
+      get    'cart/summary', to: 'carts#summary'
 
       # Review Routes
       post 'books/:book_id/reviews', to: 'reviews#create' 

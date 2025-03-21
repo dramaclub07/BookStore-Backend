@@ -2,6 +2,20 @@ class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate_request, only: [:signup, :login, :forgot_password, :reset_password]
 
 
+  def profile
+    unless @current_user
+      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
+    end
+  
+    render json: { 
+      success: true,
+      name: @current_user.full_name || "Unknown",  # Changed from name to full_name
+      email: @current_user.email || "No email",
+      mobile_number: @current_user.mobile_number
+    }, status: :ok
+  rescue StandardError => e
+    render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
+  end
   def signup
     result = UserService.signup(user_params)
     if result.success?
