@@ -4,14 +4,15 @@ class Api::V1::UsersController < ApplicationController
 
   def signup
     result = UserService.signup(user_params)
-
-    if result[:success]
-      render json: { message: 'User registered successfully', user: result[:user] }, status: :created
+    if result.success?
+    render json: {
+      message: 'User registered successfully',
+      user: result.user.as_json(only: [:id, :email, :full_name])
+      }, status: :created
     else
-      render json: { errors: result[:error] }, status: :unprocessable_entity
-    end
+      render json: { errors: result.error }, status: :unprocessable_entity
+   end
   end
-
   
 
   def login

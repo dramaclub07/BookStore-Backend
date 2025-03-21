@@ -90,7 +90,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_20_124620) do
     t.string "google_id"
     t.string "facebook_id"
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
+    t.index ["facebook_id"], name: "index_users_on_facebook_id", unique: true
+    t.index ["google_id"], name: "index_users_on_google_id", unique: true
   end
 
   create_table "wishlists", force: :cascade do |t|
