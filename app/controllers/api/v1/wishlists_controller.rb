@@ -8,9 +8,18 @@ class Api::V1::WishlistsController < ApplicationController
     end
   
     def toggle
-      service = WishlistService.new(@current_user)
-      result = service.toggle_wishlist(params[:book_id])
-      render json: result, status: :ok
+      book = Book.find(params[:book_id])
+      wishlist_item = Wishlist.find_by(user: current_user, book: book)
+  
+      if wishlist_item
+        wishlist_item.destroy
+        in_wishlist = false
+      else
+        Wishlist.create(user: current_user, book: book)
+        in_wishlist = true
+      end
+  
+      render json: { message: "Wishlist updated", in_wishlist: in_wishlist }, status: :ok
     end
   
     private
