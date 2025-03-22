@@ -25,7 +25,7 @@ class Api::V1::UsersController < ApplicationController
       }, status: :created
     else
       render json: { errors: result.error }, status: :unprocessable_entity
-   end
+    end
   end
   
 
