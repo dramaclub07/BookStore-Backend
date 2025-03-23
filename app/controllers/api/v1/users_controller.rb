@@ -6,16 +6,37 @@ class Api::V1::UsersController < ApplicationController
     unless @current_user
       return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
     end
-  
-    render json: { 
-      success: true,
-      name: @current_user.full_name || "Unknown",  # Changed from name to full_name
-      email: @current_user.email || "No email",
-      mobile_number: @current_user.mobile_number
-    }, status: :ok
+
+    # If it's a GET request, just return the profile
+    if request.get?
+      render json: { 
+        success: true,
+        name: @current_user.full_name || "Unknown",
+        email: @current_user.email || "No email",
+        mobile_number: @current_user.mobile_number
+      }, status: :ok
+    # If it's a PATCH/PUT request, update the profile
+    elsif request.patch? || request.put?
+      if @current_user.update(profile_params)
+        render json: { 
+          success: true,
+          message: "Profile updated successfully",
+          name: @current_user.full_name,
+          email: @current_user.email,
+          mobile_number: @current_user.mobile_number
+        }, status: :ok
+      else
+        render json: { 
+          success: false,
+          errors: @current_user.errors.full_messages 
+        }, status: :unprocessable_entity
+      end
+    end
   rescue StandardError => e
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
+
+
   def signup
     result = UserService.signup(user_params)
     if result.success?
@@ -25,7 +46,7 @@ class Api::V1::UsersController < ApplicationController
       }, status: :created
     else
       render json: { errors: result.error }, status: :unprocessable_entity
-   end
+    end
   end
   
 
@@ -65,5 +86,8 @@ class Api::V1::UsersController < ApplicationController
 
   def user_params
     params.require(:user).permit(:full_name, :email, :password, :mobile_number)
+  end
+  def profile_params
+    params.require(:user).permit(:full_name, :email, :mobile_number)
   end
 end
