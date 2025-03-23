@@ -24,12 +24,12 @@
 #   def social_login?
 #     google_id.present? || facebook_id.present?
 #   end
-
 # end
+
+
 class User < ApplicationRecord
   has_secure_password(validations: false) # Disable automatic password validations
 
-  has_secure_password
   has_many :wishlists
   has_many :carts, dependent: :destroy
   has_many :orders, dependent: :destroy
