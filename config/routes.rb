@@ -10,6 +10,7 @@ Rails.application.routes.draw do
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
       get 'users/profile', to: 'users#profile'
+      patch 'users/profile', to: 'users#profile'
 
       # User Profile Routes (New)
       get 'user/profile', to: 'users#profile'  # Fetch user profile
