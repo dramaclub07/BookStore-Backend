@@ -90,3 +90,5 @@ group :test do
   gem 'simplecov', '~> 0.22.0', require: false
   gem 'simplecov_json_formatter', require: false
 end
+gem 'mock_redis'
+gem 'csv'
