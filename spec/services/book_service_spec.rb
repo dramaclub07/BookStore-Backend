@@ -1,134 +1,235 @@
 require 'rails_helper'
+require 'redis'
 
-RSpec.describe BooksService, type: :service do
-  let(:redis) { double("Redis") }
+RSpec.describe BooksService do
+  let(:user) { create(:user) }
+  let(:book) { create(:book, discounted_price: 10.0, is_deleted: false) }
+  let(:redis) { BooksService::REDIS }
+  let(:redis_key) { "books_page_1_sort_relevance_per_12" }
 
   before do
-    allow(Rails.logger).to receive(:info)
-    stub_const("BooksService::REDIS", redis)
-    allow(redis).to receive(:get)
-    allow(redis).to receive(:set)
-    allow(redis).to receive(:expire)
-    allow(redis).to receive(:keys).and_return(["books_page_1_sort_relevance_per_12"])
-    allow(redis).to receive(:del)
+    # Clear Redis before each test
+    redis.flushdb
   end
 
   describe '.get_books' do
-    let!(:books) { create_list(:book, 15) }
-
-    context 'when data is not in Redis' do
-      it 'fetches books from the database and caches them' do
-        result = described_class.get_books(1, 12, false, 'relevance')
-        expect(result[:books].count).to eq(12)
-        expect(result[:total_count]).to eq(15)
-        expect(redis).to have_received(:set).with("books_page_1_sort_relevance_per_12", anything)
-      end
-    end
-
-    context 'when data is in Redis' do
-      let(:books_data) { described_class.get_books(1, 12, true, 'relevance') }
+    context 'when data is cached in Redis' do
+      let(:cached_data) { { books: [{ id: book.id }], current_page: 1, total_pages: 1 }.to_json }
 
       before do
-        allow(redis).to receive(:get).with("books_page_1_sort_relevance_per_12").and_return(books_data.to_json)
+        redis.set(redis_key, cached_data)
       end
 
-      it 'fetches books from Redis' do
-        result = described_class.get_books(1, 12, false, 'relevance')
-        expect(result[:books].count).to eq(12)
-        expect(Rails.logger).to have_received(:info).with(/Fetching books from Redis/)
-      end
-    end
-
-    context 'with force_refresh' do
-      it 'ignores Redis cache and refreshes data' do
-        allow(redis).to receive(:get).with("books_page_1_sort_relevance_per_12").and_return({ books: [] }.to_json)
-        described_class.get_books(1, 12, false, 'relevance')
-        allow(Rails.logger).to receive(:info)
-        allow(redis).to receive(:get)
-        result = described_class.get_books(1, 12, true, 'relevance')
-        expect(Rails.logger).to have_received(:info).with(/Fetching latest books from Database/).once
+      it 'fetches from Redis without force_refresh' do
+        result = BooksService.get_books(1, 12, false, 'relevance')
+        expect(result[:books]).to eq([{ id: book.id }])
+        expect(result[:current_page]).to eq(1)
       end
     end
 
+    context 'when data is not cached or force_refresh is true' do
+      before do
+        # Ensure two books exist
+        book # Create the first book
+        create(:book, discounted_price: 5.0, is_deleted: false) # Second book
+      end
+
+      it 'fetches from database and caches when no cache exists' do
+        expect(redis).to receive(:set).with(redis_key, anything)
+        expect(redis).to receive(:expire).with(redis_key, 1.hour.to_i)
+        result = BooksService.get_books(1, 12, false, 'relevance')
+        expect(result[:books].size).to eq(2)
+        expect(result[:total_pages]).to eq(1)
+      end
+
+      it 'fetches from database with force_refresh' do
+        redis.set(redis_key, { books: [] }.to_json)
+        expect(redis).to receive(:set).with(redis_key, anything)
+        result = BooksService.get_books(1, 12, true, 'relevance')
+        expect(result[:books].size).to eq(2)
+      end
+
+      context 'sorting' do
+        let!(:book2) { create(:book, discounted_price: 15.0, is_deleted: false, created_at: 1.day.from_now) }
+
+        before do
+          # Ensure all books are created before sorting tests
+          book # First book (10.0)
+          create(:book, discounted_price: 5.0, is_deleted: false) # Second book (5.0)
+        end
+
+        it 'sorts by price_low_high' do
+          result = BooksService.get_books(1, 12, true, 'price_low_high')
+          expect(result[:books].size).to be > 0 # Debug: Ensure books are returned
+          expect(result[:books].first[:discounted_price]).to eq(5.0)
+        end
+
+        it 'sorts by price_high_low' do
+          result = BooksService.get_books(1, 12, true, 'price_high_low')
+          expect(result[:books].size).to be > 0
+          expect(result[:books].first[:discounted_price]).to eq(15.0)
+        end
+
+        it 'sorts by rating with reviews' do
+          create(:review, book: book, rating: 5)
+          create(:review, book: book2, rating: 3)
+          result = BooksService.get_books(1, 12, true, 'rating')
+          expect(result[:books].size).to be > 0
+          expect(result[:books].first[:id]).to eq(book.id) # Higher avg rating
+        end
+
+        it 'sorts by rating without reviews' do
+          result = BooksService.get_books(1, 12, true, 'rating')
+          expect(result[:books].size).to be > 0
+          expect(result[:books].map { |b| b[:rating] || 0 }).to all(eq(0))
+        end
+
+        it 'defaults to relevance for invalid sort_by' do
+          result = BooksService.get_books(1, 12, true, 'invalid')
+          expect(result[:books].size).to be > 0
+          expect(result[:books].first[:id]).to eq(book2.id) # Newest first
+        end
+      end
+
+      it 'handles empty result set' do
+        Book.where(is_deleted: false).destroy_all
+        result = BooksService.get_books(1, 12, true, 'relevance')
+        expect(result[:books]).to be_empty
+        expect(result[:total_count]).to eq(0)
+      end
+    end
+  end
+
+  describe '.create_book' do
+    context 'with file' do
+      let(:csv_file) { fixture_file_upload('books.csv', 'text/csv') }
+
+      it 'calls create_books_from_csv' do
+        expect(BooksService).to receive(:create_books_from_csv).with(csv_file)
+        BooksService.create_book(file: csv_file)
+      end
+    end
+
+    context 'without file' do
+      it 'calls create_single_book' do
+        params = { book_name: 'Test Book' }
+        expect(BooksService).to receive(:create_single_book).with(params)
+        BooksService.create_book(params)
+      end
+    end
   end
 
   describe '.create_single_book' do
-    let(:params) { attributes_for(:book, book_name: 'Test Book', author_name: 'Test Author', book_mrp: 10.00) }
-
-    it 'creates a book and clears cache' do
-      result = described_class.create_single_book(params)
+    it 'creates a book successfully' do
+      params = { book_name: 'New Book', author_name: 'Author', discounted_price: 10.0, book_mrp: 20.0 }
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.create_single_book(params)
       expect(result[:success]).to be true
-      expect(Book.count).to eq(1)
-      expect(redis).to have_received(:keys).with("books_page_*")
-      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+      expect(result[:book].book_name).to eq('New Book')
     end
 
-    it 'returns errors if book creation fails' do
-      result = described_class.create_single_book(params.merge(book_name: nil))
+    it 'fails with invalid params' do
+      params = { book_name: '' }
+      result = BooksService.create_single_book(params)
       expect(result[:success]).to be false
       expect(result[:errors]).to include("Book name can't be blank")
     end
   end
 
   describe '.create_books_from_csv' do
-    let(:csv_content) do
-      "book_name,author_name,book_mrp,discounted_price,quantity,book_details,genre,book_image\n" \
-      "Test Book,Test Author,10.00,8.00,5,Details,Fiction,http://example.com/image.jpg"
-    end
-    let(:csv_file) { Tempfile.new(['books', '.csv']) }
+    let(:valid_csv) { "book_name,author_name,book_mrp,discounted_price\nBook1,Author1,20,15" }
+    let(:partial_csv) { "book_name,author_name,book_mrp,discounted_price\nBook1,Author1,20,15\n,,," }
 
-    before do
-      File.write(csv_file.path, csv_content)
-      allow(csv_file).to receive(:path).and_return(csv_file.path)
-    end
-
-    after do
-      csv_file.unlink
-    end
-
-    it 'creates books from CSV and clears cache' do
-      result = described_class.create_books_from_csv(csv_file)
+    it 'creates books from valid CSV' do
+      file = Tempfile.new('valid.csv')
+      file.write(valid_csv)
+      file.rewind
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.create_books_from_csv(file)
       expect(result[:success]).to be true
-      expect(Book.count).to eq(1)
-      expect(Book.first.book_name).to eq('Test Book')
-      expect(redis).to have_received(:keys).with("books_page_*")
-      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+      expect(result[:books].size).to eq(1)
+      expect(result[:books].first.book_name).to eq('Book1')
+      file.close
+      file.unlink
+    end
+
+    it 'handles partial success' do
+      file = Tempfile.new('partial.csv')
+      file.write(partial_csv)
+      file.rewind
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.create_books_from_csv(file)
+      expect(result[:success]).to be true
+      expect(result[:books].size).to eq(1)
+      expect(result[:books].first.book_name).to eq('Book1')
+      file.close
+      file.unlink
+    end
+
+    it 'fails with all invalid rows' do
+      file = Tempfile.new('invalid.csv')
+      file.write("book_name,author_name\n,Author1")
+      file.rewind
+      result = BooksService.create_books_from_csv(file)
+      expect(result[:success]).to be false
+      expect(result[:errors]).to eq(["Failed to create books from CSV"])
+      file.close
+      file.unlink
     end
   end
 
   describe '.update_book' do
-    let(:book) { create(:book) }
-
-    it 'updates a book and clears cache' do
-      result = described_class.update_book(book, { book_name: 'Updated Book' })
+    it 'updates a book successfully' do
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.update_book(book, { book_name: 'Updated Book' })
       expect(result[:success]).to be true
-      expect(book.reload.book_name).to eq('Updated Book')
-      expect(redis).to have_received(:keys).with("books_page_*")
-      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+      expect(result[:book].book_name).to eq('Updated Book')
+    end
+
+    it 'fails with invalid params' do
+      result = BooksService.update_book(book, { book_name: '' })
+      expect(result[:success]).to be false
+      expect(result[:errors]).to include("Book name can't be blank")
     end
   end
 
   describe '.toggle_is_deleted' do
-    let(:book) { create(:book) }
-
-    it 'toggles is_deleted and clears cache' do
-      result = described_class.toggle_is_deleted(book)
+    it 'toggles from false to true' do
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.toggle_is_deleted(book)
       expect(result[:success]).to be true
-      expect(book.reload.is_deleted).to be true
-      expect(redis).to have_received(:keys).with("books_page_*")
-      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+      expect(result[:book].is_deleted).to be true
+    end
+
+    it 'toggles from true to false' do
+      book.update(is_deleted: true)
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.toggle_is_deleted(book)
+      expect(result[:success]).to be true
+      expect(result[:book].is_deleted).to be false
     end
   end
 
   describe '.destroy_book' do
-    let(:book) { create(:book) }
-
-    it 'soft deletes a book and clears cache' do
-      result = described_class.destroy_book(book)
+    it 'marks book as deleted' do
+      expect(BooksService).to receive(:clear_related_cache)
+      result = BooksService.destroy_book(book)
       expect(result[:success]).to be true
       expect(book.reload.is_deleted).to be true
-      expect(redis).to have_received(:keys).with("books_page_*")
-      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+    end
+  end
+
+  describe '.clear_related_cache' do
+    it 'clears all related cache keys' do
+      redis.set('books_page_1_sort_relevance_per_12', 'data')
+      redis.set('books_page_2_sort_price_per_12', 'data')
+      BooksService.send(:clear_related_cache)
+      expect(redis.keys('books_page_*')).to be_empty
+    end
+
+    it 'handles no cache keys' do
+      expect { BooksService.send(:clear_related_cache) }.not_to raise_error
+      expect(redis.keys('books_page_*')).to be_empty
     end
   end
 end

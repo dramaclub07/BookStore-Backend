@@ -3,72 +3,77 @@ require 'rails_helper'
 RSpec.describe Api::V1::ReviewsController, type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book) }
-  let(:review) { create(:review, user: user, book: book) }
-  let(:token) { JwtService.encode(user_id: user.id) }
-  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+  let(:review) { create(:review, user: user, book: book, rating: 4, comment: 'Good book') }
 
-  describe 'GET /api/v1/books/:book_id/reviews' do
-    context 'when reviews exist' do
-      before { create(:review, book: book) }
+  describe '.create_review' do
+    it 'creates a review successfully' do
+      params = { rating: 5, comment: 'Awesome read!' }
+      result = ReviewService.create_review(book, user, params)
+      expect(result[:success]).to be true
+      expect(result[:review]).to be_persisted
+      expect(result[:review].rating).to eq(5)
+      expect(result[:review].comment).to eq('Awesome read!')
+    end
 
-      it 'returns a list of reviews' do
-        get "/api/v1/books/#{book.id}/reviews"
-        expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)).to be_an(Array)
-      end
+    it 'fails with invalid rating' do
+      params = { rating: 6, comment: 'Too high!' }
+      result = ReviewService.create_review(book, user, params)
+      expect(result[:success]).to be false
+      expect(result[:errors]).to include('Rating is not included in the list') # Match actual validation
+    end
+
+    it 'fails with missing rating' do
+      params = { comment: 'No rating!' }
+      result = ReviewService.create_review(book, user, params)
+      expect(result[:success]).to be false
+      expect(result[:errors]).to include("Rating can't be blank") # Assuming presence validation
     end
   end
 
-  describe 'POST /api/v1/books/:book_id/reviews' do
-    let(:valid_params) { { review: { rating: 5, comment: 'Great book!' } } }
-
-    context 'when user is authenticated' do
-      it 'creates a review successfully' do
-        post "/api/v1/books/#{book.id}/reviews", params: valid_params, headers: headers
-        expect(response).to have_http_status(:created)
-        expect(JSON.parse(response.body)['rating']).to eq(5)
-      end
+  describe '.get_reviews' do
+    it 'returns all reviews for a book' do
+      review # Ensure review is created
+      reviews = ReviewService.get_reviews(book)
+      expect(reviews).to be_an(Array)
+      expect(reviews.size).to eq(1)
+      review_hash = reviews.first
+      expect(review_hash[:id]).to eq(review.id)
+      expect(review_hash[:rating]).to eq(4)
+      expect(review_hash[:comment]).to eq('Good book')
+      expect(review_hash[:user_id]).to eq(user.id)
+      expect(review_hash[:book_id]).to eq(book.id)
     end
 
-    context 'when user is not authenticated' do
-      it 'returns unauthorized' do
-        post "/api/v1/books/#{book.id}/reviews", params: valid_params
-        expect(response).to have_http_status(:unauthorized)
-      end
-    end
-  end
-
-  describe 'GET /api/v1/books/:book_id/reviews/:id' do
-    context 'when review exists' do
-      it 'returns the review' do
-        get "/api/v1/books/#{book.id}/reviews/#{review.id}", headers: headers
-        expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['id']).to eq(review.id)
-      end
-    end
-
-    context 'when review does not exist' do
-      it 'returns not found' do
-        get "/api/v1/books/#{book.id}/reviews/999", headers: headers
-        expect(response).to have_http_status(:not_found)
-        expect(JSON.parse(response.body)['error']).to eq('Review not found')
-      end
+    it 'returns empty when no reviews exist' do
+      book.reviews.destroy_all
+      reviews = ReviewService.get_reviews(book)
+      expect(reviews).to be_empty
     end
   end
 
-  describe 'DELETE /api/v1/books/:book_id/reviews/:id' do
-    context 'when review exists and user is authenticated' do
-      it 'deletes the review successfully' do
-        delete "/api/v1/books/#{book.id}/reviews/#{review.id}", headers: headers
-        expect(response).to have_http_status(:no_content)
-      end
+  describe '.get_review' do
+    it 'returns a specific review' do
+      fetched_review = ReviewService.get_review(book, review.id)
+      expect(fetched_review).to eq(review)
     end
 
-    context 'when review does not exist' do
-      it 'returns not found' do
-        delete "/api/v1/books/#{book.id}/reviews/999", headers: headers
-        expect(response).to have_http_status(:not_found)
-      end
+    it 'returns nil when review doesn’t exist' do
+      fetched_review = ReviewService.get_review(book, 999)
+      expect(fetched_review).to be_nil
+    end
+  end
+
+  describe '.delete_review' do
+    it 'deletes a review successfully' do
+      result = ReviewService.delete_review(book, review.id)
+      expect(result[:success]).to be true
+      expect(Review.find_by(id: review.id)).to be_nil
+    end
+
+    it 'returns failure when review doesn’t exist' do
+      result = ReviewService.delete_review(book, 999)
+      expect(result[:success]).to be false
+      expect(result[:message]).to eq('Review not found')
     end
   end
 end
