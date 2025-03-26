@@ -82,6 +82,8 @@ RSpec.describe UserService do
       )
     end
   end
+  describe '.login' do
+    let(:user) { create(:user, password: 'Password@123') }
 
     context 'when valid credentials are provided' do
       it 'returns a success result with a token' do
@@ -120,4 +122,5 @@ RSpec.describe UserService do
       end
     end
   end
+end
 end
