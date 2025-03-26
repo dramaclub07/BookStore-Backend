@@ -36,7 +36,7 @@ RSpec.configure do |config|
   config.filter_run_when_matching :focus
 
   # Persist example status between runs (ignore spec/examples.txt in git)
-  config.example_status_persistence_file_path = "spec/examples.txt"
+  # config.example_status_persistence_file_path = "spec/examples.txt"
 
   # Disable monkey patching for cleaner syntax
   config.disable_monkey_patching!
