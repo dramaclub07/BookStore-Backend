@@ -10,6 +10,7 @@
 # Ignore all environment files.
 /.env*
 /.scannerwork
+/scannerwork
 /coverage
 # Ignore all logfiles and tempfiles.
 /log/*

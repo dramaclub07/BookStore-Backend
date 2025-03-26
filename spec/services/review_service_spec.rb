@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe ReviewService do
-  let!(:user) { create(:user) }
+  let!(:user) { create(:user, full_name: "Demetrius Braun") }  
   let!(:book) { create(:book) }
   let!(:review) { create(:review, user: user, book: book, rating: 4, comment: "Good book") }
 
@@ -20,7 +20,17 @@ RSpec.describe ReviewService do
   describe ".get_reviews" do
     it "returns all reviews for a book" do
       reviews = ReviewService.get_reviews(book)
-      expect(reviews).to include(review)
+
+      expect(reviews).to include(
+        a_hash_including(
+          id: review.id,
+          user_id: review.user_id,
+          user_name: review.user.full_name, # Ensure this matches your User model
+          book_id: review.book_id,
+          rating: review.rating,
+          comment: review.comment
+        )
+      )
     end
   end
 
