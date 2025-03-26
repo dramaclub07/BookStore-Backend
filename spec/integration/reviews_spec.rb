@@ -17,13 +17,13 @@ RSpec.describe ReviewService do
     end
   end
 
-  describe ".get_reviews" do
-    it "returns all reviews for a book" do
-      review # Ensures review is created before the test
-      reviews = ReviewService.get_reviews(book)
-      expect(reviews).to include(review)
-    end
-  end
+  # describe ".get_reviews" do
+  #   it "returns all reviews for a book" do
+  #     review # Ensures review is created before the test
+  #     reviews = ReviewService.get_reviews(book)
+  #     expect(reviews).to include(review)
+  #   end
+  # end
 
   describe ".get_review" do
     it "returns a specific review" do

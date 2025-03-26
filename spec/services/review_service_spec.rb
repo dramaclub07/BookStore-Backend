@@ -1,9 +1,39 @@
 require 'rails_helper'
 
 RSpec.describe ReviewService do
-  let!(:user) { create(:user, full_name: "Demetrius Braun") }  
-  let!(:book) { create(:book) }
-  let!(:review) { create(:review, user: user, book: book, rating: 4, comment: "Good book") }
+  describe ".get_reviews" do
+    let(:user) { create(:user, full_name: "John Doe") }
+    let(:book) { create(:book) }
+
+    before do
+      create(:review, book: book, user: user, rating: 5, comment: "Great book!")
+    end
+
+    it "returns all reviews for a book" do
+      reviews = ReviewService.get_reviews(book)
+
+      expect(reviews).to contain_exactly(
+        a_hash_including(
+          id: be_present,
+          user_id: user.id,
+          user_name: user.full_name, # Ensure user_name is included in the output
+          book_id: book.id,
+          rating: 5,
+          comment: "Great book!"
+        )
+      )
+    end
+
+    it "returns an empty array if no reviews exist" do
+      empty_book = create(:book)
+
+      reviews = ReviewService.get_reviews(empty_book)
+
+      expect(reviews).to eq([])
+    end
+  end
+end
+
 RSpec.describe UserService do
   describe '.signup' do
     let(:user_params) do
@@ -66,22 +96,6 @@ RSpec.describe UserService do
     end
   end
 
-  describe ".get_reviews" do
-    it "returns all reviews for a book" do
-      reviews = ReviewService.get_reviews(book)
-
-      expect(reviews).to include(
-        a_hash_including(
-          id: review.id,
-          user_id: review.user_id,
-          user_name: review.user.full_name, # Ensure this matches your User model
-          book_id: review.book_id,
-          rating: review.rating,
-          comment: review.comment
-        )
-      )
-    end
-  end
   describe '.login' do
     let(:user) { create(:user, password: 'Password@123') }
 
@@ -122,5 +136,4 @@ RSpec.describe UserService do
       end
     end
   end
-end
 end
