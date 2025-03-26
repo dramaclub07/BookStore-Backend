@@ -5,7 +5,7 @@
 /.env*
 /.scannerwork/
 /coverage
-.sonar-project.properties
+sonar-project.properties
 
 # Ignore all logfiles and tempfiles.
 /log/*
