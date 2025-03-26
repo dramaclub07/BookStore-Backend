@@ -1,8 +1,6 @@
 class AddressService
   CACHE_EXPIRATION_TIME = 10.minutes.to_i
 
-  
-
   def self.get_addresses(user)
     cache_key = "user_#{user.id}_addresses"
     cached_addresses = REDIS.get(cache_key)
@@ -18,7 +16,6 @@ class AddressService
     { success: true, addresses: addresses }
   end
 
-
   def self.create_address(user, params)
     address = user.addresses.new(params)
     if address.save
@@ -29,8 +26,11 @@ class AddressService
     end
   end
 
-
   def self.update_address(address, params)
+    if params.blank? || params.to_h.empty?
+      return { success: false, errors: ["At least one address attribute must be provided"] }
+    end
+
     if address.update(params)
       REDIS.del("user_#{address.user_id}_addresses")
       { success: true, address: address }
@@ -38,7 +38,6 @@ class AddressService
       { success: false, errors: address.errors.full_messages }
     end
   end
-
 
   def self.destroy_address(address)
     if address.destroy
