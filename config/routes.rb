@@ -50,6 +50,7 @@ Rails.application.routes.draw do
       get 'books/:book_id/reviews', to: 'reviews#index'
       get 'books/:book_id/reviews/:id', to: 'reviews#show'
       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy'
+      
       post   'cart/add', to: 'carts#add'         
       patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
       get    'cart', to: 'carts#index'  
