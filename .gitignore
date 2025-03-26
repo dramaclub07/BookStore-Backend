@@ -32,3 +32,9 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+/config/databases.yml
+/Gemfile.lock
+/db/schema.rb
+/sonar-project.properties
+/.scannerwork/
+/coverage/
