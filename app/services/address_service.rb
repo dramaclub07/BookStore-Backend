@@ -29,6 +29,10 @@ class AddressService
   end
 
   def self.update_address(address, params)
+    if params.blank? || params.to_h.empty?
+      return { success: false, errors: ["At least one address attribute must be provided"] }
+    end
+
     if address.update(params)
       REDIS.del("user_#{address.user_id}_addresses")
       Rails.logger.info("Address updated successfully: #{address.inspect}")

@@ -1,12 +1,21 @@
 class OrdersService
   def self.create_order(user, order_params)
-    book = Book.find_by(id: order_params[:book_id])
+    # Filter permitted attributes
+    permitted_params = order_params.slice(:book_id, :quantity, :address_id)
+
+    book = Book.find_by(id: permitted_params[:book_id])
     return { success: false, error: 'Book not found' } unless book
 
-    price_at_purchase = book.discounted_price || book.book_mrp
-    total_price = price_at_purchase * order_params[:quantity].to_i
+    # Validate address_id if provided
+    if permitted_params[:address_id].present?
+      address = Address.find_by(id: permitted_params[:address_id])
+      return { success: false, error: 'Address not found' } unless address
+    end
 
-    order = user.orders.new(order_params.merge(price_at_purchase: price_at_purchase, total_price: total_price))
+    price_at_purchase = book.discounted_price || book.book_mrp
+    total_price = price_at_purchase * (permitted_params[:quantity]&.to_i || 1) # Default to 1 if quantity is nil
+
+    order = user.orders.new(permitted_params.merge(price_at_purchase: price_at_purchase, total_price: total_price))
 
     if order.save
       { success: true, order: order }
