@@ -56,6 +56,16 @@ module Api
       end
 
       def create_from_cart
+        # Validate address_id presence
+        unless params[:address_id].present?
+          return render json: { success: false, errors: ["Address must be provided"] }, status: :unprocessable_entity
+        end
+
+        address = Address.find_by(id: params[:address_id])
+        unless address
+          return render json: { success: false, errors: ["Address not found"] }, status: :unprocessable_entity
+        end
+
         cart_items = @current_user.carts.active.includes(:book)
         if cart_items.empty?
           return render json: { success: false, errors: ["Your cart is empty. Add items before placing an order."] }, status: :unprocessable_entity

@@ -91,6 +91,26 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
+  def profile
+    result = UserService.get_profile(current_user)
+
+    if result[:success]
+      render json: result.except(:success), status: :ok  # Remove :success key from response
+    else
+      render json: { errors: result[:error] }, status: :unprocessable_entity
+    end
+  end
+
+  def update_profile
+    result = UserService.update_profile(current_user, user_params)
+
+    if result[:success]
+      render json: { message: 'Profile updated successfully', user: result[:user] }, status: :ok
+    else
+      render json: { errors: result[:error] }, status: :unprocessable_entity
+    end
+  end
+
   private 
 
   def user_params
