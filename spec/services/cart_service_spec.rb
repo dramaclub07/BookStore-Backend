@@ -79,16 +79,16 @@ RSpec.describe CartService, type: :service do
     end
   end
 
-#   describe "#clear_cart" do
-#     let!(:cart_item1) { create(:cart, user: user, book: book, quantity: 2) }
-#     let!(:cart_item2) { create(:cart, user: user, book: create(:book, quantity: 1)) } #5 -> 1
+  describe "#clear_cart" do
+    let!(:cart_item1) { create(:cart, user: user, book: book, quantity: 2) }
+    let!(:cart_item2) { create(:cart, user: user, book: create(:book, quantity: 10)) } # Ensure sufficient stock
 
-#     it "clears all cart items" do
-#       result = cart_service.clear_cart
-#       expect(result[:success]).to be_truthy
-#       expect(user.carts.where(is_deleted: false).count).to eq(0)
-#     end
-#   end
+    it "clears all cart items" do
+      result = cart_service.clear_cart
+      expect(result[:success]).to be_truthy
+      expect(user.carts.where(is_deleted: false).count).to eq(0)
+    end
+  end
 
   describe "#update_quantity" do
     let!(:cart_item) { create(:cart, user: user, book: book, quantity: 2) }
@@ -96,7 +96,7 @@ RSpec.describe CartService, type: :service do
     it "updates quantity when within stock" do
       result = cart_service.update_quantity(book.id, 5)
       expect(result[:success]).to be_truthy
-      expect(result[:message]).to eq("Quantity updated.")
+      expect(result[:message]).to eq("Quantity updated successfully.")
       expect(cart_item.reload.quantity).to eq(5)
     end
 
@@ -110,6 +110,28 @@ RSpec.describe CartService, type: :service do
       result = cart_service.update_quantity(9999, 2)
       expect(result[:success]).to be_falsey
       expect(result[:message]).to eq("Item not found in cart")
+    end
+  end
+
+  describe "#add_or_update_cart" do
+    context "when adding a new item" do
+      it "adds the item to the cart" do
+        result = cart_service.add_or_update_cart(book.id, 3)
+        expect(result[:success]).to be_truthy
+        expect(result[:message]).to eq("Cart updated successfully.")
+        expect(user.carts.find_by(book: book).quantity).to eq(3)
+      end
+    end
+
+    context "when updating an existing item" do
+      let!(:cart_item) { create(:cart, user: user, book: book, quantity: 2) }
+
+      it "updates the quantity of the existing item" do
+        result = cart_service.add_or_update_cart(book.id, 4)
+        expect(result[:success]).to be_truthy
+        expect(result[:message]).to eq("Cart updated successfully.")
+        expect(cart_item.reload.quantity).to eq(4)
+      end
     end
   end
 end
