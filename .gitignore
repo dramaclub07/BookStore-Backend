@@ -4,7 +4,6 @@
 # Ignore all environment files.
 /.env*
 /.scannerwork/
-/scannerwork/
 /coverage
 .sonar-project.properties
 
@@ -30,3 +29,4 @@
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+/coverage/
