@@ -35,13 +35,13 @@ RSpec.describe "Orders API", type: :request do
           book_id: book.id,
           quantity: 2,
           address_id: address.id,
-          price_at_purchase: book.discounted_price || book.book_mrp || 10.99, # Fallback if factory lacks price
+          price_at_purchase: book.discounted_price || book.book_mrp || 10.99,
           total_price: (book.discounted_price || book.book_mrp || 10.99) * 2,
           status: "pending"
         }
       }
     end
-
+  
     context "when user is authenticated" do
       it "creates an order successfully" do
         post "/api/v1/orders", params: valid_params, headers: headers
@@ -58,7 +58,23 @@ RSpec.describe "Orders API", type: :request do
         post "/api/v1/orders", params: invalid_params, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)["success"]).to be false
-        expect(JSON.parse(response.body)["errors"]).to include("Book must exist") # Adjust based on actual error
+        expect(JSON.parse(response.body)["errors"]).to include("Book must be provided")
+      end
+
+      it "returns an error when address_id is missing" do
+        invalid_params = { order: { book_id: book.id, quantity: 2 } }
+        post "/api/v1/orders", params: invalid_params, headers: headers
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)["success"]).to be false
+        expect(JSON.parse(response.body)["errors"]).to include("Address must be provided")
+      end
+
+      it "returns an error when address_id is invalid" do
+        invalid_params = { order: { book_id: book.id, quantity: 2, address_id: 9999 } }
+        post "/api/v1/orders", params: invalid_params, headers: headers
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body)["success"]).to be false
+        expect(JSON.parse(response.body)["errors"]).to include("Address not found")
       end
     end
 
