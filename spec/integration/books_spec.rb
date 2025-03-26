@@ -77,8 +77,12 @@ RSpec.describe Api::V1::BooksController, type: :request do
     end
 
     context 'with CSV file' do
-      let(:csv_file) { fixture_file_upload('books.csv', 'text/csv') }
-
+      let(:csv_path) { File.join(Rails.root, 'public', 'book.csv') }
+      let(:csv_file) do
+        raise "CSV file not found at #{csv_path}" unless File.exist?(csv_path)
+        Rack::Test::UploadedFile.new(File.open(csv_path), 'text/csv')
+      end
+  
       it 'creates books from CSV' do
         allow(BooksService).to receive(:create_books_from_csv).and_return({ success: true, message: 'Books created' })
         post '/api/v1/books/create', params: { file: csv_file }
