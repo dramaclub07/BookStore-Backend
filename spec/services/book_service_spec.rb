@@ -8,17 +8,14 @@ RSpec.describe BooksService do
   let(:redis_key) { "books_page_1_sort_relevance_per_12" }
 
   before do
-    # Clear Redis before each test
-    redis.flushdb
+    redis.flushdb # Clear Redis before each test
   end
 
   describe '.get_books' do
     context 'when data is cached in Redis' do
       let(:cached_data) { { books: [{ id: book.id }], current_page: 1, total_pages: 1 }.to_json }
 
-      before do
-        redis.set(redis_key, cached_data)
-      end
+      before { redis.set(redis_key, cached_data) }
 
       it 'fetches from Redis without force_refresh' do
         result = BooksService.get_books(1, 12, false, 'relevance')
@@ -29,8 +26,7 @@ RSpec.describe BooksService do
 
     context 'when data is not cached or force_refresh is true' do
       before do
-        # Ensure two books exist
-        book # Create the first book
+        book # Ensure first book is created
         create(:book, discounted_price: 5.0, is_deleted: false) # Second book
       end
 
@@ -53,19 +49,22 @@ RSpec.describe BooksService do
         let!(:book2) { create(:book, discounted_price: 15.0, is_deleted: false, created_at: 1.day.from_now) }
 
         before do
-          # Ensure all books are created before sorting tests
           book # First book (10.0)
           create(:book, discounted_price: 5.0, is_deleted: false) # Second book (5.0)
+          # Debug: Verify books exist
+          puts "Books in DB: #{Book.where(is_deleted: false).count}"
         end
 
         it 'sorts by price_low_high' do
           result = BooksService.get_books(1, 12, true, 'price_low_high')
-          expect(result[:books].size).to be > 0 # Debug: Ensure books are returned
+          puts "Books returned: #{result[:books]}" # Debug output
+          expect(result[:books].size).to be > 0
           expect(result[:books].first[:discounted_price]).to eq(5.0)
         end
 
         it 'sorts by price_high_low' do
           result = BooksService.get_books(1, 12, true, 'price_high_low')
+          puts "Books returned: #{result[:books]}"
           expect(result[:books].size).to be > 0
           expect(result[:books].first[:discounted_price]).to eq(15.0)
         end
@@ -74,18 +73,21 @@ RSpec.describe BooksService do
           create(:review, book: book, rating: 5)
           create(:review, book: book2, rating: 3)
           result = BooksService.get_books(1, 12, true, 'rating')
+          puts "Books returned: #{result[:books]}"
           expect(result[:books].size).to be > 0
           expect(result[:books].first[:id]).to eq(book.id) # Higher avg rating
         end
 
         it 'sorts by rating without reviews' do
           result = BooksService.get_books(1, 12, true, 'rating')
+          puts "Books returned: #{result[:books]}"
           expect(result[:books].size).to be > 0
           expect(result[:books].map { |b| b[:rating] || 0 }).to all(eq(0))
         end
 
         it 'defaults to relevance for invalid sort_by' do
           result = BooksService.get_books(1, 12, true, 'invalid')
+          puts "Books returned: #{result[:books]}"
           expect(result[:books].size).to be > 0
           expect(result[:books].first[:id]).to eq(book2.id) # Newest first
         end
@@ -119,6 +121,7 @@ RSpec.describe BooksService do
     end
   end
 
+  # Remaining tests unchanged
   describe '.create_single_book' do
     it 'creates a book successfully' do
       params = { book_name: 'New Book', author_name: 'Author', discounted_price: 10.0, book_mrp: 20.0 }

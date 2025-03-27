@@ -1,5 +1,6 @@
 require 'rails_helper'
 
+# Request specs (integration tests with full stack)
 RSpec.describe Api::V1::CartsController, type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book, book_mrp: 100, discounted_price: 80) }
@@ -70,6 +71,12 @@ RSpec.describe Api::V1::CartsController, type: :request do
         patch '/api/v1/cart/update_quantity', params: { book_id: book.id, quantity: 0 }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['message']).to eq('Invalid quantity.')
+      end
+    end
+  end
+end
+
+# Controller specs (unit tests for controller logic)
 RSpec.describe Api::V1::CartsController, type: :controller do
   let(:user) { create(:user) }
   let(:book) { create(:book) }
@@ -128,25 +135,6 @@ RSpec.describe Api::V1::CartsController, type: :controller do
     end
   end
 
-  describe 'GET /api/v1/cart/summary' do
-    before do
-      cart = build(:cart, user: user, book: book, quantity: 2, active: true)
-      cart.save!
-      puts "User ID: #{user.id}"
-      puts "Cart Count for User: #{user.carts.active.count}"
-      puts "Cart Details: #{user.carts.active.map { |c| { book_id: c.book_id, quantity: c.quantity, active: c.active, discounted_price: c.book.discounted_price } }}"
-    end
-
-    it 'returns the cart summary' do
-      get '/api/v1/cart/summary', headers: headers
-      puts "Token: #{token}"
-      puts "Summary Status: #{response.status}"
-      puts "Summary Body: #{response.body}"
-      expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
-      expect(json_response['success']).to be true
-      expect(json_response['total_items']).to eq(2)
-      expect(json_response['total_price']).to eq(160)
   describe 'GET #summary' do
     context 'when authenticated' do
       before do
@@ -223,10 +211,9 @@ RSpec.describe Api::V1::CartsController, type: :controller do
 
       it 'returns the cart items' do
         get :index
-        puts "GET #index response: #{json}" # Keep for debugging if needed
         expect(response).to have_http_status(:ok)
         expect(json[:success]).to be true
-        expect(json[:cart].size).to eq(1) # Updated to match actual key
+        expect(json[:cart].size).to eq(1)
       end
     end
 
@@ -249,10 +236,9 @@ RSpec.describe Api::V1::CartsController, type: :controller do
 
       it 'updates the quantity of the cart item' do
         put :update_quantity, params: { book_id: book.id, quantity: 3 }
-        puts "PUT #update_quantity response: #{json}" # Keep for debugging if needed
         expect(response).to have_http_status(:ok)
         expect(json[:success]).to be true
-        expect(json[:cart][:quantity]).to eq(3) # Updated to match actual key
+        expect(json[:cart][:quantity]).to eq(3)
       end
     end
 
