@@ -93,3 +93,5 @@ end
 
 gem 'mock_redis'
 gem 'csv'
+
+gem 'bunny', '~> 2.19'

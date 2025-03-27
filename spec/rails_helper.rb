@@ -16,7 +16,7 @@ require 'database_cleaner/active_record'
 require 'shoulda/matchers'
 
 # Load support files
-Rails.root.glob('spec/support/**/*.rb').sort_by(&:to_s).each { |f| require f }
+Dir[Rails.root.join('spec', 'support', '**', '*.rb')].each { |f| require f }
 
 # Checks for pending migrations and applies them before tests are run.
 begin
@@ -32,29 +32,40 @@ RSpec.configure do |config|
   # Set fixture paths
   config.fixture_paths = [Rails.root.join('spec/fixtures')]
 
-  # Disable transactional fixtures to avoid conflicts with DatabaseCleaner
-  config.use_transactional_fixtures = false
+  # Use transactional fixtures for better performance
+  config.use_transactional_fixtures = true
 
-  # DatabaseCleaner setup
+  # DatabaseCleaner setup (for JS/system tests only)
   config.before(:suite) do
     DatabaseCleaner.clean_with(:truncation)
   end
 
   config.before(:each) do
     DatabaseCleaner.strategy = :transaction
+    DatabaseCleaner.start
   end
 
+  # Use truncation for JavaScript and system tests
   config.before(:each, js: true) do
     DatabaseCleaner.strategy = :truncation
   end
 
-  config.before(:each) do
-    DatabaseCleaner.start
+  config.before(:each, type: :system) do
+    DatabaseCleaner.strategy = :deletion
   end
 
   config.after(:each) do
     DatabaseCleaner.clean
   end
+
+  # Allow focus on specific tests with `:focus` metadata
+  config.filter_run_when_matching :focus
+
+  # Randomize test order to identify order dependencies
+  config.order = :random
+
+  # Allow using `byebug` or `binding.irb` in tests
+  config.include ActiveSupport::Testing::TimeHelpers
 
   # Remove Rails internal backtrace lines from errors
   config.filter_rails_from_backtrace!

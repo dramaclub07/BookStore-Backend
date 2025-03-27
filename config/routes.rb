@@ -11,9 +11,6 @@ Rails.application.routes.draw do
       post 'reset_password', to: 'users#reset_password'
       get 'users/profile', to: 'users#profile'
       patch 'users/profile', to: 'users#profile'
-
-      # User Profile Routes (New)
-      get 'user/profile', to: 'users#profile'  # Fetch user profile
       put 'user/profile', to: 'users#update_profile'  # Update user profile
 
       # Address Management Routes
@@ -50,6 +47,7 @@ Rails.application.routes.draw do
       get 'books/:book_id/reviews', to: 'reviews#index'
       get 'books/:book_id/reviews/:id', to: 'reviews#show'
       delete 'books/:book_id/reviews/:id', to: 'reviews#destroy'
+      
       post   'cart/add', to: 'carts#add'         
       patch  'cart/toggle_remove', to: 'carts#toggle_remove' 
       get    'cart', to: 'carts#index'  

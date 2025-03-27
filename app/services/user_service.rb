@@ -23,6 +23,11 @@ class UserService
     user = User.find_by(email: email&.downcase)
     if user&.authenticate(password)
       token = JwtService.encode(user_id: user.id)
+      begin
+        UserMailer.enqueue_welcome_email(user)
+      rescue StandardError => e
+        Rails.logger.error "Failed to enqueue welcome email: #{e.message}"
+      end
       Rails.logger.info "User login successful: #{user.id}"
       Result.new(success: true, user: user, token: token)
     else

@@ -19,9 +19,9 @@ RSpec.describe AddressService do
         expect(result[:addresses].first['id']).to eq(address.id)
       end
     end
-
     context 'when addresses are not cached' do
       it 'fetches addresses from the database and caches them' do
+       
         result = AddressService.get_addresses(user)
         expect(result[:success]).to be true
         expect(result[:addresses].size).to eq(2)

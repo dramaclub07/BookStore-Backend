@@ -10,17 +10,13 @@ RSpec.describe Api::V1::WishlistsController, type: :request do
     context 'when user is authenticated' do
       before do
         # Ensure user exists and token is valid
-        puts "User ID: #{user.id}"
-        puts "Generated Token: #{token}"
         decoded = JwtService.decode(token)
-        puts "Decoded Token: #{decoded.inspect}"
+       
         allow_any_instance_of(WishlistService).to receive(:fetch_wishlist).and_return({ success: true, wishlist: [] })
       end
 
       it 'returns the wishlist successfully' do
         get '/api/v1/wishlists/fetch', headers: headers
-        puts "Response Status: #{response.status}"
-        puts "Response Body: #{response.body}"
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response).to be_a(Hash)

@@ -14,11 +14,9 @@ class Api::V1::UsersController < ApplicationController
         mobile_number: @current_user.mobile_number
       }, status: :ok
     elsif request.patch? || request.put?
-      # Extract password-related params
       current_password = profile_params[:current_password]
       new_password = profile_params[:new_password]
 
-      # If password fields are provided, verify current_password and update new_password
       if current_password.present? || new_password.present?
         unless @current_user.authenticate(current_password)
           return render json: { success: false, errors: ["Current password is incorrect"] }, status: :unprocessable_entity
@@ -26,12 +24,12 @@ class Api::V1::UsersController < ApplicationController
         unless new_password.present?
           return render json: { success: false, errors: ["New password cannot be blank"] }, status: :unprocessable_entity
         end
-        # Assign new password to user attributes
         @current_user.password = new_password
       end
 
-      # Update other profile fields (excluding password fields from direct update)
-      profile_attributes = profile_params.except(:current_password, :new_password)
+      # Filter out nil values and merge with existing attributes
+      profile_attributes = @current_user.attributes.symbolize_keys.merge(profile_params.except(:current_password, :new_password).compact)
+      Rails.logger.debug "Profile attributes: #{profile_attributes.inspect}" # Debug
       if @current_user.update(profile_attributes)
         render json: { 
           success: true,
@@ -41,6 +39,7 @@ class Api::V1::UsersController < ApplicationController
           mobile_number: @current_user.mobile_number
         }, status: :ok
       else
+        Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}" # Debug
         render json: { 
           success: false,
           errors: @current_user.errors.full_messages 
@@ -86,26 +85,6 @@ class Api::V1::UsersController < ApplicationController
     result = PasswordService.reset_password(params[:email], params[:otp], params[:new_password])
     if result[:success]
       render json: { message: result[:message] }, status: :ok
-    else
-      render json: { errors: result[:error] }, status: :unprocessable_entity
-    end
-  end
-
-  def profile
-    result = UserService.get_profile(current_user)
-
-    if result[:success]
-      render json: result.except(:success), status: :ok  # Remove :success key from response
-    else
-      render json: { errors: result[:error] }, status: :unprocessable_entity
-    end
-  end
-
-  def update_profile
-    result = UserService.update_profile(current_user, user_params)
-
-    if result[:success]
-      render json: { message: 'Profile updated successfully', user: result[:user] }, status: :ok
     else
       render json: { errors: result[:error] }, status: :unprocessable_entity
     end
