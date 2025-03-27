@@ -31,7 +31,7 @@ class ApplicationController < ActionController::API
   end
   
 
-  def current_user
-    @current_user
-  end
+  # def current_user
+  #   @current_user
+  # end why tf do we need this here? its clustering the cli output
 end

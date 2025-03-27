@@ -115,12 +115,12 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  describe 'PUT /api/v1/addresses/:id' do
+  describe 'PATCH /api/v1/addresses/:id' do
     let(:updated_attributes) { { address: { city: 'Los Angeles' } } }
 
     context 'when the address exists' do
       it 'updates the address' do
-        put "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: headers
 
         expect(response).to have_http_status(:ok)
         parsed_response = json
@@ -131,7 +131,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when the address does not exist' do
       it 'returns not found' do
-        put "/api/v1/addresses/9999", params: updated_attributes.to_json, headers: headers
+        patch "/api/v1/addresses/9999", params: updated_attributes.to_json, headers: headers
 
         expect(response).to have_http_status(:not_found)
         parsed_response = json
@@ -142,7 +142,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when request is invalid' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { address: { street: '' } }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { address: { street: '' } }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -153,7 +153,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when all parameters are blank' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { address: {} }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { address: {} }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -164,7 +164,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when not authenticated' do
       it 'returns unauthorized' do
-        put "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: {}
+        patch "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: {}
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -218,10 +218,10 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  describe 'PUT /api/v1/addresses/:id' do
+  describe 'PATCH /api/v1/addresses/:id' do
     context 'when address_params raises ActionController::ParameterMissing' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { invalid_key: 'value' }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { invalid_key: 'value' }.to_json, headers: headers
     
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -235,7 +235,7 @@ RSpec.describe 'Addresses API', type: :request do
   def json
     JSON.parse(response.body, symbolize_names: true)
   rescue JSON::ParserError => e
-    puts "Failed to parse JSON response: #{response.body}"
+    patchs "Failed to parse JSON response: #{response.body}"
     raise e
   end
 end

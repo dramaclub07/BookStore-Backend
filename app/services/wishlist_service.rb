@@ -31,14 +31,22 @@ class WishlistService
     wishlist = Wishlist.find_by(user_id: @user.id, book_id: book_id)
 
     if wishlist
-      wishlist.update(is_deleted: !wishlist.is_deleted)
-      message = wishlist.is_deleted ? 'Book removed from wishlist' : 'Book added back to wishlist'
+      original_is_deleted = wishlist.is_deleted
+      if wishlist.update(is_deleted: !original_is_deleted)
+        message = wishlist.is_deleted ? 'Book removed from wishlist' : 'Book added back to wishlist'
+        { success: true, message: message }
+      else
+        error_message = wishlist.errors.full_messages.join(", ")
+        error_message = "Failed to update wishlist entry" if error_message.empty?
+        { success: false, message: error_message }
+      end
     else
       wishlist = Wishlist.create(user_id: @user.id, book_id: book_id, is_deleted: false)
-      return { success: false, message: wishlist.errors.full_messages.join(", ") } if wishlist.errors.any?
-      message = 'Book added to wishlist'
+      if wishlist.errors.any?
+        { success: false, message: wishlist.errors.full_messages.join(", ") }
+      else
+        { success: true, message: 'Book added to wishlist' }
+      end
     end
-
-    { success: true, message: message }
   end
 end
