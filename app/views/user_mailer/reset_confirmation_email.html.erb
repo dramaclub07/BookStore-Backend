@@ -1,0 +1,5 @@
+<h1>Password Reset Confirmation</h1>
+<p>Dear <%= @user.full_name || "User" %>,</p>
+<p>Your password has been successfully reset on <%= Time.now.strftime("%B %d, %Y at %I:%M %p") %>.</p>
+<p>If you did not initiate this change, please contact our support team immediately.</p>
+<p>Thank you,<br>The Bookstore Team</p>

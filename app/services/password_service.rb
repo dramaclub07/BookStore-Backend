@@ -1,6 +1,4 @@
 class PasswordService
-
-  
   OTP_STORAGE = {} # Temporary storage (Use Redis in production)
   OTP_EXPIRY_TIME = 5 * 60 # 5 minutes in seconds
 
@@ -9,16 +7,16 @@ class PasswordService
     return { success: false, error: "User not found" } unless user
 
     otp = generate_otp
-    expiry_time = Time.now + OTP_EXPIRY_TIME # Set expiry time
+    expiry_time = Time.now + OTP_EXPIRY_TIME
 
     OTP_STORAGE[email] = { otp: otp, otp_expiry: expiry_time }
-
-    UserMailer.send_otp(user, otp, expiry_time).deliver_now
+    EmailProducer.publish_email("send_otp", {
+      user_id: user.id,
+      otp: otp,
+      expiry_time: expiry_time.to_s
+    })
     { success: true, message: "OTP sent to your email" }
   end
-
-
-
 
   def self.reset_password(email, otp, new_password)
     user = User.find_by(email: email)
@@ -29,12 +27,15 @@ class PasswordService
     return { success: false, error: "OTP expired" } if Time.now > stored_otp_data[:otp_expiry]
     return { success: false, error: "Invalid OTP" } unless stored_otp_data[:otp] == otp
 
-    user.update(password: new_password)
-    OTP_STORAGE.delete(email) # Remove OTP after successful reset
-    { success: true, message: "Password reset successfully" }
+    if user.update(password: new_password)
+      OTP_STORAGE.delete(email)
+      EmailProducer.publish_email("reset_confirmation_email", { user_id: user.id })
+      { success: true, message: "Password reset successfully" }
+    else
+      { success: false, error: user.errors.full_messages.join(", ") }
+    end
   end
 
-  
   private
 
   def self.generate_otp

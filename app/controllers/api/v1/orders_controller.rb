@@ -29,6 +29,7 @@ module Api
       def cancel
         if @order.status != "cancelled"
           @order.update(status: "cancelled")
+          EmailProducer.publish_email("cancel_order_email", { user_id: @current_user.id, order_id: @order.id })
           render json: { success: true, message: "Order cancelled successfully", order: @order }, status: :ok
         else
           render json: { success: false, error: "Order is already cancelled" }, status: :unprocessable_entity
@@ -117,6 +118,7 @@ module Api
         )
       
         if order.save
+          EmailProducer.publish_email("order_confirmation_email", { user_id: @current_user.id, order_id: order.id })
           render json: { success: true, order: order.as_json }, status: :created
         else
           render json: { success: false, errors: order.errors.full_messages }, status: :unprocessable_entity
