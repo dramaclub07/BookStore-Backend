@@ -785,7 +785,6 @@
         1,
         1,
         1,
-        1,
         null,
         1,
         0,
@@ -801,26 +800,6 @@
         null,
         0,
         null,
-        null,
-        null,
-        1,
-        null,
-        1,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        null,
-        null,
-        0,
-        0,
-        null,
-        0,
-        0,
-        null,
-        0,
         null,
         null,
         null,
@@ -861,9 +840,8 @@
         null,
         null,
         null,
-        null,
-        null,
-        null,
+        1,
+        0,
         null,
         null
       ]
@@ -1654,7 +1632,7 @@
   "groups": {
     "Controllers": {
       "lines": {
-        "covered_percent": 28.03970223325062
+        "covered_percent": 28.388746803069054
       }
     },
     "Channels": {
