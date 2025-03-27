@@ -4,13 +4,13 @@ RSpec.describe Api::V1::WishlistsController, type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book) }
   let(:token) { JwtService.encode(user_id: user.id) }
-  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+  let(:headers) { { 'Authorization' => "Bearer #{access_token}" } }
 
   describe 'GET /api/v1/wishlists/fetch' do
     context 'when user is authenticated' do
       before do
         # Ensure user exists and token is valid
-        decoded = JwtService.decode(token)
+        decoded = JwtService.decode(access_token)
        
         allow_any_instance_of(WishlistService).to receive(:fetch_wishlist).and_return({ success: true, wishlist: [] })
       end

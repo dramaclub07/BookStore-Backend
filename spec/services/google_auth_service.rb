@@ -16,7 +16,7 @@ RSpec.describe Api::V1::GoogleAuthController, type: :controller do
   describe "POST #create" do
     context "when a valid token is provided" do
       it "authenticates the user and returns a JWT token" do
-        post :create, params: { token: mock_token }
+        post :create, params: { access_token: mock_token }
 
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -42,7 +42,7 @@ RSpec.describe Api::V1::GoogleAuthController, type: :controller do
       end
 
       it "returns an unauthorized error" do
-        post :create, params: { token: "invalid_token" }
+        post :create, params: { access_token: "invalid_token" }
 
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -57,7 +57,7 @@ RSpec.describe Api::V1::GoogleAuthController, type: :controller do
       end
 
       it "returns an unprocessable entity error" do
-        post :create, params: { token: mock_token }
+        post :create, params: { access_token: mock_token }
 
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -71,7 +71,7 @@ RSpec.describe Api::V1::GoogleAuthController, type: :controller do
       end
 
       it "returns an internal server error" do
-        post :create, params: { token: mock_token }
+        post :create, params: { access_token: mock_token }
 
         expect(response).to have_http_status(:internal_server_error)
         json_response = JSON.parse(response.body)

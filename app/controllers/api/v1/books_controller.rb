@@ -1,5 +1,6 @@
 class Api::V1::BooksController < ApplicationController
-  skip_before_action :authenticate_request, only: [:index, :search, :search_suggestions, :show, :create]
+  # Only skip authentication for public actions
+  skip_before_action :authenticate_request, only: [:index, :search, :search_suggestions, :show]
   before_action :set_book, only: [:show, :update, :destroy, :is_deleted]
 
   def index
@@ -46,6 +47,10 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def create
+    unless @current_user
+      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
+    end
+
     if params[:file].present?
       result = BooksService.create_books_from_csv(params[:file])
     else
@@ -73,6 +78,10 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def update
+    unless @current_user
+      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
+    end
+
     result = BooksService.update_book(@book, book_params)
     if result[:success]
       render json: result
@@ -82,11 +91,19 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def is_deleted
+    unless @current_user
+      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
+    end
+
     result = BooksService.toggle_is_deleted(@book)
     render json: result
   end
 
   def destroy
+    unless @current_user
+      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
+    end
+
     result = BooksService.destroy_book(@book)
     render json: result
   end

@@ -7,6 +7,7 @@ Rails.application.routes.draw do
       # User Authentication Routes
       post 'signup', to: 'users#signup'
       post 'login', to: 'users#login'
+      post '/refresh', to: 'sessions#refresh'
       post 'forgot_password', to: 'users#forgot_password'
       post 'reset_password', to: 'users#reset_password'
       get 'users/profile', to: 'users#profile'
