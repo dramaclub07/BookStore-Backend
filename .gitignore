@@ -9,6 +9,8 @@
 sonar-project.properties
 # Ignore all environment files.
 /.env*
+/coverage
+/.scannerwork/
 
 # Ignore all logfiles and tempfiles.
 /log/*
