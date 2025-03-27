@@ -3,11 +3,11 @@ require 'rails_helper'
 RSpec.describe PasswordService, type: :service do
   let!(:user) { create(:user) }
 
-  describe ".forgot_password" do
+  describe ".users/password/forgot" do
     context "when user exists" do
       it "sends an OTP and returns success" do
         allow(UserMailer).to receive_message_chain(:send_otp, :deliver_now)
-        result = PasswordService.forgot_password(user.email)
+        result = PasswordService.users/password/forgot(user.email)
 
         expect(result[:success]).to be true
         expect(result[:message]).to eq("OTP sent to your email")
@@ -17,7 +17,7 @@ RSpec.describe PasswordService, type: :service do
     
     context "when user does not exist" do
       it "returns an error" do
-        result = PasswordService.forgot_password("nonexistent@example.com")
+        result = PasswordService.users/password/forgot("nonexistent@example.com")
 
         expect(result[:success]).to be false
         expect(result[:error]).to eq("User not found")

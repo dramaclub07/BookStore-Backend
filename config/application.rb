@@ -25,7 +25,7 @@ module Backend
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
-    config.action_controller.raise_on_missing_callback_actions = false
+    config.action_controller.raise_on_missing_callback_actions = true
 
 
     # Configuration for the application, engines, and railties goes here.

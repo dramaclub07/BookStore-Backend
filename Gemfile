@@ -49,7 +49,6 @@ group :development, :test do
 end
 
 group :development do
-  # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
 
@@ -62,8 +61,6 @@ group :test do
   gem 'faker'                # Faker for generating random data
   gem 'database_cleaner-active_record'  # Clean test database after tests
   gem 'shoulda-matchers'
-
-  
 end
 
 gem "bcrypt", "~> 3.1"
@@ -74,7 +71,7 @@ gem 'rswag'
 gem 'rswag-api'
 gem 'rswag-ui'
 
-gem "kaminari", "~> 1.2" # Pagination for Cart Content
+gem "kaminari", "~> 1.2" # Pagination for carts Content
 
 
 gem 'fiddle'
@@ -85,3 +82,9 @@ gem 'rack-cors'
 
 gem 'google-id-token'
 gem 'googleauth'
+
+group :test do
+  gem 'simplecov', require: false
+end
+
+gem 'active_model_serializers' # For JSON serialization

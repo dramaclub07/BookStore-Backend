@@ -1,5 +1,5 @@
 class Api::V1::UsersController < ApplicationController
-  skip_before_action :authenticate_request, only: [:signup, :login, :forgot_password, :reset_password]
+  skip_before_action :authenticate_request, only: [:create, :login, :forgot_password, :reset_password]
 
 
   def profile
@@ -37,7 +37,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
 
-  def signup
+  def create
     result = UserService.signup(user_params)
     if result.success?
     render json: {
@@ -51,11 +51,9 @@ class Api::V1::UsersController < ApplicationController
   
 
   def login
-    
     result = UserService.login(params[:email], params[:password])
-
     if result[:success]
-      render json: { message: 'Login successful', user: result[:user], token: result[:token] }, status: :ok
+      render json: { message: 'login successful', user: result[:user], token: result[:token] }, status: :ok
     else
       render json: { errors: result[:error] }, status: :unauthorized
     end

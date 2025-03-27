@@ -45,13 +45,13 @@ RSpec.describe 'Users API', type: :request do
     end
   end
 
-  describe 'POST /api/v1/forgot_password' do
+  describe 'POST /api/v1/users/password/forgot' do
     context 'with existing email' do
       let(:valid_email) { { email: existing_user.email } }
 
       it 'sends OTP successfully' do
         allow(UserMailer).to receive(:send_otp).and_return(double(deliver_now: true))
-        post '/api/v1/forgot_password', params: valid_email.as_json, as: :json
+        post '/api/v1/users/password/forgot', params: valid_email.as_json, as: :json
         expect(response).to have_http_status(200)
       end
     end

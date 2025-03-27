@@ -1,6 +1,6 @@
-class CreateCarts < ActiveRecord::Migration[8.0]
+class Createcartss < ActiveRecord::Migration[8.0]
   def change
-    create_table :carts do |t|
+    create_table :cartss do |t|
       t.references :user, null: false, foreign_key: true
       t.references :book, null: false, foreign_key: true
       t.integer :quantity

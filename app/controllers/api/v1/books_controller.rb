@@ -45,6 +45,16 @@ class Api::V1::BooksController < ApplicationController
     end
   end
 
+  def search
+  unless params[:query].present?
+    render json: { success: false, error: "Query parameter is required" }, status: :bad_request
+    return
+  end
+
+  books = Book.where("book_name ILIKE ?", "%#{params[:query]}%").where(is_deleted: false)
+  render json: { success: true, books: books }, status: :ok
+end
+
   def create
     if params[:file].present?
       result = BooksService.create_books_from_csv(params[:file])
@@ -91,6 +101,11 @@ class Api::V1::BooksController < ApplicationController
     render json: result
   end
 
+  def available
+    books = Book.where("is_deleted IS NULL OR is_deleted = ?", false)
+    render json: { success: true, books: books }, status: :ok
+  end
+
   private
 
   def set_book
@@ -103,5 +118,10 @@ class Api::V1::BooksController < ApplicationController
     params.require(:book).permit(:book_name, :author_name, :book_mrp,
                                  :discounted_price, :quantity, :book_details,
                                  :genre, :book_image, :is_deleted)
+  end
+
+  def set_book
+    @book = Book.find(params[:id])
+    render json: { success: false, message: "Book not found" }, status: :not_found unless @book
   end
 end

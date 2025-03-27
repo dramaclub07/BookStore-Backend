@@ -97,17 +97,17 @@ class CartService
     end
   end
 
-  def update_quantity(book_id, quantity)
-    return { success: false, message: "Invalid quantity." } if quantity.to_i <= 0
+ def update_quantity(book_id, quantity)
+  return { success: false, message: "Invalid quantity." } if quantity.to_i <= 0
 
-    cart_item = @user.carts.active.find_by(book_id: book_id)
-    return { success: false, message: "Item not found in cart" } unless cart_item
+  cart_item = @user.carts.active.find_by(book_id: book_id)
+  return { success: false, message: "Item not found in cart" } unless cart_item
 
-    book = cart_item.book
-    return { success: false, message: "Book not available." } unless book
-    return { success: false, message: "Not enough stock available." } if quantity > book.quantity
+  book = cart_item.book
+  return { success: false, message: "Book not available." } unless book
+  return { success: false, message: "Not enough stock available." } if quantity > book.quantity
 
-    cart_item.update(quantity: quantity)
-    { success: true, message: "Quantity updated successfully.", cart: cart_item }
-  end
+  cart_item.update(quantity: quantity)
+  { success: true, message: "Quantity updated successfully.", cart: cart_item }
+end
 end

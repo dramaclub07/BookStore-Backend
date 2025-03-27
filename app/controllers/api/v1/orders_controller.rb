@@ -10,21 +10,21 @@ module Api
         render json: { success: true, orders: orders }, status: :ok
       end
 
-      # Create an order from the books in the cart
+      # Create an order from the books in the carts
       def create
-        cart_items = @current_user.carts.active.includes(:book)
+        carts_items = @current_user.carts.active.includes(:book)
 
-        if cart_items.empty?
-          return render json: { success: false, message: "Your cart is empty. Add items before placing an order." }, status: :unprocessable_entity
+        if carts_items.empty?
+          return render json: { success: false, message: "Your carts is empty. Add items before placing an order." }, status: :unprocessable_entity
         end
 
         orders = []
-        cart_items.each do |cart_item|
+        carts_items.each do |carts_item|
           order = @current_user.orders.new(
-            book_id: cart_item.book_id,
-            quantity: cart_item.quantity,
-            price_at_purchase: cart_item.book.discounted_price || cart_item.book.book_mrp,
-            total_price: (cart_item.book.discounted_price || cart_item.book.book_mrp) * cart_item.quantity,
+            book_id: carts_item.book_id,
+            quantity: carts_item.quantity,
+            price_at_purchase: carts_item.book.discounted_price || carts_item.book.book_mrp,
+            total_price: (carts_item.book.discounted_price || carts_item.book.book_mrp) * carts_item.quantity,
             status: "pending",
             address_id: params[:address_id]
           )
@@ -36,8 +36,8 @@ module Api
           end
         end
 
-        # Clear the cart after successfully placing the orders
-        cart_items.destroy_all
+        # Clear the carts after successfully placing the orders
+        carts_items.destroy_all
 
         render json: { success: true, message: "Order placed successfully", orders: orders }, status: :created
       end

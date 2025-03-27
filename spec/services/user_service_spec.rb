@@ -28,11 +28,11 @@ RSpec.describe UserService, type: :service do
     end
   end
 
-  describe ".login" do
+  describe ".users/login" do
     context "when valid credentials are provided" do
       it "returns success and a token" do
         allow(JwtService).to receive(:encode).and_return("mocked_token")
-        result = UserService.login(existing_user.email, "Password@123")
+        result = UserService.users/login(existing_user.email, "Password@123")
 
         expect(result[:success]).to be true
         expect(result[:token]).to eq("mocked_token")
@@ -41,7 +41,7 @@ RSpec.describe UserService, type: :service do
 
     context "when invalid credentials are provided" do
       it "returns an error" do
-        result = UserService.login(existing_user.email, "wrongpassword")
+        result = UserService.users/login(existing_user.email, "wrongpassword")
         expect(result[:success]).to be false
         expect(result[:error]).to eq("Invalid email or password")
       end
@@ -51,11 +51,11 @@ end
 
 RSpec.describe PasswordService, type: :service do
   let!(:existing_user) { create(:user, email: "testuser@gmail.com", password: "Password@123") }
-  describe ".forgot_password" do
+  describe ".users/password/forgot" do
     context "when email exists" do
       it "sends OTP successfully" do
         allow(UserMailer).to receive_message_chain(:send_otp, :deliver_now)
-        result = PasswordService.forgot_password(existing_user.email)
+        result = PasswordService.users/password/forgot(existing_user.email)
         expect(result[:success]).to be true
         expect(result[:message]).to eq("OTP sent to your email")
         expect(PasswordService::OTP_STORAGE).to have_key(existing_user.email)
@@ -64,7 +64,7 @@ RSpec.describe PasswordService, type: :service do
 
     context "when email does not exist" do
       it "returns an error" do
-        result = PasswordService.forgot_password("notfound@gmail.com")
+        result = PasswordService.users/password/forgot("notfound@gmail.com")
 
         expect(result[:success]).to be false
         expect(result[:error]).to eq("User not found")
