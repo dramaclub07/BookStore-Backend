@@ -50,7 +50,8 @@ class Api::V1::UsersController < ApplicationController
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
-  def signup
+
+  def create
     result = UserService.signup(user_params)
     if result.success?
       render json: {

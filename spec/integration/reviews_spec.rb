@@ -1,4 +1,5 @@
 require 'rails_helper'
+#working fine with new routes
 
 RSpec.describe Api::V1::ReviewsController, type: :request do
   let(:user) { create(:user) }

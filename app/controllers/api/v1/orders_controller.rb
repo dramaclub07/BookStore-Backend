@@ -10,15 +10,46 @@ module Api
         render json: { success: true, orders: orders }, status: :ok
       end
 
-      # Create an order
+      # Create an order from the books in the carts
       def create
-        # If cart_items are provided, use them; otherwise, use direct params
-        if params[:cart_items].present?
-          create_from_cart
-        else
-          create_from_params
+        carts_items = @current_user.carts.active.includes(:book)
+
+        if carts_items.empty?
+          return render json: { success: false, message: "Your carts is empty. Add items before placing an order." }, status: :unprocessable_entity
         end
+
+        orders = []
+        carts_items.each do |carts_item|
+          order = @current_user.orders.new(
+            book_id: carts_item.book_id,
+            quantity: carts_item.quantity,
+            price_at_purchase: carts_item.book.discounted_price || carts_item.book.book_mrp,
+            total_price: (carts_item.book.discounted_price || carts_item.book.book_mrp) * carts_item.quantity,
+            status: "pending",
+            address_id: params[:address_id]
+          )
+
+          if order.save
+            orders << order
+          else
+            return render json: { success: false, errors: order.errors.full_messages }, status: :unprocessable_entity
+          end
+        end
+
+        # Clear the carts after successfully placing the orders
+        carts_items.destroy_all
+
+        render json: { success: true, message: "Order placed successfully", orders: orders }, status: :created
       end
+      # Create an order
+      # def create
+      #   # If cart_items are provided, use them; otherwise, use direct params
+      #   if params[:cart_items].present?
+      #     create_from_cart
+      #   else
+      #     create_from_params
+      #   end
+      # end
 
       # Show order details
       def show

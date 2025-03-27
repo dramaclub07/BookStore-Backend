@@ -1,4 +1,5 @@
 require 'rails_helper'
+#working fine with new routes
 
 RSpec.describe 'Addresses API', type: :request do
   let!(:user) { create(:user) }
