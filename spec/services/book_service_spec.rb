@@ -1,141 +1,134 @@
-class BooksService
-  require 'csv'
-  require 'redis'
+require 'rails_helper'
 
-  # Initialize Redis globally (use ENV variables in production)
-  REDIS = Redis.new(
-    host: ENV['REDIS_HOST'] || 'localhost',
-    port: ENV['REDIS_PORT'] || 6379,
-    password: ENV['REDIS_PASSWORD']
-  )
+RSpec.describe BooksService, type: :service do
+  let(:redis) { double("Redis") }
 
-  def self.get_books(page, per_page, force_refresh = false, sort_by = 'relevance')
-    redis_key = "books_page_#{page}_sort_#{sort_by}_per_#{per_page}" # Include per_page in key for consistency
+  before do
+    allow(Rails.logger).to receive(:info)
+    stub_const("BooksService::REDIS", redis)
+    allow(redis).to receive(:get)
+    allow(redis).to receive(:set)
+    allow(redis).to receive(:expire)
+    allow(redis).to receive(:keys).and_return(["books_page_1_sort_relevance_per_12"])
+    allow(redis).to receive(:del)
+  end
 
-    if force_refresh || REDIS.get(redis_key).nil?
-      Rails.logger.info "Fetching latest books from Database for page #{page} with sort #{sort_by}"
-      
-      # Base query with is_deleted filter
-      query = Book.where(is_deleted: false)
+  describe '.get_books' do
+    let!(:books) { create_list(:book, 15) }
 
-      # Apply sorting
-      case sort_by
-      when 'price_low_high'
-        query = query.order(discounted_price: :asc)
-      when 'price_high_low'
-        query = query.order(discounted_price: :desc)
-      when 'rating'
-        query = query
-          .select('books.*, COALESCE(AVG(reviews.rating), 0) as avg_rating')
-          .left_joins(:reviews)
-          .group('books.id')
-          .order('avg_rating DESC')
-      else
-        query = query.order(created_at: :desc) # Default to relevance (newest first)
+    context 'when data is not in Redis' do
+      it 'fetches books from the database and caches them' do
+        result = described_class.get_books(1, 12, false, 'relevance')
+        expect(result[:books].count).to eq(12)
+        expect(result[:total_count]).to eq(15)
+        expect(redis).to have_received(:set).with("books_page_1_sort_relevance_per_12", anything)
+      end
+    end
+
+    context 'when data is in Redis' do
+      let(:books_data) { described_class.get_books(1, 12, true, 'relevance') }
+
+      before do
+        allow(redis).to receive(:get).with("books_page_1_sort_relevance_per_12").and_return(books_data.to_json)
       end
 
-      books = query.page(page).per(per_page)
-
-      books_data = {
-        books: books.as_json(
-          only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image],
-          methods: [:rating, :rating_count] # Explicitly include rating and rating_count
-        ),
-        current_page: books.current_page,
-        next_page: books.next_page,
-        prev_page: books.prev_page,
-        total_pages: books.total_pages,
-        total_count: books.total_count
-      }
-
-      REDIS.set(redis_key, books_data.to_json)
-      REDIS.expire(redis_key, 1.hour.to_i)
-    else
-      Rails.logger.info "Fetching books from Redis for page #{page} with sort #{sort_by}"
-      books_data = JSON.parse(REDIS.get(redis_key), symbolize_names: true)
+      it 'fetches books from Redis' do
+        result = described_class.get_books(1, 12, false, 'relevance')
+        expect(result[:books].count).to eq(12)
+        expect(Rails.logger).to have_received(:info).with(/Fetching books from Redis/)
+      end
     end
 
-    books_data
-  end
-
-  def self.create_book(params)
-    if params[:file].present?
-      create_books_from_csv(params[:file])
-    else
-      create_single_book(params)
+    context 'with force_refresh' do
+      it 'ignores Redis cache and refreshes data' do
+        allow(redis).to receive(:get).with("books_page_1_sort_relevance_per_12").and_return({ books: [] }.to_json)
+        described_class.get_books(1, 12, false, 'relevance')
+        allow(Rails.logger).to receive(:info)
+        allow(redis).to receive(:get)
+        result = described_class.get_books(1, 12, true, 'relevance')
+        expect(Rails.logger).to have_received(:info).with(/Fetching latest books from Database/).once
+      end
     end
+
   end
 
-  def self.create_single_book(params)
-    book = Book.new(params.except(:file))
+  describe '.create_single_book' do
+    let(:params) { attributes_for(:book, book_name: 'Test Book', author_name: 'Test Author', book_mrp: 10.00) }
 
-    if book.save
-      clear_related_cache
-      get_books(1, 12, true) # Use consistent per_page (12) as in BooksController#index
-      { success: true, book: book }
-    else
-      { success: false, errors: book.errors.full_messages }
+    it 'creates a book and clears cache' do
+      result = described_class.create_single_book(params)
+      expect(result[:success]).to be true
+      expect(Book.count).to eq(1)
+      expect(redis).to have_received(:keys).with("books_page_*")
+      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+    end
+
+    it 'returns errors if book creation fails' do
+      result = described_class.create_single_book(params.merge(book_name: nil))
+      expect(result[:success]).to be false
+      expect(result[:errors]).to include("Book name can't be blank")
     end
   end
 
-  def self.create_books_from_csv(file)
-    csv = CSV.read(file.path, headers: true)
-    books = []
+  describe '.create_books_from_csv' do
+    let(:csv_content) do
+      "book_name,author_name,book_mrp,discounted_price,quantity,book_details,genre,book_image\n" \
+      "Test Book,Test Author,10.00,8.00,5,Details,Fiction,http://example.com/image.jpg"
+    end
+    let(:csv_file) { Tempfile.new(['books', '.csv']) }
 
-    csv.each do |row|
-      book = Book.new(
-        book_name: row["book_name"],
-        author_name: row["author_name"],
-        book_mrp: row["book_mrp"],
-        discounted_price: row["discounted_price"],
-        quantity: row["quantity"],
-        book_details: row["book_details"],
-        genre: row["genre"],
-        book_image: row["book_image"],
-        is_deleted: false
-      )
-
-      books << book if book.save
+    before do
+      File.write(csv_file.path, csv_content)
+      allow(csv_file).to receive(:path).and_return(csv_file.path)
     end
 
-    if books.any?
-      clear_related_cache
-      get_books(1, 12, true) # Use consistent per_page (12)
-      { success: true, books: books }
-    else
-      { success: false, errors: ["Failed to create books from CSV"] }
+    after do
+      csv_file.unlink
+    end
+
+    it 'creates books from CSV and clears cache' do
+      result = described_class.create_books_from_csv(csv_file)
+      expect(result[:success]).to be true
+      expect(Book.count).to eq(1)
+      expect(Book.first.book_name).to eq('Test Book')
+      expect(redis).to have_received(:keys).with("books_page_*")
+      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
     end
   end
 
-  def self.update_book(book, params)
-    if book.update(params)
-      clear_related_cache
-      get_books(1, 12, true) # Use consistent per_page (12)
-      { success: true, book: book }
-    else
-      { success: false, errors: book.errors.full_messages }
+  describe '.update_book' do
+    let(:book) { create(:book) }
+
+    it 'updates a book and clears cache' do
+      result = described_class.update_book(book, { book_name: 'Updated Book' })
+      expect(result[:success]).to be true
+      expect(book.reload.book_name).to eq('Updated Book')
+      expect(redis).to have_received(:keys).with("books_page_*")
+      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
     end
   end
 
-  def self.toggle_is_deleted(book)
-    book.update(is_deleted: !book.is_deleted)
-    clear_related_cache
-    get_books(1, 12, true) # Use consistent per_page (12)
-    { success: true, book: book }
+  describe '.toggle_is_deleted' do
+    let(:book) { create(:book) }
+
+    it 'toggles is_deleted and clears cache' do
+      result = described_class.toggle_is_deleted(book)
+      expect(result[:success]).to be true
+      expect(book.reload.is_deleted).to be true
+      expect(redis).to have_received(:keys).with("books_page_*")
+      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+    end
   end
 
-  def self.destroy_book(book)
-    book.update(is_deleted: true) # Soft delete
-    clear_related_cache
-    get_books(1, 12, true) # Use consistent per_page (12)
-    { success: true, message: "Book marked as deleted" }
-  end
+  describe '.destroy_book' do
+    let(:book) { create(:book) }
 
-  private
-
-  def self.clear_related_cache
-    keys = REDIS.keys("books_page_*")
-    keys.each { |key| REDIS.del(key) }
-    Rails.logger.info "Cleared all books cache from Redis"
+    it 'soft deletes a book and clears cache' do
+      result = described_class.destroy_book(book)
+      expect(result[:success]).to be true
+      expect(book.reload.is_deleted).to be true
+      expect(redis).to have_received(:keys).with("books_page_*")
+      expect(redis).to have_received(:del).with("books_page_1_sort_relevance_per_12")
+    end
   end
 end
