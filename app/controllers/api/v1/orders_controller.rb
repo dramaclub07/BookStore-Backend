@@ -40,6 +40,7 @@ module Api
         carts_items.destroy_all
 
         render json: { success: true, message: "Order placed successfully", orders: orders }, status: :created
+      end
       # Create an order
       # def create
       #   # If cart_items are provided, use them; otherwise, use direct params

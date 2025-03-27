@@ -15,8 +15,8 @@ class BooksService
     if force_refresh || REDIS.get(redis_key).nil?
       Rails.logger.info "Fetching latest books from Database for page #{page} with sort #{sort_by}"
       
-      # Base query with is_deleted filter
-      query = Book.where(is_deleted: false)
+      # Base query with is_deleted and out_of_stock filters
+      query = Book.where(is_deleted: false, out_of_stock: false)
 
       # Apply sorting
       case sort_by
@@ -72,7 +72,7 @@ class BooksService
     if book.save
       clear_related_cache
       get_books(1, 12, true) # Use consistent per_page (12) as in BooksController#index
-      { success: true, book: book }
+      { success: true, book: book.as_json(only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image]) }
     else
       { success: false, errors: book.errors.full_messages }
     end
@@ -92,7 +92,8 @@ class BooksService
         book_details: row["book_details"],
         genre: row["genre"],
         book_image: row["book_image"],
-        is_deleted: false
+        is_deleted: false,
+        out_of_stock: false # Ensure new books are not out of stock by default
       )
 
       books << book if book.save
@@ -101,7 +102,7 @@ class BooksService
     if books.any?
       clear_related_cache
       get_books(1, 12, true) # Use consistent per_page (12)
-      { success: true, books: books }
+      { success: true, message: "Books created successfully", books: books.as_json(only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image]) }
     else
       { success: false, errors: ["Failed to create books from CSV"] }
     end
@@ -111,7 +112,7 @@ class BooksService
     if book.update(params)
       clear_related_cache
       get_books(1, 12, true) # Use consistent per_page (12)
-      { success: true, book: book }
+      { success: true, book: book.as_json(only: [:id, :book_name, :author_name, :discounted_price, :book_mrp, :book_image]) }
     else
       { success: false, errors: book.errors.full_messages }
     end
@@ -121,7 +122,7 @@ class BooksService
     book.update(is_deleted: !book.is_deleted)
     clear_related_cache
     get_books(1, 12, true) # Use consistent per_page (12)
-    { success: true, book: book }
+    { success: true, message: "Book is_deleted set to #{book.is_deleted}" }
   end
 
   def self.destroy_book(book)

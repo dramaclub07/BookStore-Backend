@@ -1,6 +1,6 @@
-projectKey=BOOKSTORE-BACKEND
+projectKey=BookStore
 serverUrl=http://localhost:9000
 serverVersion=25.3.0.104237
-dashboardUrl=http://localhost:9000/dashboard?id=BOOKSTORE-BACKEND
-ceTaskId=ed18ca67-495d-4f41-9d41-356d7f2c98c3
-ceTaskUrl=http://localhost:9000/api/ce/task?id=ed18ca67-495d-4f41-9d41-356d7f2c98c3
+dashboardUrl=http://localhost:9000/dashboard?id=BookStore
+ceTaskId=ee5e80bc-5e48-425b-a2f0-048ff8e09613
+ceTaskUrl=http://localhost:9000/api/ce/task?id=ee5e80bc-5e48-425b-a2f0-048ff8e09613

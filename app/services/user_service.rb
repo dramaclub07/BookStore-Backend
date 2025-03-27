@@ -6,7 +6,7 @@ class UserService
     end
   end
 
-  def self.signup(params)
+  def self.create(params)
     user = User.new(params)
     if user.save
       Rails.logger.info "User signup successful: #{user.id}"

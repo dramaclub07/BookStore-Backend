@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_20_124620) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_27_085842) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,17 +40,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_20_124620) do
     t.boolean "is_deleted"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "out_of_stock", default: false, null: false
   end
 
-  create_table "cartss", force: :cascade do |t|
+  create_table "carts", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "book_id", null: false
     t.integer "quantity"
     t.boolean "is_deleted", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["book_id"], name: "index_cartss_on_book_id"
-    t.index ["user_id"], name: "index_cartss_on_user_id"
+    t.index ["book_id"], name: "index_carts_on_book_id"
+    t.index ["user_id"], name: "index_carts_on_user_id"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -90,7 +91,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_20_124620) do
     t.string "google_id"
     t.string "facebook_id"
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
+    t.index ["facebook_id"], name: "index_users_on_facebook_id", unique: true
+    t.index ["google_id"], name: "index_users_on_google_id", unique: true
   end
 
   create_table "wishlists", force: :cascade do |t|
@@ -104,8 +106,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_20_124620) do
   end
 
   add_foreign_key "addresses", "users"
-  add_foreign_key "cartss", "books"
-  add_foreign_key "cartss", "users"
+  add_foreign_key "carts", "books"
+  add_foreign_key "carts", "users"
   add_foreign_key "orders", "addresses"
   add_foreign_key "orders", "books"
   add_foreign_key "orders", "users"
