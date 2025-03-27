@@ -1,44 +1,89 @@
 require 'rails_helper'
 
-RSpec.describe UserService, type: :service do
-  let!(:existing_user) { create(:user, password: 'Password@123') }
-  describe ".signup" do
-    context "when valid details are provided" do
-      it "creates a new user successfully" do
-        params = attributes_for(:user, email: Faker::Internet.unique.email(domain: "gmail.com"), password: "NewPass@123")
+RSpec.describe UserService do
+  describe '.signup' do
+    let(:user_params) do
+      {
+        full_name: 'Akshay Katoch',
+        email: 'testuser@gmail.com',
+        password: 'Password@123',
+        mobile_number: '9876543210'
+      }
+    end
 
-        result = UserService.signup(params)
-    
-  
-    
-        expect(result[:success]).to be true
-        expect(result[:user]).to be_present
-        expect(result[:user].email).to eq(params[:email])
+    context 'when valid parameters are provided' do
+      it 'creates a new user and returns a successful result' do
+        result = UserService.signup(user_params)
+
+        expect(result).to be_success
+        expect(result.user).to be_persisted
+        expect(result.error).to be_nil
       end
     end
 
-    context "when email is already taken" do
-      it "returns an error" do
-        params = attributes_for(:user, email: existing_user.email, password: "AnotherPass@123") # No user: key
-        result = UserService.signup(params)
+    context 'when invalid parameters are provided' do
+      it 'returns an error if email is missing' do
+        user_params[:email] = nil
 
-        expect(result[:success]).to be false
-        expect(result[:error]).to include("Email already taken. Please use a different email.")
+        result = UserService.signup(user_params)
+
+        expect(result).not_to be_success
+        expect(result.error).to include("Email can't be blank")
+      end
+
+      it 'returns an error if password is too short' do
+        user_params[:password] = '123'
+
+        result = UserService.signup(user_params)
+
+        expect(result).not_to be_success
+        expect(result.error).to include("Password is too short")
+      end
+
+      it 'returns an error if email is already taken' do
+        create(:user, email: user_params[:email])
+
+        result = UserService.signup(user_params)
+
+        expect(result).not_to be_success
+        expect(result.error).to include('Email has already been taken')
+      end
+    end
+
+    context 'when an unexpected error occurs' do
+      it 'returns an error message' do
+        allow(User).to receive(:new).and_raise(StandardError.new('Unexpected error'))
+
+        result = UserService.signup(user_params)
+
+        expect(result).not_to be_success
+        expect(result.error).to include('An unexpected error occurred: Unexpected error')
       end
     end
   end
 
+<<<<<<< HEAD
   describe ".users/login" do
     context "when valid credentials are provided" do
       it "returns success and a token" do
         allow(JwtService).to receive(:encode).and_return("mocked_token")
         result = UserService.users/login(existing_user.email, "Password@123")
+=======
+  describe '.login' do
+    let(:user) { create(:user, password: 'Password@123') }
+>>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
 
-        expect(result[:success]).to be true
-        expect(result[:token]).to eq("mocked_token")
+    context 'when valid credentials are provided' do
+      it 'returns a success result with a token' do
+        result = UserService.login(user.email, 'Password@123')
+
+        expect(result).to be_success
+        expect(result.user).to eq(user)
+        expect(result.token).to be_present
       end
     end
 
+<<<<<<< HEAD
     context "when invalid credentials are provided" do
       it "returns an error" do
         result = UserService.users/login(existing_user.email, "wrongpassword")
@@ -117,6 +162,32 @@ RSpec.describe PasswordService, type: :service do
 
         expect(result[:success]).to be false
         expect(result[:error]).to eq("OTP not found")
+=======
+    context 'when invalid credentials are provided' do
+      it 'returns an error if email is incorrect' do
+        result = UserService.login('wrongemail@gmail.com', 'Password@123')
+
+        expect(result).not_to be_success
+        expect(result.error).to eq('Invalid email or password')
+      end
+
+      it 'returns an error if password is incorrect' do
+        result = UserService.login(user.email, 'WrongPassword')
+
+        expect(result).not_to be_success
+        expect(result.error).to eq('Invalid email or password')
+      end
+    end
+
+    context 'when an unexpected error occurs' do
+      it 'returns an error message' do
+        allow(User).to receive(:find_by).and_raise(StandardError.new('Unexpected error'))
+
+        result = UserService.login(user.email, 'Password@123')
+
+        expect(result).not_to be_success
+        expect(result.error).to include('An unexpected error occurred: Unexpected error')
+>>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
       end
     end
   end

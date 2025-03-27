@@ -16,6 +16,14 @@ RSpec.describe 'Addresses API', type: :request do
       expect(parsed_response[:success]).to eq(true)
       expect(parsed_response[:addresses].size).to eq(5)
     end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        get '/api/v1/addresses', headers: {}
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'GET /api/v1/addresses/:id' do
@@ -38,6 +46,14 @@ RSpec.describe 'Addresses API', type: :request do
         parsed_response = json
         expect(parsed_response[:success]).to eq(false)
         expect(parsed_response[:error]).to eq('Address not found')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        get "/api/v1/addresses/#{address_id}", headers: {}
+
+        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
@@ -66,6 +82,36 @@ RSpec.describe 'Addresses API', type: :request do
         expect(parsed_response[:errors]).to include("Street can't be blank")
       end
     end
+
+    context 'when required parameters are missing' do
+      it 'returns validation errors' do
+        post '/api/v1/addresses/create', params: { address: { city: 'New York' } }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("Street can't be blank")
+      end
+    end
+
+    context 'when all parameters are blank' do
+      it 'returns validation errors' do
+        post '/api/v1/addresses/create', params: { address: {} }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("Street can't be blank")
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        post '/api/v1/addresses/create', params: valid_attributes.to_json, headers: {}
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'PUT /api/v1/addresses/:id' do
@@ -92,6 +138,36 @@ RSpec.describe 'Addresses API', type: :request do
         expect(parsed_response[:error]).to eq('Address not found')
       end
     end
+
+    context 'when request is invalid' do
+      it 'returns validation errors' do
+        put "/api/v1/addresses/#{address_id}", params: { address: { street: '' } }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("Street can't be blank")
+      end
+    end
+
+    context 'when all parameters are blank' do
+      it 'returns validation errors' do
+        put "/api/v1/addresses/#{address_id}", params: { address: {} }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("At least one address attribute must be provided")
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        put "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: {}
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe 'DELETE /api/v1/addresses/:id' do
@@ -114,6 +190,42 @@ RSpec.describe 'Addresses API', type: :request do
         parsed_response = json
         expect(parsed_response[:success]).to eq(false)
         expect(parsed_response[:error]).to eq('Address not found')
+      end
+    end
+
+    context 'when not authenticated' do
+      it 'returns unauthorized' do
+        delete "/api/v1/addresses/#{address_id}", headers: {}
+
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  # Additional tests to cover edge cases and error handling
+
+  describe 'POST /api/v1/addresses/create' do
+    context 'when address_params raises ActionController::ParameterMissing' do
+      it 'returns validation errors' do
+        post '/api/v1/addresses/create', params: { invalid_key: 'value' }.to_json, headers: headers
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("Street can't be blank")
+      end
+    end
+  end
+
+  describe 'PUT /api/v1/addresses/:id' do
+    context 'when address_params raises ActionController::ParameterMissing' do
+      it 'returns validation errors' do
+        put "/api/v1/addresses/#{address_id}", params: { invalid_key: 'value' }.to_json, headers: headers
+    
+        expect(response).to have_http_status(:unprocessable_entity)
+        parsed_response = json
+        expect(parsed_response[:success]).to eq(false)
+        expect(parsed_response[:errors]).to include("At least one address attribute must be provided")
       end
     end
   end
