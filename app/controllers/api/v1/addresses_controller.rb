@@ -60,7 +60,7 @@ module Api
       # Permitted parameters for address creation/update
       def address_params
         params.require(:address).permit(:street, :city, :state, :zip_code, :country, :address_type, :is_default)
-      rescue ActionController::ParameterMissing => e
+      rescue ActionController::ParameterMissing # => e removed 
         # Handle missing address key by returning an empty permitted hash
         ActionController::Parameters.new({})
       end
