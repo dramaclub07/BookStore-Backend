@@ -2,7 +2,7 @@ module Api
   module V1
     class OrdersController < ApplicationController
       before_action :authenticate_request
-      before_action :set_order, only: [:show, :cancel, :update_status]
+      before_action :set_order, only: [ :show, :cancel, :update ]
 
       # Get all orders of the logged-in user
       def user_orders
@@ -68,7 +68,7 @@ module Api
       end
 
       # Update order status
-      def update_status
+      def update
         valid_statuses = %w[pending processing shipped delivered cancelled]
         if valid_statuses.include?(params[:status])
           @order.update(status: params[:status])
@@ -90,17 +90,17 @@ module Api
       def create_from_cart
         # Validate address_id presence
         unless params[:address_id].present?
-          return render json: { success: false, errors: ["Address must be provided"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Address must be provided" ] }, status: :unprocessable_entity
         end
 
         address = Address.find_by(id: params[:address_id])
         unless address
-          return render json: { success: false, errors: ["Address not found"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Address not found" ] }, status: :unprocessable_entity
         end
 
         cart_items = @current_user.carts.active.includes(:book)
         if cart_items.empty?
-          return render json: { success: false, errors: ["Your cart is empty. Add items before placing an order."] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Your cart is empty. Add items before placing an order." ] }, status: :unprocessable_entity
         end
 
         orders = []
@@ -120,24 +120,24 @@ module Api
       def create_from_params
         # Validate address_id first
         unless params[:order][:address_id].present?
-          return render json: { success: false, errors: ["Address must be provided"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Address must be provided" ] }, status: :unprocessable_entity
         end
-      
+
         address = Address.find_by(id: params[:order][:address_id])
         unless address
-          return render json: { success: false, errors: ["Address not found"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Address not found" ] }, status: :unprocessable_entity
         end
-      
+
         # Validate book_id next
         unless params[:order][:book_id].present?
-          return render json: { success: false, errors: ["Book must be provided"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Book must be provided" ] }, status: :unprocessable_entity
         end
-      
+
         book = Book.find_by(id: params[:order][:book_id])
         unless book
-          return render json: { success: false, errors: ["Book not found"] }, status: :unprocessable_entity
+          return render json: { success: false, errors: [ "Book not found" ] }, status: :unprocessable_entity
         end
-      
+
         # Create the order
         order = @current_user.orders.new(
           book_id: book.id,
@@ -147,7 +147,7 @@ module Api
           status: "pending",
           address_id: address.id
         )
-      
+
         if order.save
           EmailProducer.publish_email("order_confirmation_email", { user_id: @current_user.id, order_id: order.id })
           render json: { success: true, order: order.as_json }, status: :created

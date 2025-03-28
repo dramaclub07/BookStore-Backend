@@ -165,7 +165,7 @@ RSpec.describe "Orders API", type: :request do
 
         it "returns an error when an order fails to save" do
           allow_any_instance_of(Order).to receive(:save).and_return(false)
-          allow_any_instance_of(Order).to receive(:errors).and_return(double(full_messages: ["Invalid order"]))
+          allow_any_instance_of(Order).to receive(:errors).and_return(double(full_messages: [ "Invalid order" ]))
           post "/api/v1/orders", params: cart_params, headers: headers
           expect(response).to have_http_status(:unprocessable_entity)
           expect(JSON.parse(response.body)["success"]).to be false
@@ -243,10 +243,10 @@ RSpec.describe "Orders API", type: :request do
     end
   end
 
-  describe "PATCH /api/v1/orders/:id/update_status" do
+  describe "PATCH /api/v1/orders/:id/update" do
     context "when user is authenticated" do
       it "updates the order status successfully" do
-        patch "/api/v1/orders/#{order.id}/update_status", params: { status: "shipped" }, headers: headers
+        patch "/api/v1/orders/#{order.id}/update", params: { status: "shipped" }, headers: headers
         expect(response).to have_http_status(:ok)
         response_body = JSON.parse(response.body)
         expect(response_body["success"]).to be true
@@ -255,14 +255,14 @@ RSpec.describe "Orders API", type: :request do
       end
 
       it "returns an error when status is invalid" do
-        patch "/api/v1/orders/#{order.id}/update_status", params: { status: "invalid" }, headers: headers
+        patch "/api/v1/orders/#{order.id}/update", params: { status: "invalid" }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)["success"]).to be false
         expect(JSON.parse(response.body)["error"]).to eq("Invalid status")
       end
 
       it "returns an error when order is not found" do
-        patch "/api/v1/orders/9999/update_status", params: { status: "shipped" }, headers: headers
+        patch "/api/v1/orders/9999/update", params: { status: "shipped" }, headers: headers
         expect(response).to have_http_status(:not_found)
         expect(JSON.parse(response.body)["success"]).to be false
         expect(JSON.parse(response.body)["error"]).to eq("Order not found")
@@ -271,7 +271,7 @@ RSpec.describe "Orders API", type: :request do
 
     context "when user is not authenticated" do
       it "returns an unauthorized error" do
-        patch "/api/v1/orders/#{order.id}/update_status", params: { status: "shipped" }, headers: no_token_headers
+        patch "/api/v1/orders/#{order.id}/update", params: { status: "shipped" }, headers: no_token_headers
         expect(response).to have_http_status(:unauthorized)
       end
     end
