@@ -93,3 +93,4 @@ end
 
 gem 'mock_redis'
 gem 'csv'
+gem 'bunny'  

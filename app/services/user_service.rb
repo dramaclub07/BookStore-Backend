@@ -1,5 +1,5 @@
 class UserService
-  # ✅ Define the Result constant at the class level
+ 
   Result = Struct.new(:success, :user, :token, :error, keyword_init: true) do
     def success?
       success
@@ -10,6 +10,7 @@ class UserService
     user = User.new(params)
     if user.save
       Rails.logger.info "User signup successful: #{user.id}"
+      EmailProducer.publish_email("welcome_email", { user_id: user.id })
       Result.new(success: true, user: user)
     else
       Result.new(success: false, error: user.errors.full_messages.join(', '))
