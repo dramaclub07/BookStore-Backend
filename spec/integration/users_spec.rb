@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Api::V1::UsersController, type: :request do
   let(:user) { create(:user) }
   let(:token) { JwtService.encode(user_id: user.id) }
-  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+  let(:headers) { { 'Authorization' => "Bearer #{access_token}" } }
 
   describe 'POST /api/v1/signup' do
     let(:valid_params) { { user: { full_name: 'New User', email: 'newuser@gmail.com', password: 'newpass123', mobile_number: '9876543210' } } }
@@ -55,7 +55,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Login successful')
         expect(json_response['user']).to include('id', 'email', 'full_name')
-        expect(json_response['token']).to be_present
+        expect(json_response['access_token']).to be_present
       end
     end
 

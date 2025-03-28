@@ -1,0 +1,43 @@
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+  <!-- Logo -->
+  <div style="text-align: center; margin-bottom: 20px;">
+    <span style="font-size: 50px; color: #333;">📖</span>
+  </div>
+
+  <!-- Header -->
+  <h1 style="color: #333; text-align: center; font-size: 28px; margin-bottom: 20px;">Welcome, <%= @user.full_name || "Book Lover" %>!</h1>
+
+  <!-- Content -->
+  <div style="background-color: #ffffff; padding: 20px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <p style="color: #555; font-size: 16px; line-height: 1.6; text-align: center; margin: 0 0 15px;">
+      Thank you for joining our bookstore! We’re thrilled to have you as part of our community of readers.
+    </p>
+
+    <!-- User Details -->
+    <div style="text-align: left; color: #555; font-size: 15px; line-height: 1.5; margin-top: 20px;">
+      <p style="margin: 0 0 10px;"><strong>Your Account Details:</strong></p>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="margin-bottom: 8px;">Name: <span style="color: #007bff;"><%= @user.full_name || "Not provided" %></span></li>
+        <li style="margin-bottom: 8px;">Email: <span style="color: #007bff;"><%= @user.email %></span></li>
+        <% if @user.mobile_number.present? %>
+          <li style="margin-bottom: 8px;">Mobile: <span style="color: #007bff;"><%= @user.mobile_number %></span></li>
+        <% end %>
+        <li style="margin-bottom: 8px;">Joined: <span style="color: #007bff;"><%= @timestamp %></span></li>
+      </ul>
+    </div>
+
+    <!-- Call to Action -->
+    <p style="text-align: center; margin: 20px 0 0;">
+      <a href="<%= Rails.application.config.action_mailer.default_url_options[:host] %>" 
+         style="display: inline-block; padding: 12px 25px; background-color: #007bff; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
+        Explore Our Books
+      </a>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #999;">
+    <p>Thank you,<br>The Bookstore Team</p>
+    <p style="margin-top: 10px;">Need help? Contact us at <a href="mailto:support@bookstore.com" style="color: #007bff; text-decoration: none;">support@bookstore.com</a></p>
+  </div>
+</div>

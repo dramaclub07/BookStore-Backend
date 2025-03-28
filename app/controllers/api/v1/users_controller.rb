@@ -13,7 +13,7 @@ class Api::V1::UsersController < ApplicationController
         email: @current_user.email || "No email",
         mobile_number: @current_user.mobile_number
       }, status: :ok
-    elsif request.patch? || request.put?
+    elsif request.patch?
       current_password = profile_params[:current_password]
       new_password = profile_params[:new_password]
 
@@ -27,9 +27,8 @@ class Api::V1::UsersController < ApplicationController
         @current_user.password = new_password
       end
 
-      # Filter out nil values and merge with existing attributes
       profile_attributes = @current_user.attributes.symbolize_keys.merge(profile_params.except(:current_password, :new_password).compact)
-      Rails.logger.debug "Profile attributes: #{profile_attributes.inspect}" # Debug
+      Rails.logger.debug "Profile attributes: #{profile_attributes.inspect}"
       if @current_user.update(profile_attributes)
         render json: { 
           success: true,
@@ -39,7 +38,7 @@ class Api::V1::UsersController < ApplicationController
           mobile_number: @current_user.mobile_number
         }, status: :ok
       else
-        Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}" # Debug
+        Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}"
         render json: { 
           success: false,
           errors: @current_user.errors.full_messages 
@@ -51,6 +50,10 @@ class Api::V1::UsersController < ApplicationController
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
+  def update_profile
+    # Since there's a separate PUT route for 'user/profile'
+    profile # Call the profile method since the logic is the same
+  end
 
   def create
     result = UserService.signup(user_params)
@@ -66,10 +69,15 @@ class Api::V1::UsersController < ApplicationController
   
   def login
     result = UserService.login(params[:email], params[:password])
-    if result[:success]
-      render json: { message: 'login successful', user: result[:user], token: result[:token] }, status: :ok
+    if result.success?
+      render json: { 
+        message: 'Login successful', 
+        user: result.user.as_json(only: [:id, :email, :full_name]), 
+        access_token: result.access_token,
+        refresh_token: result.refresh_token
+      }, status: :ok
     else
-      render json: { errors: result[:error] }, status: :unauthorized
+      render json: { errors: result.error }, status: :unauthorized
     end
   end
 

@@ -1,6 +1,11 @@
 class UserService
-  # ✅ Define the Result constant at the class level
+<<<<<<< HEAD
+ 
   Result = Struct.new(:success, :user, :token, :error, keyword_init: true) do
+=======
+  # ✅ Define the Result constant at the class level
+  Result = Struct.new(:success, :user, :access_token, :refresh_token, :error, keyword_init: true) do
+>>>>>>> 39a41661fb60fc271b586757d117c29e043f9720
     def success?
       success
     end
@@ -10,6 +15,7 @@ class UserService
     user = User.new(params)
     if user.save
       Rails.logger.info "User signup successful: #{user.id}"
+      EmailProducer.publish_email("welcome_email", { user_id: user.id })
       Result.new(success: true, user: user)
     else
       Result.new(success: false, error: user.errors.full_messages.join(', '))
@@ -22,14 +28,40 @@ class UserService
   def self.login(email, password)
     user = User.find_by(email: email&.downcase)
     if user&.authenticate(password)
-      token = JwtService.encode(user_id: user.id)
+      access_token = JwtService.encode_access_token(user_id: user.id)
+      refresh_token = JwtService.encode_refresh_token(user_id: user.id)
+      begin
+        UserMailer.enqueue_welcome_email(user)
+      rescue StandardError => e
+        Rails.logger.error "Failed to enqueue welcome email: #{e.message}"
+      end
       Rails.logger.info "User login successful: #{user.id}"
-      Result.new(success: true, user: user, token: token)
+      Result.new(success: true, user: user, access_token: access_token, refresh_token: refresh_token)
     else
       Result.new(success: false, error: 'Invalid email or password')
     end
   rescue StandardError => e
     Rails.logger.error "Unexpected error during login: #{e.message}"
+    Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
+  end
+
+  # New method to refresh tokens
+  def self.refresh_token(refresh_token)
+    decoded = JwtService.decode_refresh_token(refresh_token)
+    if decoded && decoded[:user_id]
+      user = User.find_by(id: decoded[:user_id])
+      if user
+        new_access_token = JwtService.encode_access_token(user_id: user.id)
+        Rails.logger.info "Token refreshed successfully for user: #{user.id}"
+        Result.new(success: true, user: user, access_token: new_access_token, refresh_token: refresh_token)
+      else
+        Result.new(success: false, error: 'User not found')
+      end
+    else
+      Result.new(success: false, error: 'Invalid or expired refresh token')
+    end
+  rescue StandardError => e
+    Rails.logger.error "Unexpected error during token refresh: #{e.message}"
     Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
   end
 

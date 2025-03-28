@@ -79,7 +79,7 @@ RSpec.describe UserService do
 
         expect(result).to be_success
         expect(result.user).to eq(user)
-        expect(result.token).to be_present
+        expect(result.access_token).to be_present
       end
     end
 

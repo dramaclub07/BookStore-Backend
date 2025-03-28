@@ -14,11 +14,11 @@ class ApplicationController < ActionController::API
       return
     end
 
-    decoded_token = JwtService.decode(token) rescue nil
+    decoded_token = JwtService.decode_access_token(token)
 
     if decoded_token.nil?
-      Rails.logger.debug "Authentication failed: Invalid token"
-      render json: { success: false, message: 'Unauthorized - Invalid token' }, status: :unauthorized
+      Rails.logger.debug "Authentication failed: Invalid or expired token"
+      render json: { success: false, message: 'Unauthorized - Invalid or expired token' }, status: :unauthorized
       return
     end
 
@@ -27,9 +27,14 @@ class ApplicationController < ActionController::API
     if @current_user.nil?
       Rails.logger.debug "Authentication failed: User not found"
       render json: { success: false, message: 'Unauthorized - User not found' }, status: :unauthorized
+      return
     end
+
+    Rails.logger.debug "Authentication successful for user: #{@current_user.id}"
+  rescue StandardError => e
+    Rails.logger.error "Unexpected error during authentication: #{e.message}\n#{e.backtrace.join("\n")}"
+    render json: { success: false, message: 'Server error during authentication' }, status: :internal_server_error
   end
-  
 
   def current_user
     @current_user

@@ -6,6 +6,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'users', to: 'users#create'
       post 'users/login', to: 'users#login'
+      post '/refresh', to: 'sessions#refresh'
       post 'users/password/forgot', to: 'users#forgot_password'
       post 'users/password/reset', to: 'users#reset_password'
       get 'users/profile', to: 'users#profile'

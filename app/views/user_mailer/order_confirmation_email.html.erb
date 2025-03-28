@@ -1,0 +1,24 @@
+<h1>Order Confirmation</h1>
+<p>Dear <%= @user.full_name || "User" %>,</p>
+<p>Your order #<%= @order.id %> has been confirmed at <%= @timestamp %>! Below are the details of your order:</p>
+
+<table style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ddd; padding: 8px;">Book Image</th>
+      <th style="border: 1px solid #ddd; padding: 8px;">Book Name</th>
+      <th style="border: 1px solid #ddd; padding: 8px;">Quantity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+        <img src="<%= @order.book.book_image %>" alt="<%= @order.book.book_name %>" style="max-width: 100px; height: auto;" />
+      </td>
+      <td style="border: 1px solid #ddd; padding: 8px;"><%= @order.book.book_name %></td>
+      <td style="border: 1px solid #ddd; padding: 8px;"><%= @order.quantity %></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Thank you for shopping with us!<br>The Bookstore Team</p>
