@@ -81,7 +81,6 @@ RSpec.describe Api::V1::UsersController, type: :request do
     end
   end
 
-<<<<<<< HEAD
   describe 'POST /api/v1/users/password/forgot' do
     context 'with existing email' do
       let(:valid_email) { { email: existing_user.email } }
@@ -90,24 +89,6 @@ RSpec.describe Api::V1::UsersController, type: :request do
         allow(UserMailer).to receive(:send_otp).and_return(double(deliver_now: true))
         post '/api/v1/users/password/forgot', params: valid_email.as_json, as: :json
         expect(response).to have_http_status(200)
-=======
-  describe 'POST /api/v1/forgot_password' do
-    context 'with valid email' do
-      it 'initiates password reset' do
-        expect(UserMailer).to receive(:send_otp).and_return(double(deliver_now: true))
-        post '/api/v1/forgot_password', params: { email: user.email }
-        expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['message']).to eq('OTP sent to your email')
-        expect(PasswordService::OTP_STORAGE[user.email]).to be_present
-      end
-    end
-
-    context 'with invalid email' do
-      it 'returns unprocessable entity' do
-        post '/api/v1/forgot_password', params: { email: 'unknown@domain.com' }
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to eq('User not found')
->>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
       end
     end
   end
