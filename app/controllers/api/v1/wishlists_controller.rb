@@ -6,7 +6,7 @@ module Api
       def index
         service = WishlistService.new(@current_user)
         result = service.fetch_wishlist
-        render json: { success: true, wishlist: result }, status: :ok
+        render json: { success: true, wishlist: result[:wishlist] }, status: :ok
       end
 
       def toggle
@@ -27,13 +27,18 @@ module Api
           return render json: { errors: 'Unauthorized - Missing token' }, status: :unauthorized
         end
 
-        decoded_token = JwtService.decode(token)
-        return render json: { errors: 'Unauthorized - Invalid token' }, status: :unauthorized unless decoded_token
+        decoded_token = JwtService.decode_access_token(token)
+        if decoded_token.nil?
+          return render json: { errors: 'Unauthorized - Invalid or expired token' }, status: :unauthorized
+        end
 
         @current_user = User.find_by(id: decoded_token[:user_id])
-        render json: { errors: 'Unauthorized - User not found' }, status: :unauthorized unless @current_user
-      rescue JWT::DecodeError
-        render json: { errors: 'Unauthorized - Invalid token' }, status: :unauthorized
+        if @current_user.nil?
+          render json: { errors: 'Unauthorized - User not found' }, status: :unauthorized
+        end
+      rescue StandardError => e
+        Rails.logger.error "Unexpected error in authorize_request: #{e.message}\n#{e.backtrace.join("\n")}"
+        render json: { errors: 'Unauthorized - Server error' }, status: :unauthorized
       end
     end
   end

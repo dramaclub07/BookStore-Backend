@@ -1,5 +1,5 @@
 class Api::V1::UsersController < ApplicationController
-  skip_before_action :authenticate_request, only: [:signup, :login, :forgot_password, :reset_password, :refresh]
+  skip_before_action :authenticate_request, only: [:create, :login, :forgot_password, :reset_password]
 
   def profile
     unless @current_user
@@ -13,7 +13,7 @@ class Api::V1::UsersController < ApplicationController
         email: @current_user.email || "No email",
         mobile_number: @current_user.mobile_number
       }, status: :ok
-    elsif request.patch? || request.put?
+    elsif request.patch?
       current_password = profile_params[:current_password]
       new_password = profile_params[:new_password]
 
@@ -50,6 +50,10 @@ class Api::V1::UsersController < ApplicationController
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
+  def update_profile
+    # Since there's a separate PUT route for 'user/profile'
+    profile # Call the profile method since the logic is the same
+  end
 
   def create
     result = UserService.signup(user_params)
@@ -71,20 +75,6 @@ class Api::V1::UsersController < ApplicationController
         user: result.user.as_json(only: [:id, :email, :full_name]), 
         access_token: result.access_token,
         refresh_token: result.refresh_token
-      }, status: :ok
-    else
-      render json: { errors: result.error }, status: :unauthorized
-    end
-  end
-
-  def refresh
-    result = UserService.refresh_token(params[:refresh_token])
-    if result.success?
-      render json: { 
-        message: 'Token refreshed successfully',
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-        user: result.user.as_json(only: [:id, :email, :full_name])
       }, status: :ok
     else
       render json: { errors: result.error }, status: :unauthorized
