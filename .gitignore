@@ -1,6 +1,5 @@
 # Ignore bundler config.
 /.bundle
-sonar-project.properties
 # Ignore all environment files.
 /.env*
 /coverage
@@ -32,8 +31,6 @@ sonar-project.properties
 /config/databases.yml
 /Gemfile.lock
 /db/schema.rb
-/sonar-project.properties
+sonar-project.properties
 /.scannerwork/
 /coverage/
-
-sonar-project.properties
