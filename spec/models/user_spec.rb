@@ -1,3 +1,4 @@
+# spec/models/user_spec.rb
 require 'rails_helper'
 
 RSpec.describe User, type: :model do
@@ -34,7 +35,7 @@ RSpec.describe User, type: :model do
 
     context 'email validation' do
       it { should validate_presence_of(:email) }
-      it { should validate_uniqueness_of(:email) }
+      it { should validate_uniqueness_of(:email).case_insensitive }
 
       it 'is valid with a gmail.com email' do
         user.email = 'test@gmail.com'
@@ -71,7 +72,8 @@ RSpec.describe User, type: :model do
         expect(user.errors[:mobile_number]).to include("can't be blank")
 
         user.google_id = '12345'
-        expect(user).to be_valid # Social login bypasses validation
+        user.mobile_number = nil
+        expect(user).to be_valid
       end
 
       it 'requires uniqueness unless social login' do
@@ -81,7 +83,7 @@ RSpec.describe User, type: :model do
         expect(user.errors[:mobile_number]).to include('has already been taken')
 
         user.google_id = '12345'
-        expect(user).to be_valid # Social login bypasses validation
+        expect(user).to be_valid
       end
 
       it 'is valid with a 10-digit mobile number starting with 6, 7, 8, or 9' do
@@ -123,7 +125,8 @@ RSpec.describe User, type: :model do
         expect(user.errors[:password]).to include("can't be blank")
 
         user.google_id = '12345'
-        expect(user).to be_valid # Social login bypasses validation
+        user.password = nil
+        expect(user).to be_valid
       end
 
       it 'requires minimum length of 6 unless social login' do
@@ -132,24 +135,8 @@ RSpec.describe User, type: :model do
         expect(user.errors[:password]).to include('is too short (minimum is 6 characters)')
 
         user.google_id = '12345'
-        user.password = nil
-        expect(user).to be_valid # Social login bypasses validation
-      end
-
-      it 'is invalid with a nil password without social login' do
-        user.password = nil
-        user.google_id = nil
-        user.facebook_id = nil
-        expect(user).not_to be_valid
-        expect(user.errors[:password]).to include("can't be blank")
-      end
-
-      it 'is invalid with a password shorter than 6 characters without social login' do
         user.password = 'pass'
-        user.google_id = nil
-        user.facebook_id = nil
-        expect(user).not_to be_valid
-        expect(user.errors[:password]).to include('is too short (minimum is 6 characters)')
+        expect(user).to be_valid
       end
     end
 

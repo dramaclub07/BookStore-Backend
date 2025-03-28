@@ -1,4 +1,5 @@
 require 'rails_helper'
+#working fine with new routes
 
 RSpec.describe "Google Authentication Integration", type: :request do
   let(:valid_token) { "valid_google_token" }
@@ -14,7 +15,9 @@ RSpec.describe "Google Authentication Integration", type: :request do
 
   before do
     # Mock with a proper HTTP success response
-    allow(Net::HTTP).to receive(:get_response).and_return(double("HTTPResponse", code: "200", body: google_response.to_json, is_a?: ->(klass) { klass == Net::HTTPSuccess }))
+    allow(Net::HTTP).to receive(:get_response).and_return(
+      double("HTTPResponse", code: "200", body: google_response.to_json, is_a?: ->(klass) { klass == Net::HTTPSuccess })
+    )
   end
 
   describe "POST /api/v1/google_auth" do
@@ -48,7 +51,9 @@ RSpec.describe "Google Authentication Integration", type: :request do
 
     context "when Google token is invalid" do
       before do
-        allow(Net::HTTP).to receive(:get_response).and_return(double("HTTPResponse", code: "400", body: { "error" => "Invalid Google token" }.to_json, is_a?: ->(klass) { klass != Net::HTTPSuccess }))
+        allow(Net::HTTP).to receive(:get_response).and_return(
+          double("HTTPResponse", code: "400", body: { "error" => "Invalid Google token" }.to_json, is_a?: ->(klass) { klass != Net::HTTPSuccess })
+        )
       end
 
       it "returns an unauthorized error with a specific message" do
@@ -60,7 +65,9 @@ RSpec.describe "Google Authentication Integration", type: :request do
 
     context "when Google response is malformed" do
       before do
-        allow(Net::HTTP).to receive(:get_response).and_return(double("HTTPResponse", code: "200", body: "{malformed_json}", is_a?: ->(klass) { klass == Net::HTTPSuccess }))
+        allow(Net::HTTP).to receive(:get_response).and_return(
+          double("HTTPResponse", code: "200", body: "{malformed_json}", is_a?: ->(klass) { klass == Net::HTTPSuccess })
+        )
       end
 
       it "returns a bad request error due to JSON parsing failure" do
@@ -81,7 +88,9 @@ RSpec.describe "Google Authentication Integration", type: :request do
       end
 
       before do
-        allow(Net::HTTP).to receive(:get_response).and_return(double("HTTPResponse", code: "200", body: invalid_google_response.to_json, is_a?: ->(klass) { klass == Net::HTTPSuccess }))
+        allow(Net::HTTP).to receive(:get_response).and_return(
+          double("HTTPResponse", code: "200", body: invalid_google_response.to_json, is_a?: ->(klass) { klass == Net::HTTPSuccess })
+        )
       end
 
       it "returns an unprocessable entity error with validation details" do

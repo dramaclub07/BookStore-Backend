@@ -2,12 +2,12 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::BooksController, type: :request do
   let(:user) { create(:user) }
-  let(:book) { create(:book, book_name: 'Test Book', author_name: 'Author', book_mrp: 100, discounted_price: 80, is_deleted: false) }
+  let(:book) { create(:book, book_name: 'Test Book', author_name: 'Author', book_mrp: 100, discounted_price: 80, is_deleted: false, out_of_stock: false) }
   let(:token) { JwtService.encode(user_id: user.id) }
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET /api/v1/books' do
-    before { create_list(:book, 5, is_deleted: false) }
+    before { create_list(:book, 5, is_deleted: false, out_of_stock: false) }
 
     it 'returns a paginated list of books' do
       get '/api/v1/books', params: { page: 1, per_page: 2 }
@@ -49,53 +49,68 @@ RSpec.describe Api::V1::BooksController, type: :request do
     end
   end
 
+# describe 'GET /api/v1/books/available' do
+#   before do
+#     create(:book, book_name: 'Available Book', is_deleted: false, out_of_stock: false)
+#     create(:book, book_name: 'Out of Stock Book', is_deleted: false, out_of_stock: true)
+#     create(:book, book_name: 'Deleted Book', is_deleted: true, out_of_stock: false)
+#   end
+
+#   it 'returns only available books (not deleted and not out of stock)' do
+#     get '/api/v1/books/available'
+#     expect(response).to have_http_status(:ok)
+#     json_response = JSON.parse(response.body)
+#     expect(json_response['success']).to be true
+#     expect(json_response['books'].size).to eq(1)
+#     expect(json_response['books'].first['book_name']).to eq('Available Book')
+#   end
+# end
+
   describe 'GET /api/v1/books/search' do
     before do
-      create(:book, book_name: 'Ruby Programming', author_name: 'John Doe', is_deleted: false)
-      create(:book, book_name: 'Python Guide', author_name: 'Jane Smith', is_deleted: false)
+      create(:book, book_name: 'Ruby Programming', author_name: 'John Doe', is_deleted: false, out_of_stock: false)
+      create(:book, book_name: 'Python Guide', author_name: 'Jane Smith', is_deleted: false, out_of_stock: false)
     end
 
     it 'returns books matching the query by book_name' do
       get '/api/v1/books/search', params: { query: 'Ruby' }
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
       expect(json_response['books']).to be_an(Array)
       expect(json_response['books'].first['book_name']).to eq('Ruby Programming')
       expect(json_response['books'].size).to eq(1)
     end
 
-    # it 'returns books matching the query by author_name' do
-    #   get '/api/v1/books/search', params: { query: 'Jane' }
-    #   expect(response).to have_http_status(:ok)
-    #   json_response = JSON.parse(response.body)
-    #   expect(json_response['books']).to be_present # Adjust for actual response structure
-    #   expect(json_response['books'].any? { |b| b['author_name'] == 'Jane Smith' }).to be true
-    # end
-
     it 'excludes deleted books' do
       create(:book, book_name: 'Deleted Book', is_deleted: true)
       get '/api/v1/books/search', params: { query: 'Deleted' }
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)['books']).to be_empty
+      json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
+      expect(json_response['books']).to be_empty
     end
 
     it 'returns empty array for no matches' do
       get '/api/v1/books/search', params: { query: 'Nonexistent' }
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)['books']).to be_empty
+      json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
+      expect(json_response['books']).to be_empty
     end
 
-    it 'returns all books for blank query' do # Updated to match actual behavior
+    it 'returns all books for blank query' do
       get '/api/v1/books/search', params: { query: '' }
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
       expect(json_response['books']).not_to be_empty
       expect(json_response['books'].size).to eq(2)
     end
   end
 
   describe 'GET /api/v1/books/search_suggestions' do
-    before { create_list(:book, 6, book_name: 'Ruby Book', author_name: 'Author', is_deleted: false) }
+    before { create_list(:book, 6, book_name: 'Ruby Book', author_name: 'Author', is_deleted: false, out_of_stock: false) }
 
     it 'returns up to 5 suggestions for a query' do
       get '/api/v1/books/search_suggestions', params: { query: 'Ruby' }
@@ -109,15 +124,18 @@ RSpec.describe Api::V1::BooksController, type: :request do
     it 'returns empty suggestions for blank query' do
       get '/api/v1/books/search_suggestions', params: { query: '' }
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)['suggestions']).to be_empty
+      json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
+      expect(json_response['suggestions']).to be_empty
     end
 
     it 'returns fewer suggestions if less than 5 matches' do
       Book.where(book_name: 'Ruby Book').destroy_all
-      create(:book, book_name: 'Ruby Intro', is_deleted: false)
+      create(:book, book_name: 'Ruby Intro', is_deleted: false, out_of_stock: false)
       get '/api/v1/books/search_suggestions', params: { query: 'Ruby' }
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
       expect(json_response['suggestions'].size).to eq(1)
     end
 
@@ -126,33 +144,37 @@ RSpec.describe Api::V1::BooksController, type: :request do
       get '/api/v1/books/search_suggestions', params: { query: 'Ruby' }
       expect(response).to have_http_status(:ok)
       json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
       expect(json_response['suggestions'].size).to eq(5)
       expect(json_response['suggestions']).not_to include(hash_including('book_name' => 'Ruby Deleted'))
     end
   end
 
-  describe 'POST /api/v1/books/create' do
+  describe 'POST /api/v1/books' do
     let(:valid_params) { { book: { book_name: 'New Book', author_name: 'New Author', book_mrp: 150, discounted_price: 120 } } }
 
     context 'without authentication' do
       it 'creates a book successfully' do
-        post '/api/v1/books/create', params: valid_params
+        post '/api/v1/books', params: valid_params
         expect(response).to have_http_status(:created)
-        expect(JSON.parse(response.body)['success']).to be true
-        expect(JSON.parse(response.body)['book']['book_name']).to eq('New Book')
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
+        expect(json_response['book']['book_name']).to eq('New Book')
       end
 
-      it 'fails to create a book with only required fields' do # Updated to match actual behavior
-        post '/api/v1/books/create', params: { book: { book_name: 'Minimal Book', author_name: 'Minimal Author' } }
+      it 'fails to create a book with only required fields' do
+        post '/api/v1/books', params: { book: { book_name: 'Minimal Book', author_name: 'Minimal Author' } }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['success']).to be false
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
       end
 
-      it 'succeeds with duplicate book name' do # Updated to match actual behavior
-        create(:book, book_name: 'New Book', is_deleted: false)
-        post '/api/v1/books/create', params: valid_params
+      it 'succeeds with duplicate book name' do
+        create(:book, book_name: 'New Book', is_deleted: false, out_of_stock: false)
+        post '/api/v1/books', params: valid_params
         expect(response).to have_http_status(:created)
-        expect(JSON.parse(response.body)['success']).to be true
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
       end
     end
 
@@ -161,7 +183,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
       let(:csv_file) { Rack::Test::UploadedFile.new(StringIO.new(csv_content), 'text/csv', original_filename: 'books.csv') }
 
       it 'creates books from CSV' do
-        post '/api/v1/books/create', params: { file: csv_file }
+        post '/api/v1/books', params: { file: csv_file }
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -170,23 +192,26 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
       it 'handles invalid CSV gracefully' do
         invalid_csv = Rack::Test::UploadedFile.new(StringIO.new("invalid,data"), 'text/csv', original_filename: 'invalid.csv')
-        post '/api/v1/books/create', params: { file: invalid_csv }
+        post '/api/v1/books', params: { file: invalid_csv }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['success']).to be false
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
       end
     end
 
     context 'with invalid params' do
       it 'returns unprocessable entity for missing book_name' do
-        post '/api/v1/books/create', params: { book: { author_name: 'Author' } }
+        post '/api/v1/books', params: { book: { author_name: 'Author' } }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include("Book name can't be blank")
+        json_response = JSON.parse(response.body)
+        expect(json_response['errors']).to include("Book name can't be blank")
       end
 
       it 'returns unprocessable entity for negative book_mrp' do
-        post '/api/v1/books/create', params: { book: { book_name: 'Bad Book', author_name: 'Author', book_mrp: -10 } }
+        post '/api/v1/books', params: { book: { book_name: 'Bad Book', author_name: 'Author', book_mrp: -10 } }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include('Book mrp must be greater than 0') # Updated message
+        json_response = JSON.parse(response.body)
+        expect(json_response['errors']).to include('Book mrp must be greater than 0')
       end
     end
   end
@@ -206,7 +231,8 @@ RSpec.describe Api::V1::BooksController, type: :request do
         book.update(is_deleted: true)
         get "/api/v1/books/#{book.id}"
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['book_name']).to eq('Test Book')
+        json_response = JSON.parse(response.body)
+        expect(json_response['book_name']).to eq('Test Book')
       end
     end
 
@@ -214,13 +240,15 @@ RSpec.describe Api::V1::BooksController, type: :request do
       it 'returns not found' do
         get '/api/v1/books/999'
         expect(response).to have_http_status(:not_found)
-        expect(JSON.parse(response.body)['error']).to eq('Book not found')
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to eq('Book not found')
       end
 
       it 'returns not found for invalid ID format' do
         get '/api/v1/books/invalid'
         expect(response).to have_http_status(:not_found)
-        expect(JSON.parse(response.body)['error']).to eq('Book not found')
+        json_response = JSON.parse(response.body)
+        expect(json_response['error']).to eq('Book not found')
       end
     end
   end
@@ -232,7 +260,8 @@ RSpec.describe Api::V1::BooksController, type: :request do
       it 'updates the book' do
         put "/api/v1/books/#{book.id}", params: update_params, headers: headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['success']).to be true
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
         expect(book.reload.book_name).to eq('Updated Book')
       end
 
@@ -246,7 +275,8 @@ RSpec.describe Api::V1::BooksController, type: :request do
       it 'fails to update with invalid data' do
         put "/api/v1/books/#{book.id}", params: { book: { book_mrp: -5 } }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['success']).to be false
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
       end
     end
 
@@ -270,7 +300,8 @@ RSpec.describe Api::V1::BooksController, type: :request do
       it 'toggles is_deleted to true' do
         patch "/api/v1/books/#{book.id}/is_deleted", headers: headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['success']).to be true
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
         expect(book.reload.is_deleted).to be true
       end
 
@@ -297,10 +328,11 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
   describe 'DELETE /api/v1/books/:id' do
     context 'when user is authenticated' do
-      it 'soft-deletes the book' do # Updated to match actual behavior
+      it 'soft-deletes the book' do
         delete "/api/v1/books/#{book.id}", headers: headers
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['success']).to be true
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be true
         expect(book.reload.is_deleted).to be true
       end
 

@@ -1,11 +1,10 @@
 # Ignore bundler config.
 /.bundle
-
+sonar-project.properties
 # Ignore all environment files.
 /.env*
-/.scannerwork/
 /coverage
-sonar-project.properties
+/.scannerwork/
 
 # Ignore all logfiles and tempfiles.
 /log/*

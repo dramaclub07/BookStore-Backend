@@ -11,7 +11,7 @@ module Api
       def create
         token = params[:token]
         Rails.logger.info "Received Google token: #{token}"
-        return render json: { error: 'No token provided' }, status: :bad_request if token.blank?
+        return render json: { error: "No token provided" }, status: :bad_request if token.blank?
 
         uri = URI("#{GOOGLE_TOKENINFO_URI}?id_token=#{URI.encode_www_form_component(token)}")
         Rails.logger.info "Requesting Google API: #{uri}"
@@ -39,7 +39,7 @@ module Api
                 google_id: payload["sub"],
                 email: payload["email"],
                 full_name: payload["name"] || "Unknown",
-                mobile_number: payload["mobile_number"] || "9876543210"
+                mobile_number: payload["mobile_number"] || nil
               )
               Rails.logger.info "New user attributes: #{user.attributes.inspect}"
               unless user.save
@@ -53,7 +53,11 @@ module Api
 
             jwt_token = JwtService.encode({ user_id: user.id })
             Rails.logger.info "JWT token generated: #{jwt_token[0..10]}..."
-            render json: { token: jwt_token }, status: :ok
+            render json: {
+              message: "Authentication successful",
+              user: { email: user.email, full_name: user.full_name },
+              token: jwt_token
+            }, status: :ok
           else
             render json: { error: "Invalid Google token", details: payload["error"] || response.body }, status: :unauthorized
           end
@@ -62,7 +66,7 @@ module Api
           render json: { error: "Invalid Google response format" }, status: :bad_request
         rescue StandardError => e
           Rails.logger.error "Unexpected error: #{e.message}"
-          render json: { error: e.message }, status: :internal_server_error
+          render json: { error: "Unexpected error" }, status: :internal_server_error
         end
       end
     end

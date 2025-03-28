@@ -17,5 +17,5 @@ book_name,author_name,book_mrp,discounted_price,quantity,book_details,genre,book
 "The Hunger Games","Suzanne Collins",1830,1490,24,"A dystopian novel about annual televised death matches.","Young Adult","https://covers.openlibrary.org/b/isbn/9780439023528-L.jpg",false
 "The Da Vinci Code","Dan Brown",1990,1660,22,"A murder in the Louvre reveals a sinister plot.","Thriller","https://covers.openlibrary.org/b/isbn/9780307474278-L.jpg",false
 "To Kill a Mockingbird","Harper Lee",1740,1410,27,"A classic coming-of-age story in the South during the 1930s.","Classic","https://covers.openlibrary.org/b/isbn/9780061120084-L.jpg",false
-"The Road","Cormac McCarthy",1910,1580,19,"A father and son journey through post-apocalyptic America.","Fiction","https://covers.openlibrary.org/b/isbn/9780307387899-L.jpg",false
+"The Road","Cormac Mccartshy",1910,1580,19,"A father and son journey through post-apocalyptic America.","Fiction","https://covers.openlibrary.org/b/isbn/9780307387899-L.jpg",false
 "Pride and Prejudice","Jane Austen",1660,1330,25,"A classic romance novel exploring societal expectations.","Classic","https://covers.openlibrary.org/b/isbn/9780141439518-L.jpg",false
