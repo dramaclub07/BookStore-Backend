@@ -1,17 +1,12 @@
 class UserService
-<<<<<<< HEAD
- 
-  Result = Struct.new(:success, :user, :token, :error, keyword_init: true) do
-=======
   # ✅ Define the Result constant at the class level
   Result = Struct.new(:success, :user, :access_token, :refresh_token, :error, keyword_init: true) do
->>>>>>> 39a41661fb60fc271b586757d117c29e043f9720
     def success?
       success
     end
   end
 
-  def self.create(params)
+  def self.signup(params) # Changed from .create to .signup
     user = User.new(params)
     if user.save
       Rails.logger.info "User signup successful: #{user.id}"
