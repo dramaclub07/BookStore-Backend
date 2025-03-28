@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Api::V1::UsersController, type: :request do
   let(:user) { create(:user) }
   let(:token) { JwtService.encode(user_id: user.id) }
-  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+  let(:headers) { { 'Authorization' => "Bearer #{access_token}" } }
 
   describe 'POST /api/v1/signup' do
     let(:valid_params) { { user: { full_name: 'New User', email: 'newuser@gmail.com', password: 'newpass123', mobile_number: '9876543210' } } }
@@ -55,7 +55,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Login successful')
         expect(json_response['user']).to include('id', 'email', 'full_name')
-        expect(json_response['token']).to be_present
+        expect(json_response['access_token']).to be_present
       end
     end
 
@@ -81,6 +81,16 @@ RSpec.describe Api::V1::UsersController, type: :request do
     end
   end
 
+<<<<<<< HEAD
+  describe 'POST /api/v1/users/password/forgot' do
+    context 'with existing email' do
+      let(:valid_email) { { email: existing_user.email } }
+
+      it 'sends OTP successfully' do
+        allow(UserMailer).to receive(:send_otp).and_return(double(deliver_now: true))
+        post '/api/v1/users/password/forgot', params: valid_email.as_json, as: :json
+        expect(response).to have_http_status(200)
+=======
   describe 'POST /api/v1/forgot_password' do
     context 'with valid email' do
       it 'initiates password reset' do
@@ -97,6 +107,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
         post '/api/v1/forgot_password', params: { email: 'unknown@domain.com' }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to eq('User not found')
+>>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
       end
     end
   end

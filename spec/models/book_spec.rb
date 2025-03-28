@@ -1,16 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe Book, type: :model do
-  # Factory setup
   let(:book) { build(:book, book_name: 'Test Book', author_name: 'John Doe', book_mrp: 100, discounted_price: 80, quantity: 5) }
 
-  # Association tests
   describe 'associations' do
     it { should have_many(:orders).dependent(:destroy) }
     it { should have_many(:reviews).dependent(:destroy) }
   end
 
-  # Validation tests
   describe 'validations' do
     it 'is valid with valid attributes' do
       expect(book).to be_valid
@@ -30,6 +27,12 @@ RSpec.describe Book, type: :model do
         expect(book).not_to be_valid
         expect(book.errors[:book_name]).to include("can't be blank")
       end
+
+      it 'strips whitespace from book_name' do
+        book.book_name = '  Test Book  '
+        book.validate
+        expect(book.book_name).to eq('Test Book')
+      end
     end
 
     context 'author_name validation' do
@@ -45,6 +48,12 @@ RSpec.describe Book, type: :model do
         book.author_name = ''
         expect(book).not_to be_valid
         expect(book.errors[:author_name]).to include("can't be blank")
+      end
+
+      it 'strips whitespace from author_name' do
+        book.author_name = '  John Doe  '
+        book.validate
+        expect(book.author_name).to eq('John Doe')
       end
     end
 
@@ -146,7 +155,6 @@ RSpec.describe Book, type: :model do
     end
   end
 
-  # Instance method tests
   describe '#rating' do
     let(:book_with_reviews) { create(:book) }
 
@@ -163,9 +171,9 @@ RSpec.describe Book, type: :model do
         create(:review, book: book_with_reviews, rating: 3)
       end
 
-      # it 'returns the average rating rounded to 1 decimal place' do
-      #   expect(book_with_reviews.rating).to eq(4.0) # (4 + 5 + 3) / 3 = 4.0
-      # end
+      it 'returns the average rating rounded to 1 decimal place' do
+        expect(book_with_reviews.rating).to eq(4.0) # (4 + 5 + 3) / 3 = 4.0
+      end
     end
   end
 
@@ -183,21 +191,20 @@ RSpec.describe Book, type: :model do
         create_list(:review, 3, book: book_with_reviews)
       end
 
-      # it 'returns the total number of reviews' do
-      #   expect(book_with_reviews.rating_count).to eq(3)
-      # end
+      it 'returns the total number of reviews' do
+        expect(book_with_reviews.rating_count).to eq(3)
+      end
     end
   end
 
-  # Association behavior tests
   describe 'dependent: :destroy' do
     let(:book_with_orders) { create(:book) }
     let(:book_with_reviews) { create(:book) }
 
-    # it 'destroys associated orders when book is destroyed' do
-    #   create(:order, book: book_with_orders)
-    #   expect { book_with_orders.destroy }.to change(Order, :count).by(-1)
-    # end
+    it 'destroys associated orders when book is destroyed' do
+      create(:order, book: book_with_orders)
+      expect { book_with_orders.destroy }.to change(Order, :count).by(-1)
+    end
 
     it 'destroys associated reviews when book is destroyed' do
       create(:review, book: book_with_reviews)

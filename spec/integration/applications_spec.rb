@@ -3,11 +3,11 @@ require 'rails_helper'
 RSpec.describe 'Authentication', type: :request do
   let(:user) { create(:user) }
   let(:valid_token) { JwtService.encode(user_id: user.id) }
-  let(:invalid_token) { 'invalid.token.here' }
+  let(:invalid_token) { 'invalid.access_token.here' }
 
   # Helper method to make requests with or without token
-  def request_with_token(token = nil)
-    get '/protected_endpoint', headers: { 'Authorization' => token.present? ? "Bearer #{token}" : nil }
+  def request_with_token(access_token = nil)
+    get '/protected_endpoint', headers: { 'Authorization' => access_token.present? ? "Bearer #{access_token}" : nil }
   end
 
   # Define a dummy controller and route for protected action
