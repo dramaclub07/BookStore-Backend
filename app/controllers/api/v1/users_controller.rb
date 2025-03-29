@@ -11,7 +11,8 @@ class Api::V1::UsersController < ApplicationController
         success: true,
         name: @current_user.full_name || "Unknown",
         email: @current_user.email || "No email",
-        mobile_number: @current_user.mobile_number
+        mobile_number: @current_user.mobile_number,
+        role: @current_user.role # Add role to response
       }, status: :ok
     elsif request.patch?
       current_password = profile_params[:current_password]
@@ -35,7 +36,8 @@ class Api::V1::UsersController < ApplicationController
           message: "Profile updated successfully",
           name: @current_user.full_name,
           email: @current_user.email,
-          mobile_number: @current_user.mobile_number
+          mobile_number: @current_user.mobile_number,
+          role: @current_user.role # Add role to response
         }, status: :ok
       else
         Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}"
@@ -72,7 +74,7 @@ class Api::V1::UsersController < ApplicationController
     if result.success?
       render json: { 
         message: 'Login successful', 
-        user: result.user.as_json(only: [:id, :email, :full_name]), 
+        user: result.user.as_json(only: [:id, :email, :full_name, :role]), 
         access_token: result.access_token,
         refresh_token: result.refresh_token
       }, status: :ok
@@ -102,7 +104,7 @@ class Api::V1::UsersController < ApplicationController
   private 
 
   def user_params
-    params.require(:user).permit(:full_name, :email, :password, :mobile_number)
+    params.require(:user).permit(:full_name, :email, :password, :mobile_number, :role)
   end
 
   def profile_params
