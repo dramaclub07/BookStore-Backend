@@ -45,22 +45,28 @@ module Api
         result = CartService.new(@current_user).update_quantity(book_id, quantity.to_i)
         render json: result, status: result[:success] ? :ok : :unprocessable_entity
       end
+      
 
       private
 
       def authenticate_request
         token = auth_token
         if token.nil? || token.empty?
-          return render json: { message: 'Unauthorized - Missing token' }, status: :unauthorized
+          return render json: { success: false, message: 'Unauthorized - Missing token' }, status: :unauthorized
         end
 
-        @decoded_token = JwtService.decode(token)
-        return render json: { message: 'Unauthorized - Invalid token' }, status: :unauthorized unless @decoded_token
+        @decoded_token = JwtService.decode_access_token(token)
+        unless @decoded_token
+          return render json: { success: false, message: 'Unauthorized - Invalid or expired access token' }, status: :unauthorized
+        end
 
         @current_user = User.find_by(id: @decoded_token[:user_id])
-        render json: { message: 'Unauthorized - User not found' }, status: :unauthorized unless @current_user
-      rescue JWT::DecodeError
-        render json: { message: 'Unauthorized - Invalid token' }, status: :unauthorized
+        unless @current_user
+          return render json: { success: false, message: 'Unauthorized - User not found' }, status: :unauthorized
+        end
+      rescue StandardError => e
+        Rails.logger.error "Authentication error: #{e.message}\n#{e.backtrace.join("\n")}"
+        render json: { success: false, message: 'Server error during authentication' }, status: :internal_server_error
       end
 
       def auth_token

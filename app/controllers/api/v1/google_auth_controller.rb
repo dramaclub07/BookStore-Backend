@@ -1,3 +1,4 @@
+# app/controllers/api/v1/google_auth_controller.rb
 module Api
   module V1
     class GoogleAuthController < ApplicationController
