@@ -53,15 +53,16 @@ module Api
         if token.nil? || token.empty?
           return render json: { message: 'Unauthorized - Missing token' }, status: :unauthorized
         end
-
-        @decoded_token = JwtService.decode(token)
+      
+        @decoded_token = JwtService.decode_access_token(token)
         return render json: { message: 'Unauthorized - Invalid token' }, status: :unauthorized unless @decoded_token
-
+      
         @current_user = User.find_by(id: @decoded_token[:user_id])
         render json: { message: 'Unauthorized - User not found' }, status: :unauthorized unless @current_user
       rescue JWT::DecodeError
         render json: { message: 'Unauthorized - Invalid token' }, status: :unauthorized
       end
+      
 
       def auth_token
         request.headers['Authorization']&.split('Bearer ')&.last

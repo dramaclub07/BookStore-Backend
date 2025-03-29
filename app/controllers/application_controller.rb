@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::API
   before_action :authenticate_request
 
-  attr_reader :current_user  
+  attr_reader :current_user, :current_role
 
   private
 
@@ -23,6 +23,7 @@ class ApplicationController < ActionController::API
     end
 
     @current_user = User.find_by(id: decoded_token[:user_id])
+    @current_role = decoded_token[:role] # Store the role from the token
 
     if @current_user.nil?
       Rails.logger.debug "Authentication failed: User not found"
@@ -30,13 +31,19 @@ class ApplicationController < ActionController::API
       return
     end
 
-    Rails.logger.debug "Authentication successful for user: #{@current_user.id}"
+    Rails.logger.debug "Authentication successful for user: #{@current_user.id}, role: #{@current_role}"
   rescue StandardError => e
     Rails.logger.error "Unexpected error during authentication: #{e.message}\n#{e.backtrace.join("\n")}"
     render json: { success: false, message: 'Server error during authentication' }, status: :internal_server_error
   end
 
-  def current_user
-    @current_user
+  # Helper method to check if current user is admin
+  def require_admin
+    unless @current_role == 'admin'
+      Rails.logger.debug "Authorization failed: User #{@current_user.id} is not an admin"
+      render json: { success: false, message: 'Forbidden - Admin access required' }, status: :forbidden
+      return false
+    end
+    true
   end
 end
