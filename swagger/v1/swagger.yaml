@@ -1803,7 +1803,7 @@ paths:
                   error:
                     type: string
 
-  /orders/{id}/update_status:
+  /orders/{id}/update:
     patch:
       summary: Update the status of an order
       tags:

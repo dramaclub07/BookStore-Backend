@@ -1,10 +1,12 @@
 # Ignore bundler config.
 /.bundle
-sonar-project.properties
+<<<<<<< HEAD
+=======
+
+>>>>>>> backup-akshay
 # Ignore all environment files.
 /.env*
-/coverage
-/.scannerwork/
+
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -32,8 +34,6 @@ sonar-project.properties
 /config/databases.yml
 /Gemfile.lock
 /db/schema.rb
-/sonar-project.properties
+sonar-project.properties
 /.scannerwork/
 /coverage/
-
-sonar-project.properties

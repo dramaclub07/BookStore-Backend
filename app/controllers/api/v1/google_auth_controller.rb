@@ -1,3 +1,4 @@
+# app/controllers/api/v1/google_auth_controller.rb
 module Api
   module V1
     class GoogleAuthController < ApplicationController
@@ -51,12 +52,37 @@ module Api
               Rails.logger.info "New user created: #{user.id}"
             end
 
-            jwt_token = JwtService.encode({ user_id: user.id })
-            Rails.logger.info "JWT token generated: #{jwt_token[0..10]}..."
+            # Generate tokens with explicit expiration logging
+            access_token_payload = { user_id: user.id }
+            refresh_token_payload = { user_id: user.id }
+
+            access_exp = 15.minutes.from_now.to_i
+            refresh_exp = 30.days.from_now.to_i
+
+            access_token = JwtService.encode_access_token(access_token_payload, access_exp)
+            refresh_token = JwtService.encode_refresh_token(refresh_token_payload, refresh_exp)
+
+            # Verify tokens immediately after generation
+            decoded_access = JwtService.decode_access_token(access_token)
+            decoded_refresh = JwtService.decode_refresh_token(refresh_token)
+
+            Rails.logger.info "Access token expiration: #{Time.at(access_exp).utc}"
+            Rails.logger.info "Refresh token expiration: #{Time.at(refresh_exp).utc}"
+            Rails.logger.info "Decoded access token: #{decoded_access.inspect}"
+            Rails.logger.info "Decoded refresh token: #{decoded_refresh.inspect}"
+
+            if decoded_access.nil? || decoded_refresh.nil?
+              Rails.logger.error "Token generation failed - Access: #{access_token}, Refresh: #{refresh_token}"
+              render json: { error: "Failed to generate valid tokens" }, status: :internal_server_error
+              return
+            end
+
             render json: {
               message: "Authentication successful",
               user: { email: user.email, full_name: user.full_name },
-              token: jwt_token
+              access_token: access_token,
+              refresh_token: refresh_token,
+              expires_in: 15 * 60 # 15 minutes in seconds
             }, status: :ok
           else
             render json: { error: "Invalid Google token", details: payload["error"] || response.body }, status: :unauthorized
@@ -66,7 +92,7 @@ module Api
           render json: { error: "Invalid Google response format" }, status: :bad_request
         rescue StandardError => e
           Rails.logger.error "Unexpected error: #{e.message}"
-          render json: { error: "Unexpected error" }, status: :internal_server_error
+          render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
         end
       end
     end
