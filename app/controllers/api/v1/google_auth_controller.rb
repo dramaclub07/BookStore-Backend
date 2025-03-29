@@ -1,3 +1,4 @@
+# app/controllers/api/v1/google_auth_controller.rb
 module Api
   module V1
     class GoogleAuthController < ApplicationController
@@ -51,12 +52,26 @@ module Api
               Rails.logger.info "New user created: #{user.id}"
             end
 
-            jwt_token = JwtService.encode({ user_id: user.id })
-            Rails.logger.info "JWT token generated: #{jwt_token[0..10]}..."
+            # Generate access and refresh tokens
+            token_payload = { user_id: user.id }
+            access_token_expiry = 15.minutes.from_now.to_i
+            refresh_token_expiry = 30.days.from_now.to_i
+
+            access_token = JwtService.encode_access_token(token_payload, access_token_expiry)
+            refresh_token = JwtService.encode_refresh_token(token_payload, refresh_token_expiry)
+
+            Rails.logger.info "Access token generated: #{access_token[0..10]}..."
+            Rails.logger.info "Refresh token generated: #{refresh_token[0..10]}..."
+
+            # Store the refresh token in the user record (optional, for security)
+            user.update(refresh_token: refresh_token)
+
             render json: {
               message: "Authentication successful",
               user: { email: user.email, full_name: user.full_name },
-              token: jwt_token
+              access_token: access_token,
+              refresh_token: refresh_token,
+              expires_in: access_token_expiry - Time.now.to_i # Time until access token expires (in seconds)
             }, status: :ok
           else
             render json: { error: "Invalid Google token", details: payload["error"] || response.body }, status: :unauthorized
@@ -66,7 +81,7 @@ module Api
           render json: { error: "Invalid Google response format" }, status: :bad_request
         rescue StandardError => e
           Rails.logger.error "Unexpected error: #{e.message}"
-          render json: { error: "Unexpected error" }, status: :internal_server_error
+          render json: { error: "Unexpected error: #{e.message}" }, status: :internal_server_error
         end
       end
     end

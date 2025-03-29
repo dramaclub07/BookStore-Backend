@@ -45,6 +45,7 @@ module Api
         result = CartService.new(@current_user).update_quantity(book_id, quantity.to_i)
         render json: result, status: result[:success] ? :ok : :unprocessable_entity
       end
+      
 
       private
 
