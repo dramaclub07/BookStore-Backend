@@ -3,7 +3,7 @@
     "simplecov_version": "0.22.0"
   },
   "coverage": {
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/addresses_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/addresses_controller.rb": {
       "lines": [
         0,
         0,
@@ -76,7 +76,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/books_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/books_controller.rb": {
       "lines": [
         1,
         null,
@@ -220,7 +220,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/carts_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/carts_controller.rb": {
       "lines": [
         1,
         1,
@@ -299,7 +299,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/facebook_auth_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/facebook_auth_controller.rb": {
       "lines": [
         null,
         0,
@@ -382,7 +382,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/google_auth_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/google_auth_controller.rb": {
       "lines": [
         0,
         0,
@@ -460,7 +460,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/orders_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/orders_controller.rb": {
       "lines": [
         0,
         0,
@@ -635,7 +635,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/reviews_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/reviews_controller.rb": {
       "lines": [
         1,
         1,
@@ -692,7 +692,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/users_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/users_controller.rb": {
       "lines": [
         0,
         0,
@@ -807,7 +807,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/api/v1/wishlists_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/api/v1/wishlists_controller.rb": {
       "lines": [
         1,
         1,
@@ -856,7 +856,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/controllers/application_controller.rb": {
+    "E:/Backend/BookStore-Backend/app/controllers/application_controller.rb": {
       "lines": [
         1,
         1,
@@ -902,49 +902,49 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/books_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/books_helper.rb": {
       "lines": [
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/carts_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/carts_helper.rb": {
       "lines": [
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/reviews_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/reviews_helper.rb": {
       "lines": [
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/sessions_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/sessions_helper.rb": {
       "lines": [
         0,
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/users_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/users_helper.rb": {
       "lines": [
         0,
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/wishlists_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/api/v1/wishlists_helper.rb": {
       "lines": [
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/helpers/application_helper.rb": {
+    "E:/Backend/BookStore-Backend/app/helpers/application_helper.rb": {
       "lines": [
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/jobs/application_job.rb": {
+    "E:/Backend/BookStore-Backend/app/jobs/application_job.rb": {
       "lines": [
         0,
         null,
@@ -955,55 +955,55 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/mailers/application_mailer.rb": {
+    "E:/Backend/BookStore-Backend/app/mailers/application_mailer.rb": {
       "lines": [
-        0,
-        0,
-        0,
-        0
-      ]
-    },
-    "D:/BookStore_App/BookStore-Backend/app/mailers/user_mailer.rb": {
-      "lines": [
-        0,
-        0,
-        null,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        null,
-        0,
-        0,
-        0,
-        0,
-        0,
-        null,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        null,
-        0,
-        0,
-        0,
-        0,
-        0,
-        null,
-        0,
-        0,
-        0,
         0,
         0,
         0,
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/address.rb": {
+    "E:/Backend/BookStore-Backend/app/mailers/user_mailer.rb": {
+      "lines": [
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "E:/Backend/BookStore-Backend/app/models/address.rb": {
       "lines": [
         1,
         1,
@@ -1024,14 +1024,14 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/application_record.rb": {
+    "E:/Backend/BookStore-Backend/app/models/application_record.rb": {
       "lines": [
         1,
         1,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/book.rb": {
+    "E:/Backend/BookStore-Backend/app/models/book.rb": {
       "lines": [
         1,
         1,
@@ -1044,18 +1044,18 @@
         null,
         null,
         1,
-        1,
+        0,
         null,
         null,
         1,
-        1,
+        0,
         null,
         null,
         null,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/cart.rb": {
+    "E:/Backend/BookStore-Backend/app/models/cart.rb": {
       "lines": [
         1,
         1,
@@ -1080,7 +1080,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/order.rb": {
+    "E:/Backend/BookStore-Backend/app/models/order.rb": {
       "lines": [
         1,
         1,
@@ -1099,20 +1099,20 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/review.rb": {
+    "E:/Backend/BookStore-Backend/app/models/review.rb": {
+      "lines": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "E:/Backend/BookStore-Backend/app/models/user.rb": {
       "lines": [
         1,
         1,
-        1,
-        1,
-        1,
-        null
-      ]
-    },
-    "D:/BookStore_App/BookStore-Backend/app/models/user.rb": {
-      "lines": [
-        1,
-        1,
         null,
         1,
         1,
@@ -1131,12 +1131,12 @@
         1,
         null,
         1,
-        5,
+        0,
         null,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/models/wishlist.rb": {
+    "E:/Backend/BookStore-Backend/app/models/wishlist.rb": {
       "lines": [
         0,
         0,
@@ -1147,7 +1147,7 @@
         0
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/address_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/address_service.rb": {
       "lines": [
         1,
         1,
@@ -1207,7 +1207,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/books_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/books_service.rb": {
       "lines": [
         1,
         1,
@@ -1221,16 +1221,14 @@
         null,
         null,
         1,
-        1,
+        0,
         null,
-        1,
-        1,
-        null,
-        null,
-        1,
+        0,
+        0,
         null,
         null,
-        1,
+        0,
+        null,
         null,
         0,
         null,
@@ -1238,50 +1236,40 @@
         null,
         0,
         null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        1,
-        null,
-        null,
-        1,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        1,
-        null,
-        0,
         0,
         null,
         null,
-        1,
         null,
         null,
-        1,
+        null,
         0,
+        null,
+        null,
         0,
+        null,
         null,
         0,
         null,
         null,
         null,
-        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
         0,
         null,
         0,
         0,
+        null,
+        null,
+        0,
+        null,
+        null,
+        1,
         0,
         0,
         null,
@@ -1290,36 +1278,38 @@
         null,
         null,
         1,
-        1,
-        1,
+        0,
         null,
-        1,
-        1,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
+        0,
+        0,
+        0,
+        0,
         null,
         0,
         null,
         null,
         null,
         1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        null,
         0,
         0,
         0,
@@ -1335,6 +1325,16 @@
         0,
         0,
         null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
         null,
         1,
         0,
@@ -1346,14 +1346,14 @@
         1,
         null,
         1,
-        1,
-        2,
-        1,
+        0,
+        0,
+        0,
         null,
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/cart_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/cart_service.rb": {
       "lines": [
         1,
         1,
@@ -1450,7 +1450,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/email_producer.rb": {
+    "E:/Backend/BookStore-Backend/app/services/email_producer.rb": {
       "lines": [
         1,
         1,
@@ -1468,7 +1468,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/jwt_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/jwt_service.rb": {
       "lines": [
         1,
         null,
@@ -1514,7 +1514,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/orders_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/orders_service.rb": {
       "lines": [
         1,
         1,
@@ -1544,7 +1544,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/password_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/password_service.rb": {
       "lines": [
         1,
         1,
@@ -1592,7 +1592,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/review_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/review_service.rb": {
       "lines": [
         1,
         1,
@@ -1635,7 +1635,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/user_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/user_service.rb": {
       "lines": [
         null,
         null,
@@ -1723,7 +1723,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/services/wishlist_service.rb": {
+    "E:/Backend/BookStore-Backend/app/services/wishlist_service.rb": {
       "lines": [
         1,
         1,
@@ -1771,7 +1771,7 @@
         null
       ]
     },
-    "D:/BookStore_App/BookStore-Backend/app/workers/email_consumer.rb": {
+    "E:/Backend/BookStore-Backend/app/workers/email_consumer.rb": {
       "lines": [
         0,
         null,
@@ -1864,7 +1864,7 @@
     },
     "Models": {
       "lines": {
-        "covered_percent": 82.1917808219178
+        "covered_percent": 70.27027027027027
       }
     },
     "Mailers": {
@@ -1889,7 +1889,7 @@
     },
     "Services": {
       "lines": {
-        "covered_percent": 31.225296442687746
+        "covered_percent": 23.715415019762847
       }
     }
   }
