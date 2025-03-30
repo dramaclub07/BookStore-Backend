@@ -82,5 +82,5 @@ RSpec.describe Address, type: :model do
         expect(saved_address.errors[:street]).to include("can't be blank")
       end
     end
-  end
+  endg
 end

@@ -1,9 +1,8 @@
 require 'rails_helper'
-#working fine with new routes
 
 RSpec.describe 'Addresses API', type: :request do
   let!(:user) { create(:user) }
-  let!(:auth_token) { JwtService.encode(user_id: user.id) }
+  let!(:auth_token) { JwtService.encode_access_token(user_id: user.id) } # Updated this line
   let!(:headers) { { 'Authorization' => "Bearer #{auth_token}", 'Content-Type' => 'application/json' } }
   let!(:addresses) { create_list(:address, 5, user: user) }
   let(:address_id) { addresses.first.id }
@@ -203,8 +202,6 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  # Additional tests to cover edge cases and error handling
-
   describe 'POST /api/v1/addresses/create' do
     context 'when address_params raises ActionController::ParameterMissing' do
       it 'returns validation errors' do
@@ -231,11 +228,10 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  # Helper method to parse JSON response
   def json
     JSON.parse(response.body, symbolize_names: true)
   rescue JSON::ParserError => e
-    patchs "Failed to parse JSON response: #{response.body}"
+    puts "Failed to parse JSON response: #{response.body}"
     raise e
   end
 end
