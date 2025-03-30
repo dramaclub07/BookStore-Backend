@@ -8,6 +8,7 @@ class UserService
 
   def self.signup(params) # Changed from .create to .signup
     user = User.new(params)
+    user.role = params[:role] if params[:role]
     if user.save
       Rails.logger.info "User signup successful: #{user.id}"
       EmailProducer.publish_email("welcome_email", { user_id: user.id })
