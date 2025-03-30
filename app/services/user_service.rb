@@ -6,7 +6,7 @@ class UserService
     end
   end
 
-  def self.signup(params) # Changed from .create to .signup
+  def self.create(params)
     user = User.new(params)
     user.role = params[:role] if params[:role]
     if user.save

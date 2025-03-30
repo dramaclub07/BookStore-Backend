@@ -52,6 +52,11 @@ class Api::V1::UsersController < ApplicationController
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
+  def update_profile
+    # Since there's a separate PUT route for 'user/profile'
+    profile # Call the profile method since the logic is the same
+  end
+
   def create
     result = UserService.create(user_params)
     if result.success?

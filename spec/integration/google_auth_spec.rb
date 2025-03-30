@@ -7,8 +7,8 @@ RSpec.describe "Google Authentication Integration", type: :request do
   let(:google_response) do
     {
       "sub" => "123",
-      "email" => "akshay@gmail.com",
-      "name" => "Akshay Katoch",
+      "email" => "User@gmail.com",
+      "name" => "Test User",
       "mobile_number" => "9876543210"
     }
   end
@@ -24,8 +24,8 @@ RSpec.describe "Google Authentication Integration", type: :request do
     context "when Google token is valid and user already exists" do
       let!(:user) do
         User.create!(
-          full_name: "Akshay Katoch",
-          email: "akshay@gmail.com",
+          full_name: "Test User",
+          email: "testuser@gmail.com",
           mobile_number: "9876543210",
           google_id: "123"
         )

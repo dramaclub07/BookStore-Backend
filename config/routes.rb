@@ -48,11 +48,11 @@ Rails.application.routes.draw do
       delete "addresses/:id", to: "addresses#destroy"
 
       # Order Management Routes (Only for Logged-in Users)
-      get "orders", to: "orders#user_orders"
+      get "orders", to: "orders#index"
       post "orders", to: "orders#create"
       get "orders/:id", to: "orders#show"
-      patch "orders/:id/cancel", to: "orders#cancel"
-      patch "orders/:id/update", to: "orders#update"
+      patch "orders/:id", to: "orders#update"
+      delete "orders/:id", to: "orders#destroy"
     end
   end
 end

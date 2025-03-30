@@ -109,7 +109,6 @@ RSpec.describe cartsService, type: :service do
 #       expect(user.cartss.where(is_deleted: false).count).to eq(0)
 #     end
 #   end
-=======
   describe "#clear_cart" do
     let!(:cart_item1) { create(:cart, user: user, book: book, quantity: 2) }
     let!(:cart_item2) { create(:cart, user: user, book: create(:book, quantity: 10)) } # Ensure sufficient stock
@@ -120,7 +119,6 @@ RSpec.describe cartsService, type: :service do
       expect(user.carts.where(is_deleted: false).count).to eq(0)
     end
   end
->>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
 
   describe "#update_quantity" do
     let!(:carts_item) { create(:carts, user: user, book: book, quantity: 2) }
@@ -128,13 +126,9 @@ RSpec.describe cartsService, type: :service do
     it "updates quantity when within stock" do
       result = carts_service.update_quantity(book.id, 5)
       expect(result[:success]).to be_truthy
-<<<<<<< HEAD
-      expect(result[:message]).to eq("Quantity updated.")
-      expect(carts_item.reload.quantity).to eq(5)
-=======
+
       expect(result[:message]).to eq("Quantity updated successfully.")
       expect(cart_item.reload.quantity).to eq(5)
->>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
     end
 
     it "rejects update if new quantity is greater than stock" do

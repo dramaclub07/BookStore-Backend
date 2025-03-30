@@ -27,7 +27,7 @@ RSpec.describe UserService do
   describe '.create' do
     let(:user_params) do
       {
-        full_name: 'Akshay Katoch',
+        full_name: 'Test User',
         email: 'testuser@gmail.com',
         password: 'Password@123',
         mobile_number: '9876543210'
