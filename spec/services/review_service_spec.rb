@@ -24,10 +24,10 @@ RSpec.describe ReviewService do
 end  # Closing ReviewService block
 
 RSpec.describe UserService do
-  describe '.signup' do
+  describe '.create' do
     let(:user_params) do
       {
-        full_name: 'Akshay Katoch',
+        full_name: 'Test User',
         email: 'testuser@gmail.com',
         password: 'Password@123',
         mobile_number: '9876543210'
@@ -36,7 +36,7 @@ RSpec.describe UserService do
 
     context 'when valid parameters are provided' do
       it 'creates a new user and returns a successful result' do
-        result = UserService.signup(user_params)
+        result = UserService.create(user_params)
 
         expect(result).to be_success
         expect(result.user).to be_persisted
@@ -48,7 +48,7 @@ RSpec.describe UserService do
       it 'returns an error if email is missing' do
         user_params[:email] = nil
 
-        result = UserService.signup(user_params)
+        result = UserService.create(user_params)
 
         expect(result).not_to be_success
         expect(result.error).to include("Email can't be blank")
@@ -57,7 +57,7 @@ RSpec.describe UserService do
       it 'returns an error if password is too short' do
         user_params[:password] = '123'
 
-        result = UserService.signup(user_params)
+        result = UserService.create(user_params)
 
         expect(result).not_to be_success
         expect(result.error).to include("Password is too short")
@@ -66,7 +66,7 @@ RSpec.describe UserService do
       it 'returns an error if email is already taken' do
         create(:user, email: user_params[:email])
 
-        result = UserService.signup(user_params)
+        result = UserService.create(user_params)
 
         expect(result).not_to be_success
         expect(result.error).to include('Email has already been taken')
@@ -77,7 +77,7 @@ RSpec.describe UserService do
       it 'returns an error message' do
         allow(User).to receive(:new).and_raise(StandardError.new('Unexpected error'))
 
-        result = UserService.signup(user_params)
+        result = UserService.create(user_params)
 
         expect(result).not_to be_success
         expect(result.error).to include('An unexpected error occurred: Unexpected error')

@@ -4,7 +4,7 @@ RSpec.describe UserService do
   describe '.signup' do
     let(:user_params) do
       {
-        full_name: 'Akshay Katoch',
+        full_name: 'Test User',
         email: 'testuser@gmail.com',
         password: 'Password@123',
         mobile_number: '9876543210'
@@ -62,16 +62,16 @@ RSpec.describe UserService do
     end
   end
 
-<<<<<<< HEAD
+
   describe ".users/login" do
     context "when valid credentials are provided" do
       it "returns success and a token" do
         allow(JwtService).to receive(:encode).and_return("mocked_token")
         result = UserService.users/login(existing_user.email, "Password@123")
-=======
+
   describe '.login' do
     let(:user) { create(:user, password: 'Password@123') }
->>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
+
 
     context 'when valid credentials are provided' do
       it 'returns a success result with a token' do
@@ -83,7 +83,7 @@ RSpec.describe UserService do
       end
     end
 
-<<<<<<< HEAD
+
     context "when invalid credentials are provided" do
       it "returns an error" do
         result = UserService.users/login(existing_user.email, "wrongpassword")
@@ -162,7 +162,7 @@ RSpec.describe PasswordService, type: :service do
 
         expect(result[:success]).to be false
         expect(result[:error]).to eq("OTP not found")
-=======
+
     context 'when invalid credentials are provided' do
       it 'returns an error if email is incorrect' do
         result = UserService.login('wrongemail@gmail.com', 'Password@123')
@@ -187,7 +187,6 @@ RSpec.describe PasswordService, type: :service do
 
         expect(result).not_to be_success
         expect(result.error).to include('An unexpected error occurred: Unexpected error')
->>>>>>> 0a8f9a4f46c7cedd6ea0c604f42e444425a7f4ef
       end
     end
   end

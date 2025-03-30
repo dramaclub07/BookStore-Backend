@@ -1,7 +1,7 @@
 class Api::V1::BooksController < ApplicationController
-  # Only skip authentication for public actions
   skip_before_action :authenticate_request, only: [:index, :search, :search_suggestions, :show, :available]
   before_action :set_book, only: [:show, :update, :destroy, :is_deleted]
+  before_action :require_admin, only: [:create, :update, :is_deleted, :destroy] # Restrict to admins
 
   def index
     sort_by = params[:sort] || 'relevance'
@@ -52,10 +52,7 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def create
-    unless @current_user
-      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
-    end
-
+    # Admin check is handled by require_admin
     if params[:file].present?
       result = BooksService.create_books_from_csv(params[:file])
     else
@@ -87,10 +84,7 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def update
-    unless @current_user
-      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
-    end
-
+    # Admin check is handled by require_admin
     result = BooksService.update_book(@book, book_params)
     if result[:success]
       render json: result
@@ -100,19 +94,13 @@ class Api::V1::BooksController < ApplicationController
   end
 
   def is_deleted
-    unless @current_user
-      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
-    end
-
+    # Admin check is handled by require_admin
     result = BooksService.toggle_is_deleted(@book)
     render json: result
   end
 
   def destroy
-    unless @current_user
-      return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
-    end
-
+    # Admin check is handled by require_admin
     result = BooksService.destroy_book(@book)
     render json: result
   end
