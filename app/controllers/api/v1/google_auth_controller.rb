@@ -87,6 +87,7 @@ module Api
           else
             render json: { error: "Invalid Google token", details: payload["error"] || response.body }, status: :unauthorized
           end
+  
         rescue JSON::ParserError => e
           Rails.logger.error "JSON parsing error: #{e.message}"
           render json: { error: "Invalid Google response format" }, status: :bad_request
@@ -98,3 +99,4 @@ module Api
     end
   end
 end
+
