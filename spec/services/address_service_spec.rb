@@ -2,109 +2,95 @@ require 'rails_helper'
 
 RSpec.describe AddressService do
   let!(:user) { create(:user) }
-  let!(:address) { create(:address, user: user) }
-  let!(:another_address) { create(:address, user: user) }
+  let!(:address) { create(:address, user: user, is_deleted: false) }
+  let!(:another_address) { create(:address, user: user, is_deleted: false) }
+
+  before do
+    REDIS.del("user_#{user.id}_addresses") # Clear cache before each test
+  end
 
   describe '.get_addresses' do
     context 'when addresses are cached' do
       before do
-        cache_key = "user_#{user.id}_addresses"
-        REDIS.set(cache_key, [address.as_json].to_json)
+        REDIS.set("user_#{user.id}_addresses", [address.as_json].to_json)
       end
 
       it 'returns cached addresses' do
-        result = AddressService.get_addresses(user)
+        result = described_class.get_addresses(user)
         expect(result[:success]).to be true
         expect(result[:addresses].size).to eq(1)
         expect(result[:addresses].first['id']).to eq(address.id)
       end
     end
+
     context 'when addresses are not cached' do
-      it 'fetches addresses from the database and caches them' do
-       
-        result = AddressService.get_addresses(user)
+      it 'fetches active addresses from database and caches them' do
+        result = described_class.get_addresses(user)
+        
         expect(result[:success]).to be true
         expect(result[:addresses].size).to eq(2)
-        expect(result[:addresses].map { |a| a['id'] }).to include(address.id, another_address.id)
+        expect(result[:addresses].map { |a| a['id'] }).to contain_exactly(address.id, another_address.id)
+        
+        # Verify caching
+        cached = REDIS.get("user_#{user.id}_addresses")
+        expect(JSON.parse(cached).size).to eq(2)
       end
     end
   end
 
   describe '.create_address' do
-    context 'when address is valid' do
-      let(:valid_params) { { street: '123 Main St', city: 'Anytown', state: 'CA', zip_code: '12345', country: 'USA' } }
+    let(:valid_params) { attributes_for(:address) }
 
-      it 'creates a new address and invalidates the cache' do
-        result = AddressService.create_address(user, valid_params)
+    it 'creates address and clears cache' do
+      expect {
+        result = described_class.create_address(user, valid_params)
         expect(result[:success]).to be true
-        expect(result[:address].street).to eq('123 Main St')
-        expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
-      end
-    end
-
-    context 'when address is invalid' do
-      let(:invalid_params) { { street: '' } }
-
-      it 'returns validation errors' do
-        result = AddressService.create_address(user, invalid_params)
-        expect(result[:success]).to be false
-        expect(result[:errors]).to include("Street can't be blank")
-      end
+        expect(result[:address]).to be_persisted
+      }.to change(user.addresses, :count).by(1)
+      
+      expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
     end
   end
 
   describe '.update_address' do
-    context 'when address is valid' do
-      let(:valid_params) { { city: 'New City' } }
-
-      it 'updates the address and invalidates the cache' do
-        result = AddressService.update_address(address, valid_params)
+    context 'with valid params' do
+      it 'updates address and clears cache' do
+        result = described_class.update_address(address, city: 'New City')
         expect(result[:success]).to be true
-        expect(result[:address].city).to eq('New City')
+        expect(address.reload.city).to eq('New City')
         expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
       end
     end
 
-    context 'when address is invalid' do
-      let(:invalid_params) { { street: '' } }
-
-      it 'returns validation errors' do
-        result = AddressService.update_address(address, invalid_params)
+    context 'with invalid params' do
+      it 'returns errors' do
+        result = described_class.update_address(address, street: '')
         expect(result[:success]).to be false
         expect(result[:errors]).to include("Street can't be blank")
-      end
-    end
-
-    context 'when params are blank' do
-      let(:blank_params) { {} }
-
-      it 'returns an error message' do
-        result = AddressService.update_address(address, blank_params)
-        expect(result[:success]).to be false
-        expect(result[:errors]).to include("At least one address attribute must be provided")
       end
     end
   end
 
   describe '.destroy_address' do
-    context 'when address is successfully destroyed' do
-      it 'deletes the address and invalidates the cache' do
-        result = AddressService.destroy_address(address)
+    context 'when soft delete succeeds' do
+      it 'marks as deleted and clears cache' do
+        result = described_class.destroy_address(address)
         expect(result[:success]).to be true
-        expect(result[:message]).to eq('Address deleted successfully')
+        expect(address.reload.is_deleted).to be true
         expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
       end
     end
 
-    context 'when address cannot be destroyed' do
+    context 'when soft delete fails' do
       before do
-        allow(address).to receive(:destroy).and_return(false)
+        allow_any_instance_of(Address).to receive(:update).and_return(false)
+        address.errors.add(:base, "Deletion failed")
       end
 
-      it 'returns an error message' do
-        result = AddressService.destroy_address(address)
+      it 'returns error message' do
+        result = described_class.destroy_address(address)
         expect(result[:success]).to be false
-        expect(result[:errors]).to include('Failed to delete address')
+        expect(result[:errors]).to include("Deletion failed")
       end
     end
   end

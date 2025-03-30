@@ -23,22 +23,33 @@ class WishlistService
   end
 
   def toggle_wishlist(book_id)
-    return { success: false, message: "Invalid book_id" } unless book_id.present? && book_id.to_s.to_i.positive?
+    return { success: false, message: 'Invalid book_id' } unless book_id.present?
 
-    book = Book.find_by(id: book_id.to_s, is_deleted: [false, nil], out_of_stock: false)
-    return { success: false, message: "Book not found or unavailable" } unless book
+    book = Book.find_by(id: book_id, is_deleted: false)
+    return { success: false, message: 'Book not found or unavailable' } unless book
 
     wishlist = Wishlist.find_by(user_id: @user.id, book_id: book.id)
-
+    
     if wishlist
-      wishlist.update(is_deleted: !wishlist.is_deleted)
-      message = wishlist.is_deleted ? 'Book removed from wishlist' : 'Book added back to wishlist'
+      new_state = !wishlist.is_deleted
+      if wishlist.update(is_deleted: new_state)
+        {
+          success: true,
+          message: new_state ? 'Book removed from wishlist' : 'Book added back to wishlist'
+        }
+      else
+        {
+          success: false,
+          message: wishlist.errors.full_messages.join(', ')
+        }
+      end
     else
       wishlist = Wishlist.create(user_id: @user.id, book_id: book.id, is_deleted: false)
-      return { success: false, message: wishlist.errors.full_messages.join(", ") } if wishlist.errors.any?
-      message = 'Book added to wishlist'
+      if wishlist.persisted?
+        { success: true, message: 'Book added to wishlist' }
+      else
+        { success: false, message: wishlist.errors.full_messages.join(', ') }
+      end
     end
-
-    { success: true, message: message }
   end
 end
