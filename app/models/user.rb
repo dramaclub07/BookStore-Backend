@@ -20,6 +20,6 @@ class User < ApplicationRecord
   private
 
   def social_login?
-    google_id.present? || facebook_id.present?
+    google_id.present? || facebook_id.present? || github_id.present?
   end
 end
