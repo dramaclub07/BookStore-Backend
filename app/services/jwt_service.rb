@@ -4,13 +4,13 @@ class JwtService
   SECRET_KEY = ENV.fetch('JWT_SECRET_KEY', 'fallback_secret_key')
   REFRESH_SECRET_KEY = ENV.fetch('JWT_REFRESH_SECRET_KEY', 'fallback_refresh_secret_key')
 
-  def self.encode_access_token(payload, exp = 1.minutes.from_now.to_i)
+  def self.encode_access_token(payload, exp = 24.hours.from_now.to_i) # Changed to 24 hours
     payload[:exp] = exp
     payload[:role] = User.find(payload[:user_id]).role # Add role to payload
     JWT.encode(payload, SECRET_KEY, 'HS256')
   end
 
-  def self.encode_refresh_token(payload, exp = 2.minutes.from_now.to_i)
+  def self.encode_refresh_token(payload, exp = 7.days.from_now.to_i) # Changed to 7 days
     payload[:exp] = exp
     payload[:role] = User.find(payload[:user_id]).role # Add role to payload
     JWT.encode(payload, REFRESH_SECRET_KEY, 'HS256')
