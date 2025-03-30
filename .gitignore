@@ -5,11 +5,9 @@
 
 # Ignore all environment files.
 /.env*
-<<<<<<< HEAD
-/coverage
 /.scannerwork/
 sonar-project.properties
-=======
+
 
 
 
@@ -42,6 +40,4 @@ sonar-project.properties
 sonar-project.properties
 /.scannerwork/
 coverage/
-<<<<<<< HEAD
-
 failures.txt.
