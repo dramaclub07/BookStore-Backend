@@ -51,7 +51,7 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def create
-    result = UserService.signup(user_params)
+    result = UserService.create(user_params)
     if result.success?
       render json: {
         message: 'User registered successfully',

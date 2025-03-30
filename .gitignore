@@ -1,10 +1,18 @@
 # Ignore bundler config.
 /.bundle
+
+
+
 # Ignore all environment files.
 /.env*
+<<<<<<< HEAD
 /coverage
 /.scannerwork/
 sonar-project.properties
+=======
+
+
+
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*
@@ -33,5 +41,6 @@ sonar-project.properties
 /db/schema.rb
 sonar-project.properties
 /.scannerwork/
-/coverage/
+coverage/
+<<<<<<< HEAD
 

@@ -23,6 +23,7 @@
         0,
         null,
         null,
+<<<<<<< HEAD
         null,
         1,
         null,
@@ -31,6 +32,23 @@
         0,
         0,
         0,
+=======
+>>>>>>> backup-akshay
+        null,
+        1,
+        null,
+        null,
+        1,
+        0,
+        0,
+        null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        null,
+        0,
         null,
         null,
         null,
@@ -47,7 +65,10 @@
         0,
         0,
         0,
-        0,
+<<<<<<< HEAD
+=======
+        null,
+>>>>>>> backup-akshay
         0,
         null,
         null,
@@ -348,6 +369,7 @@
         0,
         null,
         0,
+<<<<<<< HEAD
         0,
         0,
         0,
@@ -379,8 +401,50 @@
         null,
         null,
         0,
+=======
+>>>>>>> backup-akshay
         0,
         0,
+        0,
+        0,
+        null,
+<<<<<<< HEAD
+        0,
+        0,
+=======
+        null,
+        null,
+        null,
+        0,
+        null,
+        0,
+        null,
+        0,
+        0,
+        null,
+        null,
+        0,
+        null,
+        null,
+        null,
+>>>>>>> backup-akshay
+        null,
+        null,
+        0,
+        null,
+        null,
+        0,
+<<<<<<< HEAD
+=======
+        0,
+        0,
+        0,
+        null,
+        null,
+        null,
+        0,
+        0,
+        null,
         0,
         0,
         null,
@@ -392,6 +456,7 @@
         null,
         null,
         0,
+>>>>>>> backup-akshay
         null,
         null,
         null,
@@ -410,6 +475,12 @@
         1,
         1,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        null,
+        1,
+=======
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         1,
         null,
@@ -465,24 +536,37 @@
         null,
         null,
         null,
+<<<<<<< HEAD
 =======
         null,
         1,
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         1,
         null,
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         1,
         0,
         0,
         0,
+<<<<<<< HEAD
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+=======
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         1,
         1,
         null,
+<<<<<<< HEAD
 <<<<<<< HEAD
         3,
         3,
@@ -495,11 +579,24 @@
         null,
 <<<<<<< HEAD
 =======
+=======
+        null,
+        0,
+        0,
+=======
+        3,
+        3,
+>>>>>>> backup-akshay
+        null,
+        null,
+<<<<<<< HEAD
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         0,
         0,
         0,
         0,
         null,
+<<<<<<< HEAD
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
         null,
         null,
@@ -509,6 +606,13 @@
     },
     "D:/Book-Store-App/BookStore_Backend/app/controllers/api/v1/orders_controller.rb": {
 =======
+=======
+=======
+>>>>>>> backup-akshay
+        null,
+        null,
+<<<<<<< HEAD
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         0,
         0,
         0,
@@ -549,6 +653,8 @@
         null,
         null,
         null,
+=======
+>>>>>>> backup-akshay
         null
       ]
     },
@@ -563,7 +669,20 @@
 <<<<<<< HEAD
 =======
         null,
+<<<<<<< HEAD
         1,
+=======
+        null,
+        1,
+        0,
+        0,
+        null,
+        null,
+        null,
+        1,
+        0,
+        null,
+>>>>>>> backup-akshay
         0,
         0,
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
@@ -572,6 +691,7 @@
         1,
         0,
         0,
+<<<<<<< HEAD
 <<<<<<< HEAD
         null,
         null,
@@ -623,15 +743,25 @@
         null,
         null,
 =======
+=======
+=======
+        0,
+        null,
+        null,
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         0,
         null,
         null,
+        null,
+        null,
         0,
         0,
         null,
         0,
         null,
+<<<<<<< HEAD
         null,
         null,
         1,
@@ -639,17 +769,46 @@
         0,
         0,
         null,
+=======
+        null,
+        null,
+        null,
         0,
+        null,
+>>>>>>> backup-akshay
+        0,
+        null,
+        null,
+        null,
+<<<<<<< HEAD
+=======
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
         null,
         null,
         null,
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
         1,
         0,
+        null,
+        null,
+        null,
+>>>>>>> backup-akshay
+        1,
         0,
         0,
         0,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+        0,
+<<<<<<< HEAD
+=======
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         0,
         null,
@@ -703,6 +862,7 @@
         null,
         0,
         0,
+<<<<<<< HEAD
 =======
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
         null,
@@ -732,11 +892,45 @@
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
         0,
         null,
+=======
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         null,
 <<<<<<< HEAD
         null,
         null,
+<<<<<<< HEAD
+=======
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        null,
+        1,
+        0,
+        0,
+=======
+        1,
+        null,
+        0,
+>>>>>>> backup-akshay
+        0,
+        null,
+        null,
+        null,
+<<<<<<< HEAD
+=======
+        null,
+        null,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         0,
         0,
         null,
@@ -776,11 +970,15 @@
         null,
         null,
         null,
+<<<<<<< HEAD
         null
       ]
     },
     "D:/Book-Store-App/BookStore_Backend/app/controllers/api/v1/reviews_controller.rb": {
 =======
+=======
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null
       ]
     },
@@ -981,21 +1179,36 @@
         1,
         3,
         3,
+<<<<<<< HEAD
         1,
         0,
 <<<<<<< HEAD
 =======
         0,
+=======
+        1,
+        0,
+        null,
+        1,
+        null,
+        null,
+        null,
+        1,
+        null,
+        1,
+        5,
+        5,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         0,
         null,
         null,
-        0,
-        0,
+        5,
+        5,
         0,
         null,
         null,
-        0,
-        0,
+        5,
+        5,
         0,
         null,
         null,
@@ -1646,6 +1859,423 @@
         2,
 =======
         1,
+<<<<<<< HEAD
+=======
+        27,
+        null,
+        27,
+        18,
+        18,
+        18,
+        null,
+        null,
+        9,
+        null,
+        9,
+        3,
+        3,
+        3,
+        null,
+        null,
+        6,
+        null,
+        6,
+        1,
+        1,
+        1,
+        null,
+        null,
+        5,
+        null,
+        0,
+        0,
+        null,
+        null,
+        1,
+        0,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/books_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/carts_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/reviews_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/sessions_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/users_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/api/v1/wishlists_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/helpers/application_helper.rb": {
+      "lines": [
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/jobs/application_job.rb": {
+      "lines": [
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/mailers/application_mailer.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/mailers/user_mailer.rb": {
+      "lines": [
+        1,
+        1,
+        null,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        1,
+        0,
+        0,
+        0,
+        null,
+        null,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null,
+        1,
+        0,
+        0,
+        0,
+        null,
+        null,
+        1,
+        0,
+        0,
+        0,
+        0,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/address.rb": {
+      "lines": [
+        1,
+        1,
+        null,
+        1,
+        1,
+        1,
+        null,
+        1,
+        null,
+        1,
+        null,
+        1,
+        7,
+        2,
+        null,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/application_record.rb": {
+      "lines": [
+        1,
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/book.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        null,
+        null,
+        1,
+        54,
+        null,
+        null,
+        1,
+        54,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/cart.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        1,
+        null,
+        3,
+        null,
+        1,
+        null,
+        1,
+        55,
+        null,
+        38,
+        1,
+        1,
+        null,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/order.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        1,
+        null,
+        1,
+        null,
+        1,
+        62,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/review.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/user.rb": {
+      "lines": [
+        1,
+        1,
+        null,
+        1,
+        1,
+        1,
+        1,
+        null,
+        null,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        1,
+        null,
+        1,
+        null,
+        1,
+        1120,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/models/wishlist.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/services/address_service.rb": {
+      "lines": [
+        1,
+        1,
+        null,
+        1,
+        2,
+        2,
+        null,
+        2,
+        1,
+        null,
+        1,
+        1,
+        1,
+        null,
+        null,
+        2,
+        null,
+        null,
+        1,
+        2,
+        2,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null,
+        1,
+        3,
+        1,
+        null,
+        null,
+        2,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null,
+        1,
+        2,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null
+      ]
+    },
+    "D:/BookStore_App/BookStore-Backend/app/services/books_service.rb": {
+      "lines": [
+        1,
+        1,
+        1,
+        null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1,
+        15,
+        null,
+        15,
+        12,
+        null,
+        null,
+        12,
+        null,
+        null,
+        12,
+        null,
+        0,
+        null,
+        0,
+        null,
+        0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        12,
+        null,
+        null,
+        12,
+        null,
+        null,
+        12,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        12,
+        12,
+        null,
+        3,
+        3,
+        null,
+        null,
+        15,
+        null,
+        null,
+        1,
+        0,
+        0,
+        null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        2,
+        null,
+>>>>>>> backup-akshay
         2,
         null,
         2,
@@ -1677,7 +2307,77 @@
         null,
         null,
         1,
+<<<<<<< HEAD
         0,
+=======
+        1,
+        1,
+        null,
+        1,
+        null,
+        null,
+        null,
+        1,
+        1,
+        1,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1,
+        null,
+        null,
+        1,
+        1,
+        1,
+        1,
+        null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        1,
+        1,
+        1,
+        1,
+        null,
+        0,
+        null,
+        null,
+        null,
+        1,
+        1,
+        1,
+        1,
+        1,
+        null,
+        null,
+        1,
+        1,
+        1,
+        1,
+        1,
+        null,
+        null,
+        1,
+        null,
+        1,
+        7,
+        16,
+        7,
+>>>>>>> backup-akshay
         null,
         null
       ]
@@ -2238,13 +2938,17 @@
       "lines": [
         1,
         1,
-        0,
+        2,
         null,
         null,
         null,
         null,
+<<<<<<< HEAD
         0,
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+        2,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         0,
         0,
@@ -2268,18 +2972,27 @@
         null,
         1,
 <<<<<<< HEAD
+<<<<<<< HEAD
         6,
         6,
 =======
         0,
         0,
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+        0,
+        0,
+=======
+        7,
+        7,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         null,
         null,
         1,
-        0,
-        0,
+        1,
+        1,
+>>>>>>> backup-akshay
         null,
         null,
         null,
@@ -2320,8 +3033,11 @@
         0,
         null,
 <<<<<<< HEAD
+<<<<<<< HEAD
         18,
 =======
+=======
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         1,
         0,
@@ -2389,7 +3105,13 @@
         1,
         0,
         0,
+<<<<<<< HEAD
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+=======
+        18,
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         18,
         18,
@@ -2401,17 +3123,21 @@
         null,
         null,
 <<<<<<< HEAD
+<<<<<<< HEAD
         15,
         15,
         null,
         15,
 =======
+=======
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         1,
         0,
         0,
         null,
         0,
         0,
+<<<<<<< HEAD
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
         null,
         14,
@@ -2420,6 +3146,19 @@
 <<<<<<< HEAD
         5,
 =======
+=======
+=======
+        15,
+        15,
+        null,
+        15,
+>>>>>>> backup-akshay
+        null,
+        14,
+        9,
+        null,
+<<<<<<< HEAD
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         1,
         null,
@@ -2434,7 +3173,13 @@
         null,
         null,
         null,
+<<<<<<< HEAD
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+=======
+        5,
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         null,
         null
@@ -2549,7 +3294,11 @@
         null,
         1,
         1,
+<<<<<<< HEAD
         0,
+=======
+        4,
+>>>>>>> backup-akshay
         null,
         null,
         null,
@@ -2568,6 +3317,7 @@
         null,
         null,
         1,
+<<<<<<< HEAD
         0,
         0,
         0,
@@ -2585,6 +3335,25 @@
         null,
         0,
         0,
+=======
+        4,
+        3,
+        1,
+        1,
+        null,
+        1,
+        null,
+        1,
+        null,
+        1,
+        1,
+        null,
+        2,
+        null,
+        null,
+        1,
+        1,
+>>>>>>> backup-akshay
         null,
         null,
         null,
@@ -2634,7 +3403,11 @@
       "lines": [
         1,
         1,
+<<<<<<< HEAD
         16,
+=======
+        12,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         null,
         1,
@@ -2657,6 +3430,7 @@
         null,
         null,
         1,
+<<<<<<< HEAD
         7,
         null,
         6,
@@ -2665,6 +3439,16 @@
         5,
         null,
         5,
+=======
+        3,
+        null,
+        3,
+        3,
+        null,
+        3,
+        null,
+        3,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         3,
         3,
         null,
@@ -2673,7 +3457,11 @@
         1,
         null,
         null,
+<<<<<<< HEAD
         4,
+=======
+        3,
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
         null,
         null
       ]
@@ -2723,9 +3511,12 @@
         null,
         null,
         null,
+<<<<<<< HEAD
+=======
         null,
         0,
-        0,
+>>>>>>> backup-akshay
+        null,
         0,
         0,
         0,
@@ -2756,8 +3547,38 @@
         null,
         0,
         0,
+        null,
+        null,
+        null,
+        1,
         0,
         null,
+<<<<<<< HEAD
+        0,
+        null,
+        0,
+        null,
+        0,
+        null,
+        0,
+        0,
+        null,
+        0,
+        0,
+        null,
+        0,
+        null,
+        0,
+        null,
+        null,
+        0,
+        null,
+        0,
+        0,
+        0,
+        null,
+=======
+>>>>>>> backup-akshay
         null
       ]
     }
@@ -2766,10 +3587,17 @@
     "Controllers": {
       "lines": {
 <<<<<<< HEAD
+<<<<<<< HEAD
         "covered_percent": 31.496062992125985
 =======
         "covered_percent": 29.156010230179028
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+        "covered_percent": 29.156010230179028
+=======
+        "covered_percent": 45.433255269320846
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
       }
     },
     "Channels": {
@@ -2780,10 +3608,17 @@
     "Models": {
       "lines": {
 <<<<<<< HEAD
+<<<<<<< HEAD
         "covered_percent": 100.0
 =======
         "covered_percent": 87.5
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+        "covered_percent": 87.5
+=======
+        "covered_percent": 100.0
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
       }
     },
     "Mailers": {
@@ -2798,7 +3633,11 @@
     },
     "Jobs": {
       "lines": {
+<<<<<<< HEAD
         "covered_percent": 11.363636363636363
+=======
+        "covered_percent": 11.627906976744185
+>>>>>>> backup-akshay
       }
     },
     "Libraries": {
@@ -2809,10 +3648,17 @@
     "Services": {
       "lines": {
 <<<<<<< HEAD
+<<<<<<< HEAD
         "covered_percent": 65.84507042253522
 =======
         "covered_percent": 20.234604105571847
 >>>>>>> 41ee09d750639542d5d23edbc4cc4578a5673fa2
+=======
+        "covered_percent": 20.234604105571847
+=======
+        "covered_percent": 71.95945945945945
+>>>>>>> backup-akshay
+>>>>>>> 70e5899f0c35f4762824a5217cd6c68d8462d44f
       }
     }
   }

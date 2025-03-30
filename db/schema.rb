@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_27_085842) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_29_032222) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -90,6 +90,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_27_085842) do
     t.datetime "updated_at", null: false
     t.string "google_id"
     t.string "facebook_id"
+    t.string "refresh_token"
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
   end
