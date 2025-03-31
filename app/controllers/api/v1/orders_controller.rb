@@ -12,10 +12,12 @@ module Api
       def create
         if params[:address_id].present? && params[:order].blank?
           result = OrdersService.create_order_from_cart(@current_user, params[:address_id])
+        elsif params[:order].present?
+          result = OrdersService.create_order(@current_user, params[:order])
         else
-          result = OrdersService.create_order(@current_user, params[:order] || {})
+          result = { success: false, message: "Invalid parameters" }
         end
-
+      
         if result[:success]
           render json: result, status: :created
         else

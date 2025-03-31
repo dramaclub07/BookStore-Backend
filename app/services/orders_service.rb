@@ -30,35 +30,42 @@ class OrdersService
   end
 
   def self.create_order(user, order_params)
-    permitted_params = order_params.slice(:book_id, :quantity, :address_id)
-    return { success: false, message: "Book must be provided" } unless permitted_params[:book_id].present?
-    return { success: false, message: "Address must be provided" } unless permitted_params[:address_id].present?
+    # Expect order_params to include address_id and optionally validate cart presence
+    return { success: false, message: "Address must be provided" } unless order_params[:address_id].present?
 
-    book = Book.find_by(id: permitted_params[:book_id])
-    return { success: false, message: "Book not found" } unless book
-
-    address = Address.find_by(id: permitted_params[:address_id])
+    address = Address.find_by(id: order_params[:address_id])
     return { success: false, message: "Address not found" } unless address
 
-    price_at_purchase = book.discounted_price || book.book_mrp
-    quantity = permitted_params[:quantity]&.to_i || 1
-    total_price = price_at_purchase * quantity
+    carts_items = user.carts.active.includes(:book)
+    return { success: false, message: "Your cart is empty. Add items before placing an order." } if carts_items.empty?
 
-    order = user.orders.new(
-      book_id: book.id,
-      quantity: quantity,
-      price_at_purchase: price_at_purchase,
-      total_price: total_price,
-      status: "pending",
-      address_id: address.id
-    )
+    orders = []
+    carts_items.each do |cart_item|
+      price_at_purchase = cart_item.book.discounted_price || cart_item.book.book_mrp
+      total_price = price_at_purchase * cart_item.quantity
 
-    if order.save
-      EmailProducer.publish_email("order_confirmation_email", { user_id: user.id, order_id: order.id })
-      { success: true, message: "Order placed successfully", order: order }
-    else
-      { success: false, errors: order.errors.full_messages }
+      order = user.orders.new(
+        book_id: cart_item.book_id,
+        quantity: cart_item.quantity,
+        price_at_purchase: price_at_purchase,
+        total_price: total_price,
+        status: "pending",
+        address_id: address.id
+      )
+
+      if order.save
+        orders << order
+      else
+        return { success: false, errors: order.errors.full_messages }
+      end
     end
+
+    # Clear all cart items after successful order creation
+    carts_items.destroy_all
+
+    # Send email for the last order (or adjust to send for all orders if needed)
+    EmailProducer.publish_email("order_confirmation_email", { user_id: user.id, order_id: orders.last.id })
+    { success: true, message: "Order placed successfully", orders: orders }
   end
 
   def self.fetch_order(user, order_id)
