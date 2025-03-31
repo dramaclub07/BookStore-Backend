@@ -4,7 +4,7 @@ class PasswordService
 
   def self.forgot_password(email)
     user = User.find_by(email: email)
-    return { success: false, error: "User not found" } unless user
+     return { success: false, error: "User not found", status: :not_found } unless user
 
     otp = generate_otp
     expiry_time = Time.now + OTP_EXPIRY_TIME

@@ -1,10 +1,13 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::BooksController, type: :request do
+  let(:admin_user) { create(:user, role: 'admin') } # Add admin user for tests requiring admin access
   let(:user) { create(:user) }
   let(:book) { create(:book, book_name: 'Test Book', author_name: 'Author', book_mrp: 100, discounted_price: 80, is_deleted: false, out_of_stock: false) }
-  let(:token) { JwtService.encode(user_id: user.id) }
+  let(:token) { JwtService.encode_access_token(user_id: user.id) } # Fix: Use encode_access_token
+  let(:admin_token) { JwtService.encode_access_token(user_id: admin_user.id) } # Token for admin user
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
+  let(:admin_headers) { { 'Authorization' => "Bearer #{admin_token}" } } # Headers for admin user
 
   describe 'GET /api/v1/books' do
     before { create_list(:book, 5, is_deleted: false, out_of_stock: false) }
@@ -48,23 +51,6 @@ RSpec.describe Api::V1::BooksController, type: :request do
       expect(json_response['books']).to be_an(Array)
     end
   end
-
-# describe 'GET /api/v1/books/available' do
-#   before do
-#     create(:book, book_name: 'Available Book', is_deleted: false, out_of_stock: false)
-#     create(:book, book_name: 'Out of Stock Book', is_deleted: false, out_of_stock: true)
-#     create(:book, book_name: 'Deleted Book', is_deleted: true, out_of_stock: false)
-#   end
-
-#   it 'returns only available books (not deleted and not out of stock)' do
-#     get '/api/v1/books/available'
-#     expect(response).to have_http_status(:ok)
-#     json_response = JSON.parse(response.body)
-#     expect(json_response['success']).to be true
-#     expect(json_response['books'].size).to eq(1)
-#     expect(json_response['books'].first['book_name']).to eq('Available Book')
-#   end
-# end
 
   describe 'GET /api/v1/books/search' do
     before do
@@ -153,9 +139,9 @@ RSpec.describe Api::V1::BooksController, type: :request do
   describe 'POST /api/v1/books' do
     let(:valid_params) { { book: { book_name: 'New Book', author_name: 'New Author', book_mrp: 150, discounted_price: 120 } } }
 
-    context 'without authentication' do
+    context 'with admin authentication' do # Fix: Update context to reflect admin authentication requirement
       it 'creates a book successfully' do
-        post '/api/v1/books', params: valid_params
+        post '/api/v1/books', params: valid_params, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -163,7 +149,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
       end
 
       it 'fails to create a book with only required fields' do
-        post '/api/v1/books', params: { book: { book_name: 'Minimal Book', author_name: 'Minimal Author' } }
+        post '/api/v1/books', params: { book: { book_name: 'Minimal Book', author_name: 'Minimal Author' } }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be false
@@ -171,7 +157,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
       it 'succeeds with duplicate book name' do
         create(:book, book_name: 'New Book', is_deleted: false, out_of_stock: false)
-        post '/api/v1/books', params: valid_params
+        post '/api/v1/books', params: valid_params, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -183,7 +169,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
       let(:csv_file) { Rack::Test::UploadedFile.new(StringIO.new(csv_content), 'text/csv', original_filename: 'books.csv') }
 
       it 'creates books from CSV' do
-        post '/api/v1/books', params: { file: csv_file }
+        post '/api/v1/books', params: { file: csv_file }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -192,7 +178,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
       it 'handles invalid CSV gracefully' do
         invalid_csv = Rack::Test::UploadedFile.new(StringIO.new("invalid,data"), 'text/csv', original_filename: 'invalid.csv')
-        post '/api/v1/books', params: { file: invalid_csv }
+        post '/api/v1/books', params: { file: invalid_csv }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be false
@@ -201,17 +187,35 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
     context 'with invalid params' do
       it 'returns unprocessable entity for missing book_name' do
-        post '/api/v1/books', params: { book: { author_name: 'Author' } }
+        post '/api/v1/books', params: { book: { author_name: 'Author' } }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['errors']).to include("Book name can't be blank")
       end
 
       it 'returns unprocessable entity for negative book_mrp' do
-        post '/api/v1/books', params: { book: { book_name: 'Bad Book', author_name: 'Author', book_mrp: -10 } }
+        post '/api/v1/books', params: { book: { book_name: 'Bad Book', author_name: 'Author', book_mrp: -10 } }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['errors']).to include('Book mrp must be greater than 0')
+      end
+    end
+
+    context 'without authentication' do # Add test for unauthenticated access
+      it 'returns unauthorized' do
+        post '/api/v1/books', params: valid_params
+        expect(response).to have_http_status(:unauthorized)
+        json_response = JSON.parse(response.body)
+        expect(json_response['message']).to eq('Unauthorized - Missing token')
+      end
+    end
+
+    context 'with non-admin authentication' do # Add test for non-admin user
+      it 'returns forbidden' do
+        post '/api/v1/books', params: valid_params, headers: headers # Use regular user headers
+        expect(response).to have_http_status(:forbidden)
+        json_response = JSON.parse(response.body)
+        expect(json_response['message']).to eq('Forbidden - Admin access required')
       end
     end
   end
@@ -258,7 +262,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
     context 'when user is authenticated' do
       it 'updates the book' do
-        put "/api/v1/books/#{book.id}", params: update_params, headers: headers
+        put "/api/v1/books/#{book.id}", params: update_params, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -266,14 +270,14 @@ RSpec.describe Api::V1::BooksController, type: :request do
       end
 
       it 'updates discounted_price without changing other fields' do
-        put "/api/v1/books/#{book.id}", params: { book: { discounted_price: 90 } }, headers: headers
+        put "/api/v1/books/#{book.id}", params: { book: { discounted_price: 90 } }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         expect(book.reload.discounted_price).to eq(90)
         expect(book.book_name).to eq('Test Book')
       end
 
       it 'fails to update with invalid data' do
-        put "/api/v1/books/#{book.id}", params: { book: { book_mrp: -5 } }, headers: headers
+        put "/api/v1/books/#{book.id}", params: { book: { book_mrp: -5 } }, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be false
@@ -289,7 +293,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
     context 'when book does not exist' do
       it 'returns not found' do
-        put '/api/v1/books/999', params: update_params, headers: headers
+        put '/api/v1/books/999', params: update_params, headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -298,7 +302,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
   describe 'PATCH /api/v1/books/:id/is_deleted' do
     context 'when user is authenticated' do
       it 'toggles is_deleted to true' do
-        patch "/api/v1/books/#{book.id}/is_deleted", headers: headers
+        patch "/api/v1/books/#{book.id}/is_deleted", headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -307,13 +311,13 @@ RSpec.describe Api::V1::BooksController, type: :request do
 
       it 'toggles is_deleted back to false' do
         book.update(is_deleted: true)
-        patch "/api/v1/books/#{book.id}/is_deleted", headers: headers
+        patch "/api/v1/books/#{book.id}/is_deleted", headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         expect(book.reload.is_deleted).to be false
       end
 
       it 'returns not found for non-existent book' do
-        patch '/api/v1/books/999/is_deleted', headers: headers
+        patch '/api/v1/books/999/is_deleted', headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:not_found)
       end
     end
@@ -329,7 +333,7 @@ RSpec.describe Api::V1::BooksController, type: :request do
   describe 'DELETE /api/v1/books/:id' do
     context 'when user is authenticated' do
       it 'soft-deletes the book' do
-        delete "/api/v1/books/#{book.id}", headers: headers
+        delete "/api/v1/books/#{book.id}", headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be true
@@ -337,13 +341,13 @@ RSpec.describe Api::V1::BooksController, type: :request do
       end
 
       it 'returns not found for non-existent book' do
-        delete '/api/v1/books/999', headers: headers
+        delete '/api/v1/books/999', headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:not_found)
       end
 
       it 'handles already deleted book gracefully' do
         book.update(is_deleted: true)
-        delete "/api/v1/books/#{book.id}", headers: headers
+        delete "/api/v1/books/#{book.id}", headers: admin_headers # Fix: Use admin_headers
         expect(response).to have_http_status(:ok)
         expect(book.reload.is_deleted).to be true
       end

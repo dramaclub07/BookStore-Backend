@@ -1,10 +1,13 @@
+# spec/factories/addresses.rb
 FactoryBot.define do
   factory :address do
     street { "123 Main St" }
-    city { "New York" }
-    state { "NY" }
-    zip_code { "10001" }
+    city { "Anytown" }
+    state { "CA" }
+    zip_code { "12345" }
     country { "USA" }
-    association :user
+    address_type { "home" }
+    is_deleted { false }
+    user
   end
 end

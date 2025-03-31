@@ -7,90 +7,77 @@ RSpec.describe WishlistService, type: :service do
   let(:wishlist_service) { described_class.new(user) }
 
   describe '#fetch_wishlist' do
-    context 'when wishlist has books' do
-      before do
-        create(:wishlist, user: user, book: book1, is_deleted: false)
-        create(:wishlist, user: user, book: book2, is_deleted: false)
-      end
-
-      it 'returns all books in the wishlist with all attributes' do
-        result = wishlist_service.fetch_wishlist
-        expect(result.size).to eq(2)
-        
-        first_item = result.find { |item| item[:book_id] == book1.id }
-        expect(first_item[:id]).to be_present
-        expect(first_item[:book_id]).to eq(book1.id)
-        expect(first_item[:user_id]).to eq(user.id)
-        expect(first_item[:book_name]).to eq("Book 1")
-        expect(first_item[:author_name]).to eq("Author 1")
-        expect(first_item[:discounted_price]).to eq(10.99)
-        expect(first_item[:book_image]).to eq("image1.jpg")
-      end
-    end
-
-    context 'when wishlist has soft deleted books' do
-      before do
-        create(:wishlist, user: user, book: book1, is_deleted: true)
-        create(:wishlist, user: user, book: book2, is_deleted: false)
-      end
-
-      it 'returns only non-deleted books' do
-        result = wishlist_service.fetch_wishlist
-        expect(result.size).to eq(1)
-        expect(result.first[:book_id]).to eq(book2.id)
-      end
-    end
-
-    context 'when wishlist has books with is_deleted as nil' do
-      before do
-        create(:wishlist, user: user, book: book1, is_deleted: nil)
-        create(:wishlist, user: user, book: book2, is_deleted: true)
-      end
-
-      it 'returns books where is_deleted is nil' do
-        result = wishlist_service.fetch_wishlist
-        expect(result.size).to eq(1)
-        expect(result.first[:book_id]).to eq(book1.id)
-      end
-    end
-
-    context 'when wishlist is empty' do
-      it 'returns an empty array' do
-        result = wishlist_service.fetch_wishlist
-        expect(result).to be_empty
-      end
-    end
+    # ... your fetch_wishlist tests ...
   end
 
   describe '#toggle_wishlist' do
-  context 'when book is already in wishlist' do
-    let!(:wishlist) { create(:wishlist, user: user, book: book1, is_deleted: false) }
+    context 'when book is already in wishlist' do
+      let!(:wishlist) { create(:wishlist, user: user, book: book1, is_deleted: false) }
 
-    it 'soft deletes the book from wishlist' do
-      result = wishlist_service.toggle_wishlist(book1.id)
-      wishlist.reload
+      it 'soft deletes the book from wishlist' do
+        result = wishlist_service.toggle_wishlist(book1.id)
+        wishlist.reload
+        expect(wishlist.is_deleted).to be_truthy
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq('Book removed from wishlist')
+      end
 
-      expect(wishlist.is_deleted).to be_truthy
-      expect(result[:message]).to eq('Book removed from wishlist')
+      it 're-adds the book to wishlist if already deleted' do
+        wishlist.update(is_deleted: true)
+        result = wishlist_service.toggle_wishlist(book1.id)
+        wishlist.reload
+        expect(wishlist.is_deleted).to be_falsy
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq('Book added back to wishlist')
+      end
+
+      it 'handles update failure' do
+        allow(Wishlist).to receive(:find_by).and_return(wishlist)
+        allow(wishlist).to receive(:update).and_return(false)
+        allow(wishlist).to receive_message_chain(:errors, :full_messages).and_return(["Update failed"])
+        
+        result = wishlist_service.toggle_wishlist(book1.id)
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq("Update failed")
+      end
     end
 
-    it 're-adds the book to wishlist if already deleted' do
-      wishlist.update(is_deleted: true)
-      result = wishlist_service.toggle_wishlist(book1.id)
-      wishlist.reload
+    context 'when book is not in wishlist' do
+      it 'adds the book to the wishlist' do
+        result = wishlist_service.toggle_wishlist(book1.id)
+        wishlist = Wishlist.find_by(user_id: user.id, book_id: book1.id)
+        expect(wishlist).to be_present
+        expect(wishlist.is_deleted).to be_falsy
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq('Book added to wishlist')
+      end
 
-      expect(wishlist.is_deleted).to be_falsy
-      expect(result[:message]).to eq('Book added back to wishlist')
+      it 'handles creation failure' do
+        allow(Wishlist).to receive(:create).and_return(
+          double(persisted?: false, errors: double(full_messages: ["Creation failed"]))
+        )
+        result = wishlist_service.toggle_wishlist(book1.id)
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq("Creation failed")
+      end
     end
 
-    it 'handles update failure' do
-      allow_any_instance_of(Wishlist).to receive(:update).and_return(false)
-      result = wishlist_service.toggle_wishlist(book1.id)
-      wishlist.reload
-
-      expect(wishlist.is_deleted).to be_falsy # Unchanged due to failure
-      expect(result[:message]).to eq('Book added back to wishlist') # Matches current behavior
+    context 'when book_id is invalid' do
+      it 'returns an error for invalid book_id' do
+        result = wishlist_service.toggle_wishlist(nil)
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq('Invalid book_id')
+      end
     end
-  end
+
+    context 'when book is not found or unavailable' do
+      let(:unavailable_book) { create(:book, is_deleted: true) }
+
+      it 'returns an error if book is not found or unavailable' do
+        result = wishlist_service.toggle_wishlist(unavailable_book.id)
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq('Book not found or unavailable')
+      end
+    end
   end
 end

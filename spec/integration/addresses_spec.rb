@@ -1,9 +1,8 @@
 require 'rails_helper'
-#working fine with new routes
 
 RSpec.describe 'Addresses API', type: :request do
   let!(:user) { create(:user) }
-  let!(:auth_token) { JwtService.encode(user_id: user.id) }
+  let!(:auth_token) { JwtService.encode_access_token(user_id: user.id) } # Updated this line
   let!(:headers) { { 'Authorization' => "Bearer #{auth_token}", 'Content-Type' => 'application/json' } }
   let!(:addresses) { create_list(:address, 5, user: user) }
   let(:address_id) { addresses.first.id }
@@ -115,12 +114,12 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  describe 'PUT /api/v1/addresses/:id' do
+  describe 'PATCH /api/v1/addresses/:id' do
     let(:updated_attributes) { { address: { city: 'Los Angeles' } } }
 
     context 'when the address exists' do
       it 'updates the address' do
-        put "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: headers
 
         expect(response).to have_http_status(:ok)
         parsed_response = json
@@ -131,7 +130,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when the address does not exist' do
       it 'returns not found' do
-        put "/api/v1/addresses/9999", params: updated_attributes.to_json, headers: headers
+        patch "/api/v1/addresses/9999", params: updated_attributes.to_json, headers: headers
 
         expect(response).to have_http_status(:not_found)
         parsed_response = json
@@ -142,7 +141,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when request is invalid' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { address: { street: '' } }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { address: { street: '' } }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -153,7 +152,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when all parameters are blank' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { address: {} }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { address: {} }.to_json, headers: headers
 
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -164,7 +163,7 @@ RSpec.describe 'Addresses API', type: :request do
 
     context 'when not authenticated' do
       it 'returns unauthorized' do
-        put "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: {}
+        patch "/api/v1/addresses/#{address_id}", params: updated_attributes.to_json, headers: {}
 
         expect(response).to have_http_status(:unauthorized)
       end
@@ -203,8 +202,6 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  # Additional tests to cover edge cases and error handling
-
   describe 'POST /api/v1/addresses/create' do
     context 'when address_params raises ActionController::ParameterMissing' do
       it 'returns validation errors' do
@@ -218,10 +215,10 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  describe 'PUT /api/v1/addresses/:id' do
+  describe 'PATCH /api/v1/addresses/:id' do
     context 'when address_params raises ActionController::ParameterMissing' do
       it 'returns validation errors' do
-        put "/api/v1/addresses/#{address_id}", params: { invalid_key: 'value' }.to_json, headers: headers
+        patch "/api/v1/addresses/#{address_id}", params: { invalid_key: 'value' }.to_json, headers: headers
     
         expect(response).to have_http_status(:unprocessable_entity)
         parsed_response = json
@@ -231,7 +228,6 @@ RSpec.describe 'Addresses API', type: :request do
     end
   end
 
-  # Helper method to parse JSON response
   def json
     JSON.parse(response.body, symbolize_names: true)
   rescue JSON::ParserError => e

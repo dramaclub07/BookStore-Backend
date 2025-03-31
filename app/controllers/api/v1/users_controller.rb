@@ -11,7 +11,8 @@ class Api::V1::UsersController < ApplicationController
         success: true,
         name: @current_user.full_name || "Unknown",
         email: @current_user.email || "No email",
-        mobile_number: @current_user.mobile_number
+        mobile_number: @current_user.mobile_number,
+        role: @current_user.role # Add role to response
       }, status: :ok
     elsif request.patch?
       current_password = profile_params[:current_password]
@@ -35,7 +36,8 @@ class Api::V1::UsersController < ApplicationController
           message: "Profile updated successfully",
           name: @current_user.full_name,
           email: @current_user.email,
-          mobile_number: @current_user.mobile_number
+          mobile_number: @current_user.mobile_number,
+          role: @current_user.role # Add role to response
         }, status: :ok
       else
         Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}"
@@ -50,10 +52,30 @@ class Api::V1::UsersController < ApplicationController
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
-  def update_profile
-    # Since there's a separate PUT route for 'user/profile'
-    profile # Call the profile method since the logic is the same
+
+def update_profile
+  # Only permit the fields we want to allow for update
+  update_params = params.require(:user).permit(:full_name, :email, :mobile_number)
+  
+  # Filter out blank values to prevent overwriting with empty strings
+  update_params = update_params.reject { |_, v| v.blank? }
+
+  if @current_user.update(update_params)
+    render json: { 
+      success: true,
+      message: "Profile updated successfully",
+      name: @current_user.full_name,
+      email: @current_user.email,
+      mobile_number: @current_user.mobile_number,
+      role: @current_user.role
+    }, status: :ok
+  else
+    render json: { 
+      success: false,
+      errors: @current_user.errors.full_messages 
+    }, status: :unprocessable_entity
   end
+end
 
   def create
     result = UserService.create(user_params)
@@ -72,7 +94,7 @@ class Api::V1::UsersController < ApplicationController
     if result.success?
       render json: { 
         message: 'Login successful', 
-        user: result.user.as_json(only: [:id, :email, :full_name]), 
+        user: result.user.as_json(only: [:id, :email, :full_name, :role]), 
         access_token: result.access_token,
         refresh_token: result.refresh_token
       }, status: :ok
@@ -84,9 +106,9 @@ class Api::V1::UsersController < ApplicationController
   def forgot_password
     result = PasswordService.forgot_password(params[:email])
     if result[:success]
-      render json: { message: result[:message] }, status: :ok
+      render json: { success: true, message: result[:message] }, status: result[:status] || :ok
     else
-      render json: { errors: result[:error] }, status: :unprocessable_entity
+      render json: { success: false, error: result[:error] }, status: result[:status] || :unprocessable_entity
     end
   end
 
@@ -102,7 +124,7 @@ class Api::V1::UsersController < ApplicationController
   private 
 
   def user_params
-    params.require(:user).permit(:full_name, :email, :password, :mobile_number)
+    params.require(:user).permit(:full_name, :email, :password, :mobile_number, :role)
   end
 
   def profile_params

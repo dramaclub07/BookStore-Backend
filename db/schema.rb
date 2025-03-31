@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_29_032222) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_30_193811) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_29_032222) do
     t.boolean "is_default", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "is_deleted"
     t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
@@ -47,6 +48,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_29_032222) do
     t.bigint "user_id", null: false
     t.bigint "book_id", null: false
     t.integer "quantity"
+    t.boolean "is_deletedcls"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "is_deleted", default: false, null: false
@@ -90,9 +92,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_29_032222) do
     t.datetime "updated_at", null: false
     t.string "google_id"
     t.string "facebook_id"
+    t.string "role", default: "user", null: false
     t.string "refresh_token"
+    t.string "github_id"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["github_id"], name: "index_users_on_github_id", unique: true
     t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
+    t.index ["role"], name: "index_users_on_role"
   end
 
   create_table "wishlists", force: :cascade do |t|

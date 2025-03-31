@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Authentication', type: :request do
   let(:user) { create(:user) }
-  let(:valid_token) { JwtService.encode(user_id: user.id) }
+  let(:valid_token) { JwtService.encode_access_token(user_id: user.id) } # Fix: Use encode_access_token
   let(:invalid_token) { 'invalid.access_token.here' }
 
   # Helper method to make requests with or without token
@@ -65,13 +65,13 @@ RSpec.describe 'Authentication', type: :request do
         json_response = JSON.parse(response.body)
 
         expect(json_response['success']).to be false
-        expect(json_response['message']).to eq('Unauthorized - Invalid token')
+        expect(json_response['message']).to eq('Unauthorized - Invalid or expired access token') # Fix: Update expected message
       end
     end
 
     context 'when user is not found' do
       it 'returns unauthorized with user not found message' do
-        deleted_user_token = JwtService.encode(user_id: user.id)
+        deleted_user_token = JwtService.encode_access_token(user_id: user.id) # Fix: Use encode_access_token
         user.destroy!
 
         request_with_token(deleted_user_token)
