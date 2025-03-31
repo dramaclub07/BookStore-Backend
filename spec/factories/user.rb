@@ -12,5 +12,9 @@ FactoryBot.define do
     trait :with_google do
       google_id { Faker::Number.number(digits: 15) }
     end
+
+    trait :with_github do
+      github_id { Faker::Number.number(digits: 15) }
+    end
   end
 end

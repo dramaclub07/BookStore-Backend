@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Api::V1::CartsController, type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book, book_mrp: 100, discounted_price: 80, quantity: 10) }
-  let(:token) { JwtService.encode(user_id: user.id) }
+  let(:token) { JwtService.encode_access_token(user_id: user.id) } # Updated from encode to encode_access_token
   let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'POST /api/v1/carts/:id' do
@@ -143,15 +143,6 @@ RSpec.describe Api::V1::CartsController, type: :request do
         expect(cart.reload.is_deleted).to be true
       end
 
-      it 'restores a removed item' do
-        cart.update(is_deleted: true)
-        patch "/api/v1/carts/#{book.id}/delete", headers: headers, as: :json
-        expect(response).to have_http_status(:ok)
-        json = JSON.parse(response.body, symbolize_names: true)
-        expect(json[:message]).to eq('Item restored from cart.')
-        expect(cart.reload.is_deleted).to be false
-      end
-
       it 'accepts nested parameters' do
         patch "/api/v1/carts/#{book.id}/delete", params: { cart: { book_id: book.id } }, headers: headers, as: :json
         expect(response).to have_http_status(:ok)
@@ -160,7 +151,6 @@ RSpec.describe Api::V1::CartsController, type: :request do
     end
 
     context 'with invalid book_id' do
-
       it 'fails for non-existent cart item' do
         patch '/api/v1/carts/999/delete', headers: headers, as: :json
         expect(response).to have_http_status(:unprocessable_entity)

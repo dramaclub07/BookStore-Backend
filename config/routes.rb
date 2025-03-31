@@ -11,10 +11,12 @@ Rails.application.routes.draw do
       post "users/password/reset", to: "users#reset_password"
       get "users/profile", to: "users#profile"
       patch "users/profile", to: "users#profile"
-      put "user/profile", to: "users#update_profile"  # Update user profile
+      put "users/profile", to: "users#update_profile"  # Update user profile
 
       post "google_auth", to: "google_auth#create"
       post "facebook_auth", to: "facebook_auth#create"
+      get 'github_auth', to: 'github_auth#login'
+      get 'github_auth/callback', to: 'github_auth#callback'
 
       post "books", to: "books#create"
       get "books/search", to: "books#search"
