@@ -14,12 +14,12 @@ class User < ApplicationRecord
 
   VALID_MOBILE_REGEX = /\A[6789]\d{9}\z/
   validates :mobile_number, presence: true, uniqueness: true, format: { with: VALID_MOBILE_REGEX }, unless: :social_login?
-  validates :password, presence: true, length: { minimum: 6 }, unless: :social_login?
+  validates :password, presence: { message: "cannot be blank" },length: { minimum: 6 },unless: :social_login?
   validates :role, presence: true, inclusion: { in: %w[user admin], message: "%{value} is not a valid role" }
 
   private
 
   def social_login?
-    google_id.present? || facebook_id.present?
+    google_id.present? || facebook_id.present? || github_id.present?
   end
 end

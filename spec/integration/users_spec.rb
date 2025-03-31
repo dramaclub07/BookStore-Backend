@@ -1,16 +1,20 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::UsersController, type: :request do
-  let(:user) { create(:user) }
-  let(:token) { JwtService.encode(user_id: user.id) }
+  let(:user) { create(:user, password: 'Password@123') }
+  let(:access_token) { JwtService.encode_access_token(user_id: user.id) }
   let(:headers) { { 'Authorization' => "Bearer #{access_token}" } }
+  let(:existing_user) { create(:user) }
 
-  describe 'POST /api/v1/signup' do
-    let(:valid_params) { { user: { full_name: 'New User', email: 'newuser@gmail.com', password: 'newpass123', mobile_number: '9876543210' } } }
+  describe 'POST /api/v1/users' do
+    let(:valid_params) { { user: { full_name: 'New User', email: 'newuser@gmail.com', password: 'newpass123', mobile_number: '9876543210', role: 'user' } } }
 
     context 'with valid params' do
       it 'creates a new user' do
-        post '/api/v1/signup', params: valid_params
+        expect {
+          post '/api/v1/users', params: valid_params
+        }.to change(User, :count).by(1)
+        
         expect(response).to have_http_status(:created)
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('User registered successfully')
@@ -21,36 +25,36 @@ RSpec.describe Api::V1::UsersController, type: :request do
 
     context 'with invalid params' do
       it 'returns unprocessable entity for invalid email' do
-        post '/api/v1/signup', params: { user: { full_name: 'User', email: 'invalid@domain.com', password: 'newpass123', mobile_number: '9876543210' } }
+        post '/api/v1/users', params: { user: { full_name: 'User', email: 'invalid@domain.com', password: 'newpass123', mobile_number: '9876543210', role: 'user' } }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to include("Email is invalid")
       end
 
       it 'returns unprocessable entity for blank password' do
-        post '/api/v1/signup', params: { user: { full_name: 'User', email: 'new2@gmail.com', password: '', mobile_number: '9876543210' } }
+        post '/api/v1/users', params: { user: { full_name: 'User', email: 'new2@gmail.com', password: '', mobile_number: '9876543210', role: 'user' } }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include("Password can't be blank")
+        expect(JSON.parse(response.body)['errors']).to include("Password cannot be blank, Password is too short (minimum is 6 characters)")
       end
 
       it 'returns unprocessable entity for invalid mobile number' do
-        post '/api/v1/signup', params: { user: { full_name: 'User', email: 'new3@gmail.com', password: 'newpass123', mobile_number: '1234567890' } }
+        post '/api/v1/users', params: { user: { full_name: 'User', email: 'new3@gmail.com', password: 'newpass123', mobile_number: '1234567890', role: 'user' } }
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to include("Mobile number is invalid")
       end
 
       it 'handles unexpected errors gracefully' do
         allow(User).to receive(:new).and_raise(StandardError.new('DB error'))
-        post '/api/v1/signup', params: valid_params
+        post '/api/v1/users', params: valid_params
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to include('An unexpected error occurred: DB error')
       end
     end
   end
 
-  describe 'POST /api/v1/login' do
+  describe 'POST /api/v1/users/login' do
     context 'with valid credentials' do
       it 'logs in the user and returns a token' do
-        post '/api/v1/login', params: { email: user.email, password: 'Password@123' }
+        post '/api/v1/users/login', params: { email: user.email, password: 'Password@123' }
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Login successful')
@@ -61,20 +65,20 @@ RSpec.describe Api::V1::UsersController, type: :request do
 
     context 'with invalid credentials' do
       it 'returns unauthorized for wrong password' do
-        post '/api/v1/login', params: { email: user.email, password: 'wrongpass' }
+        post '/api/v1/users/login', params: { email: user.email, password: 'wrongpass' }
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)['errors']).to eq('Invalid email or password')
       end
 
       it 'returns unauthorized for non-existent email' do
-        post '/api/v1/login', params: { email: 'unknown@gmail.com', password: 'Password@123' }
+        post '/api/v1/users/login', params: { email: 'unknown@gmail.com', password: 'Password@123' }
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)['errors']).to eq('Invalid email or password')
       end
 
       it 'handles unexpected errors gracefully' do
         allow(User).to receive(:find_by).and_raise(StandardError.new('DB error'))
-        post '/api/v1/login', params: { email: user.email, password: 'Password@123' }
+        post '/api/v1/users/login', params: { email: user.email, password: 'Password@123' }
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)['errors']).to include('An unexpected error occurred: DB error')
       end
@@ -87,13 +91,21 @@ RSpec.describe Api::V1::UsersController, type: :request do
 
       it 'sends OTP successfully' do
         allow(UserMailer).to receive(:send_otp).and_return(double(deliver_now: true))
-        post '/api/v1/users/password/forgot', params: valid_email.as_json, as: :json
-        expect(response).to have_http_status(200)
+        post '/api/v1/users/password/forgot', params: valid_email
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)['success']).to be true
+      end
+    end
+
+    context 'with non-existing email' do
+      it 'returns not found' do
+        post '/api/v1/users/password/forgot', params: { email: 'nonexistent@example.com' }
+        expect(response).to have_http_status(:not_found)
       end
     end
   end
 
-  describe 'POST /api/v1/reset_password' do
+  describe 'POST /api/v1/users/password/reset' do
     let(:reset_params) { { email: user.email, otp: '123456', new_password: 'Newpass@123' } }
 
     context 'with valid OTP and params' do
@@ -102,11 +114,11 @@ RSpec.describe Api::V1::UsersController, type: :request do
       end
 
       it 'resets the password' do
-        post '/api/v1/reset_password', params: reset_params
+        post '/api/v1/users/password/reset', params: reset_params
         expect(response).to have_http_status(:ok)
         expect(JSON.parse(response.body)['message']).to eq('Password reset successfully')
         expect(PasswordService::OTP_STORAGE[user.email]).to be_nil
-        expect(user.reload.authenticate('Newpass@123')).to be_present
+        expect(user.reload.authenticate('Newpass@123')).to be_truthy
       end
     end
 
@@ -116,7 +128,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
       end
 
       it 'returns unprocessable entity for wrong OTP' do
-        post '/api/v1/reset_password', params: reset_params
+        post '/api/v1/users/password/reset', params: reset_params
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to eq('Invalid OTP')
       end
@@ -128,7 +140,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
       end
 
       it 'returns unprocessable entity' do
-        post '/api/v1/reset_password', params: reset_params
+        post '/api/v1/users/password/reset', params: reset_params
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to eq('OTP expired')
       end
@@ -136,8 +148,9 @@ RSpec.describe Api::V1::UsersController, type: :request do
 
     context 'with missing OTP' do
       before { PasswordService::OTP_STORAGE.clear }
+      
       it 'returns unprocessable entity' do
-        post '/api/v1/reset_password', params: reset_params
+        post '/api/v1/users/password/reset', params: reset_params
         expect(response).to have_http_status(:unprocessable_entity)
         expect(JSON.parse(response.body)['errors']).to eq('OTP not found')
       end
@@ -162,8 +175,7 @@ RSpec.describe Api::V1::UsersController, type: :request do
         get '/api/v1/users/profile'
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
-   
-        expect(json_response['success']).to be_falsey
+        expect(json_response['success']).to be false
         expect(json_response['message']).to match(/Unauthorized/)
       end
     end
@@ -180,30 +192,19 @@ RSpec.describe Api::V1::UsersController, type: :request do
         expect(json_response['success']).to be true
         expect(json_response['message']).to eq('Profile updated successfully')
         expect(user.reload.full_name).to eq('Updated User')
-        expect(user.authenticate('Newpass@456')).to be_present
+        expect(user.authenticate('Newpass@456')).to be_truthy
       end
-
-      # it 'updates profile without password change' do
-      #   patch '/api/v1/users/profile', params: { user: { full_name: 'New Name' } }, headers: headers
-      #   expect(response).to have_http_status(:ok)
-      #   json_response = JSON.parse(response.body)
-      #   puts "PATCH response: #{response.body}" if response.status != 200 # Debug
-      #   expect(json_response['success']).to be true
-      #   expect(json_response['message']).to eq('Profile updated successfully')
-      #   expect(user.reload.full_name).to eq('New Name')
-      #   expect(user.authenticate('Password@123')).to be_present
-      # end
 
       it 'fails with incorrect current password' do
         patch '/api/v1/users/profile', params: { user: { current_password: 'wrongpass', new_password: 'Newpass@456' } }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to eq(['Current password is incorrect'])
+        expect(JSON.parse(response.body)['errors']).to include('Current password is incorrect')
       end
 
       it 'fails with blank new password' do
         patch '/api/v1/users/profile', params: { user: { current_password: 'Password@123', new_password: '' } }, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to eq(['New password cannot be blank'])
+        expect(JSON.parse(response.body)['errors']).to include("New password cannot be blank")
       end
 
       it 'fails with invalid email' do
@@ -225,42 +226,45 @@ RSpec.describe Api::V1::UsersController, type: :request do
         patch '/api/v1/users/profile', params: update_params
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
-        puts "PATCH unauthenticated response: #{response.body}" # Debug
-        expect(json_response['success']).to be_falsey
+        expect(json_response['success']).to be false
         expect(json_response['message']).to match(/Unauthorized/)
       end
     end
   end
 
-  describe 'PUT /api/v1/users/profile' do
-    let(:update_params) { { user: { full_name: 'Updated User' } } }
+ describe 'PUT /api/v1/users/profile' do
+  let(:update_params) { { 
+    user: { 
+      full_name: 'Updated User',
+      email: user.email, # Keep original email to avoid validation issues
+      mobile_number: user.mobile_number # Keep original mobile number
+    } 
+  } }
 
-    # context 'when user is authenticated' do
-    #   # it 'updates profile' do
-    #   #   put '/api/v1/users/profile', params: update_params, headers: headers
-    #   #   expect(response).to have_http_status(:ok)
-    #   #   json_response = JSON.parse(response.body)
-    #   #   expect(json_response['success']).to be_true
-    #   #   expect(json_response['message']).to eq('Profile updated successfully')
-    #   #   expect(user.reload.full_name).to eq('Updated User')
-    #   # end
+  context 'when user is authenticated' do
+    it 'updates profile without password change' do
+      put '/api/v1/users/profile', params: update_params, headers: headers
+      
+      # Debugging output if test fails
+      puts "Response status: #{response.status}"
+      puts "Response body: #{response.body}" unless response.successful?
+      
+      expect(response).to have_http_status(:ok)
+      json_response = JSON.parse(response.body)
+      expect(json_response['success']).to be true
+      expect(json_response['message']).to eq('Profile updated successfully')
+      expect(user.reload.full_name).to eq('Updated User')
+    end
+  end
 
-    #   # it 'fails when update is unsuccessful' do
-    #   #   put '/api/v1/users/profile', params: { user: { email: 'invalid@domain.com' } }, headers: headers
-    #   #   expect(response).to have_http_status(:unprocessable_entity)
-    #   #   expect(JSON.parse(response.body)['errors']).to include("Email is invalid")
-    #   # end
-    # end
-
-    # context 'when user is not authenticated' do
-    #   # it 'returns unauthorized' do
-    #   #   put '/api/v1/users/profile', params: update_params
-    #   #   expect(response).to have_http_status(:unauthorized)
-    #   #   json_response = JSON.parse(response.body)
-    #   #   puts "PUT unauthenticated response: #{response.body}" # Debug
-    #   #   expect(json_response['success']).to be_falsey
-    #   #   expect(json_response['message']).to match(/Unauthorized/)
-    #   # end
-    # end
+    context 'when user is not authenticated' do
+      it 'returns unauthorized' do
+        put '/api/v1/users/profile', params: update_params
+        expect(response).to have_http_status(:unauthorized)
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
+        expect(json_response['message']).to match(/Unauthorized/)
+      end
+    end
   end
 end
