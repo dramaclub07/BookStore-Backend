@@ -4,7 +4,7 @@ RSpec.describe "Api::V1::Orders Integration", type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book, discounted_price: 200, book_mrp: 250) }
   let(:address) { create(:address, user: user) }
-  let(:token) { JWT.encode({ user_id: user.id }, ENV['JWT_SECRET_KEY'] || 'test-secret') }
+  let(:token) { JwtService.encode_access_token(user_id: user.id) } # Updated to match CartsController
   let(:headers) { { "Authorization" => "Bearer #{token}" } }
 
   describe "GET /api/v1/orders" do
@@ -33,7 +33,7 @@ RSpec.describe "Api::V1::Orders Integration", type: :request do
     end
 
     context "from cart with address_id" do
-      let(:cart_item) { create(:cart, user: user, book: book, quantity: 1) }
+      let(:cart_item) { create(:cart, user: user, book: book, quantity: 1, is_deleted: false) } # Added is_deleted: false
       let(:params) { { address_id: address.id } }
 
       it "creates orders from cart" do

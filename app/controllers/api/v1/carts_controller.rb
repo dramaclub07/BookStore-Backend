@@ -28,7 +28,7 @@ module Api
 
       def toggle_remove
         book_id = params[:id]
-        result = CartService.new(@current_user).toggle_cart_item(book_id)
+        result = CartService.new(@current_user).remove_cart_item(book_id) # Updated to call remove_cart_item
         render json: result, status: result[:success] ? :ok : :unprocessable_entity
       end
 
@@ -45,7 +45,6 @@ module Api
         result = CartService.new(@current_user).update_quantity(book_id, quantity.to_i)
         render json: result, status: result[:success] ? :ok : :unprocessable_entity
       end
-      
 
       private
 
@@ -66,7 +65,6 @@ module Api
         Rails.logger.error "Authentication error: #{e.message}\n#{e.backtrace.join("\n")}"
         render json: { success: false, message: 'Server error during authentication' }, status: :internal_server_error
       end
-      
 
       def auth_token
         request.headers['Authorization']&.split('Bearer ')&.last

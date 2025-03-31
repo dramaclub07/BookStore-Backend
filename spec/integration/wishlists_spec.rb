@@ -1,109 +1,121 @@
 require 'rails_helper'
 
-RSpec.describe Api::V1::WishlistsController, type: :controller do
+RSpec.describe Api::V1::WishlistsController, type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book) }
-  let(:valid_token) { JwtService.encode_access_token(user_id: user.id) }
-  let(:invalid_token) { 'invalid.token.here' }
-  let(:headers) { { 'Authorization' => "Bearer #{valid_token}", 'Content-Type' => 'application/json' } }
-
-  def json
-    JSON.parse(response.body, symbolize_names: true)
-  rescue JSON::ParserError
-    puts "Failed to parse JSON response: #{response.body}"
-    {}
-  end
-
-  describe 'before_action :authorize_request' do
-    context 'with valid token and existing user' do
-      it 'sets @current_user' do
-        request.headers.merge!(headers)
-        get :index
-        expect(response).to have_http_status(:ok)
-        expect(controller.instance_variable_get(:@current_user)).to eq(user)
-      end
-    end
-
-    context 'with no Authorization header' do
-      it 'returns unauthorized' do
-        get :index
-        expect(response).to have_http_status(:unauthorized)
-        expect(json[:errors]).to eq('Unauthorized - Missing token')
-      end
-    end
-
-    context 'with invalid token' do
-      it 'returns unauthorized due to decode error' do
-        request.headers['Authorization'] = "Bearer #{invalid_token}"
-        get :index
-        expect(response).to have_http_status(:unauthorized)
-        expect(json[:errors]).to eq('Unauthorized - Invalid or expired token')
-      end
-    end
-
-    context 'with token for non-existent user' do
-      it 'returns unauthorized due to user not found' do
-        non_existent_token = JwtService.encode_access_token(user_id: 999)
-        request.headers['Authorization'] = "Bearer #{non_existent_token}"
-        get :index
-        expect(response).to have_http_status(:unauthorized)
-        expect(json[:errors]).to eq('Unauthorized - User not found')
-      end
-    end
-  end
+  let(:token) { JwtService.encode_access_token(user_id: user.id) }
+  let(:headers) { { 'Authorization' => "Bearer #{token}" } }
 
   describe 'GET #index' do
-    context 'when authenticated' do
+    context 'when user is authenticated' do
       before do
-        request.headers.merge!(headers)
+        allow_any_instance_of(WishlistService).to receive(:fetch_wishlist).and_return({ success: true, wishlist: [] })
       end
 
       it 'returns the wishlist successfully' do
-        allow_any_instance_of(WishlistService).to receive(:fetch_wishlist).and_return(
-          { success: true, wishlist: [{ book_id: book.id }] }
-        )
-        get :index
+        get '/api/v1/wishlists', headers: headers
         expect(response).to have_http_status(:ok)
-        expect(json[:success]).to be true
-        expect(json[:wishlist]).to eq([{ book_id: book.id }])
+        json_response = JSON.parse(response.body)
+        expect(json_response).to be_a(Hash)
+        expect(json_response['success']).to be true
+        expect(json_response['wishlist']).to eq([])
+      end
+    end
+
+    context 'when user is not authenticated' do
+      it 'returns unauthorized due to missing token' do
+        get '/api/v1/wishlists'
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)['message']).to eq('Unauthorized - Missing token')
+      end
+    end
+
+    context 'when token is invalid' do
+      it 'returns unauthorized due to invalid token' do
+        get '/api/v1/wishlists', headers: { 'Authorization' => 'Bearer invalid_token' }
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)['message']).to eq('Unauthorized - Invalid or expired access token')
+      end
+    end
+
+    context 'when user is not found' do
+      let(:non_existent_user_id) { 9999999 }
+      let(:invalid_token) { JwtService.encode_access_token(user_id: non_existent_user_id) }
+
+      before do
+        User.where(id: non_existent_user_id).destroy_all
+      end
+
+      it 'returns unauthorized due to user not found' do
+        get '/api/v1/wishlists', headers: { 'Authorization' => "Bearer #{invalid_token}" }
+        expect(response).to have_http_status(:unauthorized)
+        json_response = JSON.parse(response.body)
+        expect(json_response['message']).to eq('Unauthorized - User not found')
       end
     end
   end
 
   describe 'POST #toggle' do
     context 'when authenticated' do
-      before do
-        request.headers.merge!(headers)
-      end
-
       it 'toggles a book into the wishlist successfully' do
-        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(book.id.to_s).and_return(
-          { success: true, message: 'Book added to wishlist' }
-        )
-        post :toggle, params: { book_id: book.id }
+        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(book.id).and_return({ success: true, message: 'Book added to wishlist' })
+        post '/api/v1/wishlists', params: { book_id: book.id }, headers: headers
         expect(response).to have_http_status(:ok)
-        expect(json[:success]).to be true
-        expect(json[:message]).to eq('Book added to wishlist')
+        json_response = JSON.parse(response.body)
+        expect(json_response).to be_a(Hash)
+        expect(json_response['success']).to be true
+        expect(json_response['message']).to eq('Book added to wishlist')
       end
 
       it 'toggles a book out of the wishlist successfully' do
-        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(book.id.to_s).and_return(
-          { success: true, message: 'Book removed from wishlist' }
-        )
-        post :toggle, params: { book_id: book.id }
+        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(book.id).and_return({ success: true, message: 'Book removed from wishlist' })
+        post '/api/v1/wishlists', params: { book_id: book.id }, headers: headers
         expect(response).to have_http_status(:ok)
-        expect(json[:success]).to be true
-        expect(json[:message]).to eq('Book removed from wishlist')
+        json_response = JSON.parse(response.body)
+        expect(json_response).to be_a(Hash)
+        expect(json_response['success']).to be true
+        expect(json_response['message']).to eq('Book removed from wishlist')
       end
 
       it 'handles missing book_id gracefully' do
-        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(nil).and_return(
-          { success: false, message: 'Invalid book_id' }
-        )
-        post :toggle, params: { book_id: nil }
+        allow_any_instance_of(WishlistService).to receive(:toggle_wishlist).with(nil).and_return({ success: false, message: 'Book ID is required' })
+        post '/api/v1/wishlists', params: {}, headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(json[:success]).to be false
-        expect(json[:message]).to eq('Invalid book_id')
+        json_response = JSON.parse(response.body)
+        expect(json_response['success']).to be false
+        expect(json_response['message']).to eq('Book ID is required')
+      end
+    end
+
+    context 'when user is not authenticated' do
+      it 'returns unauthorized due to missing token' do
+        post '/api/v1/wishlists', params: { book_id: book.id }
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)['message']).to eq('Unauthorized - Missing token')
+      end
+    end
+
+    context 'when token is invalid' do
+      it 'returns unauthorized due to invalid token' do
+        post '/api/v1/wishlists', params: { book_id: book.id }, headers: { 'Authorization' => 'Bearer invalid_token' }
+        expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)['message']).to eq('Unauthorized - Invalid or expired access token')
+      end
+    end
+
+    context 'when user is not found' do
+      let(:non_existent_user_id) { 9999999 }
+      let(:invalid_token) { JwtService.encode_access_token(user_id: non_existent_user_id) }
+
+      before do
+        User.where(id: non_existent_user_id).destroy_all
+      end
+
+      it 'returns unauthorized due to user not found' do
+        post '/api/v1/wishlists', params: { book_id: book.id }, headers: { 'Authorization' => "Bearer #{invalid_token}" }
+        expect(response).to have_http_status(:unauthorized)
+        json_response = JSON.parse(response.body)
+        expect(json_response['message']).to eq('Unauthorized - User not found')
       end
     end
   end
