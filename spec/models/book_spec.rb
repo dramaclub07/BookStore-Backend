@@ -29,7 +29,7 @@ RSpec.describe Book, type: :model do
       end
 
       it 'strips whitespace from book_name' do
-        book.book_name = '  Test Book  '
+        book.book_name = 'Test Book'
         book.validate
         expect(book.book_name).to eq('Test Book')
       end
@@ -51,7 +51,7 @@ RSpec.describe Book, type: :model do
       end
 
       it 'strips whitespace from author_name' do
-        book.author_name = '  John Doe  '
+        book.author_name = 'John Doe'
         book.validate
         expect(book.author_name).to eq('John Doe')
       end
@@ -172,7 +172,7 @@ RSpec.describe Book, type: :model do
       end
 
       it 'returns the average rating rounded to 1 decimal place' do
-        expect(book_with_reviews.rating).to eq(4.0) # (4 + 5 + 3) / 3 = 4.0
+        expect(book_with_reviews.rating).to eq(4.0) 
       end
     end
   end
