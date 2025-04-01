@@ -91,7 +91,11 @@ end
 gem 'mock_redis'
 gem 'csv'
 gem 'bunny'  
+gem 'omniauth-github'
+gem 'omniauth-rails_csrf_protection'
 
 group :test do
   gem 'webmock'
 end
+
+gem "httparty"

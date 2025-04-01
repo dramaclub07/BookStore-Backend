@@ -1,104 +1,86 @@
-# README
+module Api
+  module V1
+    class GithubAuthController < ApplicationController
+      skip_before_action :authenticate_request, only: [:login, :callback]
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+      def login
+        state_token = SecureRandom.hex(32)
+        OauthState.create!(state: state_token, expires_at: 10.minutes.from_now)
+        Rails.logger.info "Setting GitHub OAuth state token: #{state_token}"
 
-Things you may want to cover:
+        auth_url = "#{GithubAuthService::GITHUB_AUTH_URI}?" + {
+          client_id: ENV['GITHUB_CLIENT_ID'],
+          redirect_uri: github_callback_url,
+          scope: 'user:email',
+          state: state_token,
+          allow_signup: 'false'
+        }.to_query
 
-* Ruby version
+        redirect_to auth_url, allow_other_host: true
+      end
 
-* System dependencies
+      def callback
+        unless params[:state].present?
+          Rails.logger.error "Missing state parameter in callback"
+          return render json: { error: 'Missing state parameter' }, status: :unprocessable_entity
+        end
 
-* Configuration
+        oauth_state = OauthState.find_by(state: params[:state])
+        if oauth_state.nil?
+          Rails.logger.error "No OAuth state found in database"
+          return render json: { error: 'Invalid state parameter' }, status: :unprocessable_entity
+        end
 
-* Database creation
+        if oauth_state.expires_at < Time.current
+          Rails.logger.error "OAuth state expired"
+          oauth_state.destroy
+          return render json: { error: 'State parameter expired' }, status: :unprocessable_entity
+        end
 
-* Database initialization
+        oauth_state.destroy
+        Rails.logger.info "OAuth state verified and removed from database"
 
-* How to run the test suite
+        result = GithubAuthService.new(params[:code]).authenticate
+        if result.success
+          Rails.logger.info "GitHub authentication successful for user: #{result.user.email}"
+          render json: auth_success_response(result), status: :ok
+        else
+          Rails.logger.error "GitHub authentication failed: #{result.error}"
+          render json: { 
+            error: result.error || 'Authentication failed'
+          }, status: result.status || :unauthorized
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error "User validation failed: #{e.record.errors.full_messages.join(', ')}"
+        render json: { error: 'User validation failed: ' + e.record.errors.full_messages.join(', ') }, status: :unprocessable_entity
+      rescue StandardError => e
+        Rails.logger.error "Unexpected GitHub OAuth error: #{e.message}\n#{e.backtrace.join("\n")}"
+        render json: { error: 'Internal authentication error' }, status: :internal_server_error
+      end
 
-* Services (job queues, cache servers, search engines, etc.)
+      private
 
-* Deployment instructions
+      def github_callback_url
+        ENV.fetch('GITHUB_CALLBACK_URL', 'http://localhost:3000/api/v1/github_auth/callback')
+      end
 
-* ...
-# Theory of RabbitMQ
-
-RabbitMQ is a message broker that enables asynchronous communication between different applications and services. Here's a brief overview of its key concepts:
-
-## Message Queue
-
-A message queue is a buffer that stores messages until they are processed by a consumer. RabbitMQ uses a message queue to store messages that are sent by producers and consumed by consumers.
-
-## Producers
-
-Producers are applications that send messages to RabbitMQ. They can be thought of as the "senders" of messages.
-
-## Consumers
-
-Consumers are applications that receive messages from RabbitMQ. They can be thought of as the "receivers" of messages.
-
-## Exchanges
-
-Exchanges are the core of RabbitMQ's routing mechanism. They are responsible for routing messages to queues based on routing keys.
-
-## Routing Keys
-
-Routing keys are used to determine which queue a message should be routed to. They are typically used in conjunction with exchanges.
-
-## Bindings
-
-Bindings are used to link queues to exchanges. They specify the routing key that should be used to route messages to a queue.
-
-## Queues
-
-Queues are the buffers that store messages until they are processed by a consumer.
-
-## Message Patterns
-
-RabbitMQ supports several message patterns, including:
-
-* **Direct Exchange**: Messages are routed to a queue based on a routing key.
-* **Fanout Exchange**: Messages are routed to all queues that are bound to the exchange.
-* **Topic Exchange**: Messages are routed to queues based on a routing key that matches a pattern.
-* **Headers Exchange**: Messages are routed to queues based on a set of headers.
-
-## Advantages
-
-RabbitMQ has several advantages, including:
-
-* **Decoupling**: RabbitMQ enables decoupling between producers and consumers, allowing them to operate independently.
-* **Scalability**: RabbitMQ is highly scalable, making it suitable for large-scale applications.
-* **Reliability**: RabbitMQ provides guaranteed delivery of messages, ensuring that messages are not lost in transit.
-
-## Use Cases
-
-RabbitMQ is commonly used in a variety of scenarios, including:
-
-* **Request/Response**: RabbitMQ can be used to implement request/response patterns, where a producer sends a request and a consumer responds with a result.
-* **Pub/Sub**: RabbitMQ can be used to implement publish/subscribe patterns, where producers publish messages and consumers subscribe to receive them.
-* **Job Queue**: RabbitMQ can be used to implement job queues, where producers send jobs and consumers process them.require 'bunny'
-
-# Create a connection to RabbitMQ
-conn = Bunny.new
-conn.start
-
-# Create a channel
-ch = conn.create_channel
-
-# Declare an exchange
-x = ch.direct('my_exchange')
-
-# Declare a queue
-q = ch.queue('my_queue')
-
-# Bind the queue to the exchange
-q.bind(x, routing_key: 'my_routing_key')
-
-# Publish a message to the exchange
-x.publish('Hello, world!', routing_key: 'my_routing_key')
-
-# Start consuming messages from the queue
-q.subscribe(block: true) do |delivery_info, properties, payload|
-  puts "Received message: #{payload}"
+      def auth_success_response(result)
+        {
+          message: "Authentication successful",
+          data: {
+            user: {
+              id: result.user.id,
+              email: result.user.email,
+              name: result.user.full_name
+            },
+            tokens: {
+              access_token: result.access_token,
+              refresh_token: result.refresh_token,
+              expires_in: 15.minutes.to_i
+            }
+          }
+        }
+      end
+    end
+  end
 end

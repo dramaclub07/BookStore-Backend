@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_03_30_193811) do
+ActiveRecord::Schema[8.0].define(version: 2025_03_31_211501) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -48,12 +48,19 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_30_193811) do
     t.bigint "user_id", null: false
     t.bigint "book_id", null: false
     t.integer "quantity"
-    t.boolean "is_deletedcls"
+    t.boolean "is_deleted", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "is_deleted", default: false, null: false
     t.index ["book_id"], name: "index_carts_on_book_id"
     t.index ["user_id"], name: "index_carts_on_user_id"
+  end
+
+  create_table "oauth_states", force: :cascade do |t|
+    t.string "state"
+    t.datetime "expires_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["state"], name: "index_oauth_states_on_state", unique: true
   end
 
   create_table "orders", force: :cascade do |t|
@@ -96,8 +103,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_30_193811) do
     t.string "refresh_token"
     t.string "github_id"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["facebook_id"], name: "index_users_on_facebook_id", unique: true
     t.index ["github_id"], name: "index_users_on_github_id", unique: true
-    t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
+    t.index ["google_id"], name: "index_users_on_google_id", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 
