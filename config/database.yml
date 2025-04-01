@@ -10,14 +10,14 @@ development:
   host: localhost
   port: 5432
   username: postgres
-  password: 9119
+  password: Vishal@2002
 
 
 test:
   <<: *default
   database:  bookstore_test_database
   username: postgres
-  password: 9119
+  password: Vishal@2002
   host: localhost
   port: 5432
 

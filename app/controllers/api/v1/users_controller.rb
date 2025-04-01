@@ -1,51 +1,41 @@
 class Api::V1::UsersController < ApplicationController
   skip_before_action :authenticate_request, only: [:create, :login, :forgot_password, :reset_password]
 
+  
   def profile
     unless @current_user
       return render json: { success: false, error: "User not authenticated" }, status: :unauthorized
     end
-
-    if request.get?
-      render json: { 
-        success: true,
-        name: @current_user.full_name || "Unknown",
-        email: @current_user.email || "No email",
-        mobile_number: @current_user.mobile_number,
-        role: @current_user.role # Add role to response
-      }, status: :ok
-    elsif request.patch?
-      current_password = profile_params[:current_password]
-      new_password = profile_params[:new_password]
-
-      if current_password.present? || new_password.present?
-        unless @current_user.authenticate(current_password)
-          return render json: { success: false, errors: ["Current password is incorrect"] }, status: :unprocessable_entity
-        end
-        unless new_password.present?
-          return render json: { success: false, errors: ["New password cannot be blank"] }, status: :unprocessable_entity
-        end
-        @current_user.password = new_password
-      end
-
-      profile_attributes = @current_user.attributes.symbolize_keys.merge(profile_params.except(:current_password, :new_password).compact)
-      Rails.logger.debug "Profile attributes: #{profile_attributes.inspect}"
+  
+    if request.put?
+      profile_attributes = profile_params.except(:current_password, :new_password).compact_blank
+      Rails.logger.debug "Current user before update: #{@current_user.attributes.inspect}"
+      Rails.logger.debug "Profile attributes to update: #{profile_attributes.inspect}"
       if @current_user.update(profile_attributes)
+        Rails.logger.debug "User updated successfully: #{@current_user.attributes.inspect}"
         render json: { 
           success: true,
           message: "Profile updated successfully",
           name: @current_user.full_name,
           email: @current_user.email,
           mobile_number: @current_user.mobile_number,
-          role: @current_user.role # Add role to response
+          role: @current_user.role
         }, status: :ok
       else
-        Rails.logger.debug "Update errors: #{@current_user.errors.full_messages}"
+        Rails.logger.debug "Update failed with errors: #{@current_user.errors.full_messages.inspect}"
         render json: { 
           success: false,
           errors: @current_user.errors.full_messages 
         }, status: :unprocessable_entity
       end
+    else
+      render json: { 
+        success: true,
+        name: @current_user.full_name,
+        email: @current_user.email,
+        mobile_number: @current_user.mobile_number,
+        role: @current_user.role
+      }, status: :ok
     end
   rescue StandardError => e
     Rails.logger.error "Profile update error: #{e.message}\n#{e.backtrace.join("\n")}"
