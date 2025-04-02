@@ -48,10 +48,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_30_193811) do
     t.bigint "user_id", null: false
     t.bigint "book_id", null: false
     t.integer "quantity"
-    t.boolean "is_deletedcls"
+    t.boolean "is_deleted", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "is_deleted", default: false, null: false
     t.index ["book_id"], name: "index_carts_on_book_id"
     t.index ["user_id"], name: "index_carts_on_user_id"
   end

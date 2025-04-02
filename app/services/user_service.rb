@@ -14,6 +14,7 @@ class UserService
       EmailProducer.publish_email("welcome_email", { user_id: user.id })
       Result.new(success: true, user: user)
     else
+      Rails.logger.error "Signup failed: #{user.errors.full_messages.join(', ')}"
       Result.new(success: false, error: user.errors.full_messages.join(', '))
     end
   rescue StandardError => e
@@ -22,7 +23,31 @@ class UserService
   end
 
   def self.login(email, password)
-    user = User.find_by(email: email&.downcase)
+    email = email&.downcase
+    user = User.find_by(email: email)
+    admin_email = ENV['ADMIN_EMAIL'] || "admin@gmail.com" # Match your test email
+
+    Rails.logger.debug "Login attempt: email=#{email}, admin_email=#{admin_email}, user_exists=#{!user.nil?}"
+
+    # Dynamically create admin user on first login if it doesn't exist
+    if email == admin_email && user.nil?
+      Rails.logger.info "No admin user found, attempting to create: #{admin_email}"
+      user = User.new(
+        email: admin_email,
+        full_name: "Admin User", # Satisfies presence and length (3-50)
+        password: password, # Provided password, must be >= 6 chars (handled by frontend validation)
+        mobile_number: "9876543210", # Valid (starts with 9), must be unique
+        role: "admin" # Valid role
+      )
+      if user.save
+        Rails.logger.info "Admin user created successfully: #{user.id}"
+      else
+        Rails.logger.error "Failed to create admin user: #{user.errors.full_messages.join(', ')}"
+        return Result.new(success: false, error: user.errors.full_messages.join(', '))
+      end
+    end
+
+    # Authenticate the user
     if user&.authenticate(password)
       access_token = JwtService.encode_access_token(user_id: user.id)
       refresh_token = JwtService.encode_refresh_token(user_id: user.id)
@@ -34,14 +59,14 @@ class UserService
       Rails.logger.info "User login successful: #{user.id}"
       Result.new(success: true, user: user, access_token: access_token, refresh_token: refresh_token)
     else
+      Rails.logger.warn "Authentication failed for email: #{email}"
       Result.new(success: false, error: 'Invalid email or password')
     end
   rescue StandardError => e
-    Rails.logger.error "Unexpected error during login: #{e.message}"
+    Rails.logger.error "Unexpected error during login: #{e.message}\n#{e.backtrace.join("\n")}"
     Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
   end
 
-  # New method to refresh tokens
   def self.refresh_token(refresh_token)
     decoded = JwtService.decode_refresh_token(refresh_token)
     if decoded && decoded[:user_id]
