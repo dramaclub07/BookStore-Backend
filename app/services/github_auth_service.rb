@@ -13,35 +13,35 @@ class GithubAuthService
       Rails.logger.error("Failed to obtain access token: #{token_response.code} - #{token_response.parsed_response}")
       return Result.new(false, :unauthorized, "Failed to obtain access token")
     end
-  
+
     access_token = token_response.parsed_response["access_token"]
     Rails.logger.info("Access token obtained: #{access_token}")
-  
+
     # Fetch user data from GitHub
     user_data = fetch_user_data(access_token)
     unless user_data.success?
       Rails.logger.error("Failed to fetch user data: #{user_data.code} - #{user_data.parsed_response}")
       return Result.new(false, :unauthorized, "Failed to fetch user data")
     end
-  
+
     Rails.logger.info("User data fetched: #{user_data.parsed_response}")
-  
-    # Find or create user in your app
+
+    # Find or create user in your app using github_id
     user = find_or_create_user(user_data.parsed_response, access_token)
     unless user
       Rails.logger.error("Failed to create user with data: #{user_data.parsed_response}")
       return Result.new(false, :internal_server_error, "Failed to create user")
     end
-  
+
     Rails.logger.info("User created/found: #{user.email}")
-  
+
     # Generate tokens
     access_token, refresh_token = generate_tokens(user)
     unless access_token && refresh_token
       Rails.logger.error("Failed to generate tokens for user: #{user.email}")
       return Result.new(false, :internal_server_error, "Failed to generate authentication tokens")
     end
-  
+
     Result.new(true, :ok, nil, user: user, access_token: access_token, refresh_token: refresh_token)
   end
 
@@ -71,29 +71,45 @@ class GithubAuthService
   end
 
   def find_or_create_user(user_data, access_token)
-    email = user_data["email"]
-    unless email
-      # If email is not public, fetch it using the emails API
-      email = fetch_user_email(access_token)
-      Rails.logger.info("Fetched email: #{email}")
-    end
-    unless email
-      Rails.logger.error("No email available for user: #{user_data['login']}")
+    github_id = user_data["id"].to_s
+    unless github_id
+      Rails.logger.error("No GitHub ID available in user data: #{user_data}")
       return nil
     end
-  
-    user = User.find_or_create_by(email: email) do |u|
+
+    # Fetch email if not present in user_data
+    email = user_data["email"] || fetch_user_email(access_token)
+    email ||= "#{github_id}@github-no-email.com" # Fallback if no email is available
+
+    # Find existing user by github_id or initialize a new one
+    user = User.where(github_id: github_id).first_or_initialize do |u|
       u.full_name = user_data["name"] || user_data["login"]
       u.password = SecureRandom.hex(16) # Random password for OAuth users
-      u.github_id = user_data["id"].to_s # Set github_id to the GitHub user ID
       u.role = "user" # Set default role
     end
-  
-    unless user.persisted?
+
+    # Set email and handle conflicts
+    if user.new_record?
+      user.email = email
+      if User.exists?(email: email)
+        existing_user = User.find_by(email: email)
+        if existing_user.github_id.nil?
+          # Link GitHub account to existing user if no github_id is set
+          existing_user.update(github_id: github_id, full_name: user_data["name"] || user_data["login"])
+          return existing_user
+        else
+          # Use a unique email to avoid conflict
+          user.email = "#{github_id}+#{email}"
+        end
+      end
+    end
+
+    # Save the user and handle validation errors
+    unless user.save
       Rails.logger.error("User validation errors: #{user.errors.full_messages}")
       return nil
     end
-  
+
     user
   end
 
@@ -116,8 +132,8 @@ class GithubAuthService
   end
 
   def generate_tokens(user)
-    access_token = JwtService.encode_access_token({ user_id: user.id }, 15.minutes.from_now.to_i) # Use JwtService
-    refresh_token = JwtService.encode_refresh_token({ user_id: user.id }, 30.days.from_now.to_i) # Use JwtService
+    access_token = JwtService.encode_access_token({ user_id: user.id }, 15.minutes.from_now.to_i)
+    refresh_token = JwtService.encode_refresh_token({ user_id: user.id }, 30.days.from_now.to_i)
     [access_token, refresh_token]
   end
 

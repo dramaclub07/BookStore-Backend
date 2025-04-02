@@ -14,30 +14,15 @@ RSpec.describe GithubAuthService, type: :service do
       allow(JwtService).to receive(:encode_refresh_token).and_return(mock_refresh_token)
     end
 
-    # Shared examples for successful authentication
-    shared_examples "successful authentication" do |expected_email|
-      it "returns a success result with tokens" do
-        result = GithubAuthService.new(github_code).authenticate
-        expect(result.success).to be true
-        expect(result.user.email).to eq(expected_email)
-        expect(result.access_token).to eq(mock_access_token)
-        expect(result.refresh_token).to eq(mock_refresh_token)
-        expect(result.error).to be_nil
-        expect(result.status).to eq(:ok)
-      end
-    end
-
     context "when GitHub code is valid and user exists" do
-      let(:user) { create(:user, :with_github, github_id: "12345", email: "testuser@gmail.com", full_name: "Test User", password: "temp12345") }
+      let(:user) { create(:user, :with_github, github_id: "12345", email: "testuser#{SecureRandom.hex(4)}@gmail.com", full_name: "Test User", password: "temp12345") } # Unique email
 
       before do
         stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
           .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
-        stub_request(:get, GithubAuthService::GITHUB_USER_URI)
-          .with(headers: { 'Authorization' => "token #{mock_github_token}" })
-          .to_return(status: 200, body: { id: "12345", email: "testuser@gmail.com", login: "testuser", name: "Test User" }.to_json, headers: { "Content-Type" => "application/json" })
-        allow(JwtService).to receive(:decode_access_token).and_return({ user_id: user.id, exp: 15.minutes.from_now.to_i, role: "user" })
-        allow(JwtService).to receive(:decode_refresh_token).and_return({ user_id: user.id, exp: 30.days.from_now.to_i, role: "user" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 200, body: { id: "12345", email: user.email, login: "testuser", name: "Test User" }.to_json, headers: { "Content-Type" => "application/json" })
       end
 
       it "returns a success result with the existing user" do
@@ -52,17 +37,15 @@ RSpec.describe GithubAuthService, type: :service do
     end
 
     context "when GitHub code is valid and user doesn’t exist" do
-      let(:new_user_email) { "newuser@gmail.com" }
+      let(:new_user_email) { "newuser#{SecureRandom.hex(4)}@gmail.com" } # Unique email
       let(:new_user_github_id) { "67890" }
 
       before do
         stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
           .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
-        stub_request(:get, GithubAuthService::GITHUB_USER_URI)
-          .with(headers: { 'Authorization' => "token #{mock_github_token}" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
           .to_return(status: 200, body: { id: new_user_github_id, email: new_user_email, login: "newuser", name: "New User" }.to_json, headers: { "Content-Type" => "application/json" })
-        allow(JwtService).to receive(:decode_access_token).and_return({ user_id: 1, exp: 15.minutes.from_now.to_i, role: "user" })
-        allow(JwtService).to receive(:decode_refresh_token).and_return({ user_id: 1, exp: 30.days.from_now.to_i, role: "user" })
       end
 
       it "creates a user and returns success with tokens" do
@@ -80,18 +63,91 @@ RSpec.describe GithubAuthService, type: :service do
     end
 
     context "when GitHub code is invalid" do
-      let(:invalid_code) { "invalid_code" }
-
       before do
         stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
           .to_return(status: 401, body: { error: "invalid_code" }.to_json, headers: { "Content-Type" => "application/json" })
       end
 
       it "returns a failure result" do
-        result = GithubAuthService.new(invalid_code).authenticate
+        result = GithubAuthService.new("invalid_code").authenticate
         expect(result.success).to be false
-        expect(result.error).to eq("invalid_code")
+        expect(result.error).to eq("Failed to obtain access token")
         expect(result.status).to eq(:unauthorized)
+      end
+    end
+
+    context "when fetching user data fails" do
+      before do
+        stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
+          .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 403, body: { error: "forbidden" }.to_json, headers: { "Content-Type" => "application/json" })
+      end
+
+      it "returns a failure result" do
+        result = GithubAuthService.new(github_code).authenticate
+        expect(result.success).to be false
+        expect(result.error).to eq("Failed to fetch user data")
+        expect(result.status).to eq(:unauthorized)
+      end
+    end
+
+    context "when user creation fails due to missing email" do
+      before do
+        stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
+          .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 200, body: { id: "99999", login: "noemailuser", name: "No Email" }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, "https://api.github.com/user/emails")
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 200, body: [].to_json, headers: { "Content-Type" => "application/json" }) # No emails
+      end
+
+      it "returns a failure result" do
+        result = GithubAuthService.new(github_code).authenticate
+        expect(result.success).to be false
+        expect(result.error).to eq("Failed to create user")
+        expect(result.status).to eq(:internal_server_error)
+      end
+    end
+
+    context "when token generation fails" do
+      before do
+        stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
+          .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 200, body: { id: "22222", email: "tokenfail#{SecureRandom.hex(4)}@gmail.com", login: "tokenfail", name: "Token Fail" }.to_json, headers: { "Content-Type" => "application/json" })
+        allow(JwtService).to receive(:encode_access_token).and_return(nil) # Simulate token generation failure
+      end
+
+      it "returns a failure result" do
+        result = GithubAuthService.new(github_code).authenticate
+        expect(result.success).to be false
+        expect(result.error).to eq("Failed to generate authentication tokens")
+        expect(result.status).to eq(:internal_server_error)
+      end
+    end
+
+    context "when fetching user email fails" do
+      before do
+        stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
+          .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, GithubAuthService::GITHUB_API_URI)
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 200, body: { id: "33333", login: "noemailuser", name: "No Email" }.to_json, headers: { "Content-Type" => "application/json" })
+        stub_request(:get, "https://api.github.com/user/emails")
+          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
+          .to_return(status: 403, body: { error: "forbidden" }.to_json, headers: { "Content-Type" => "application/json" })
+      end
+
+      it "returns a failure result" do
+        result = GithubAuthService.new(github_code).authenticate
+        expect(result.success).to be false
+        expect(result.error).to eq("Failed to create user")
+        expect(result.status).to eq(:internal_server_error)
       end
     end
   end
