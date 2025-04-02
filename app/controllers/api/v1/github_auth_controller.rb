@@ -1,13 +1,13 @@
 module Api
   module V1
     class GithubAuthController < ApplicationController
-      skip_before_action :authenticate_request, only: [:login, :callback]
+      skip_before_action :authenticate_request, only: :login
 
       def login
-        redirect_to "#{GithubAuthService::GITHUB_AUTH_URI}?client_id=#{ENV['GITHUB_CLIENT_ID']}&redirect_uri=#{github_callback_url}", allow_other_host: true
-      end
+        unless params[:code].present?
+          return render json: { error: "GitHub code is required" }, status: :bad_request
+        end
 
-      def callback
         result = GithubAuthService.new(params[:code]).authenticate
         if result.success
           render json: {
@@ -15,17 +15,11 @@ module Api
             user: { email: result.user.email, full_name: result.user.full_name },
             access_token: result.access_token,
             refresh_token: result.refresh_token,
-            expires_in: 15 * 60
+            expires_in: 15 * 60 # 15 minutes
           }, status: :ok
         else
           render json: { error: result.error }, status: result.status
         end
-      end
-
-      private
-
-      def github_callback_url
-        'http://localhost:3000/api/v1/github_auth/callback'
       end
     end
   end

@@ -1,120 +1,136 @@
-require 'net/http'
-require 'json'
-
 class GithubAuthService
-  Result = Struct.new(:success, :user, :access_token, :refresh_token, :error, :status)
-
-  GITHUB_AUTH_URI = 'https://github.com/login/oauth/authorize'
-  GITHUB_TOKEN_URI = 'https://github.com/login/oauth/access_token'
-  GITHUB_USER_URI = 'https://api.github.com/user'
+  GITHUB_TOKEN_URI = "https://github.com/login/oauth/access_token".freeze
+  GITHUB_API_URI = "https://api.github.com/user".freeze
 
   def initialize(code)
     @code = code
-    @client_id = ENV['GITHUB_CLIENT_ID']
-    @client_secret = ENV['GITHUB_CLIENT_SECRET']
   end
 
   def authenticate
-    Rails.logger.info "Received GitHub code: #{@code}"
-    return Result.new(false, nil, nil, nil, "No code provided", :bad_request) if @code.blank?
-
+    # Exchange code for access token
     token_response = exchange_code_for_token
-    unless token_response[:success]
-      Rails.logger.error "Token exchange failed: #{token_response[:error]}"
-      return Result.new(false, nil, nil, nil, token_response[:error], token_response[:status])
+    unless token_response.success?
+      Rails.logger.error("Failed to obtain access token: #{token_response.code} - #{token_response.parsed_response}")
+      return Result.new(false, :unauthorized, "Failed to obtain access token")
     end
-
-    access_token = token_response[:access_token]
+  
+    access_token = token_response.parsed_response["access_token"]
+    Rails.logger.info("Access token obtained: #{access_token}")
+  
+    # Fetch user data from GitHub
     user_data = fetch_user_data(access_token)
-    unless user_data[:success]
-      Rails.logger.error "User data fetch failed: #{user_data[:error]}"
-      return Result.new(false, nil, nil, nil, user_data[:error], user_data[:status])
+    unless user_data.success?
+      Rails.logger.error("Failed to fetch user data: #{user_data.code} - #{user_data.parsed_response}")
+      return Result.new(false, :unauthorized, "Failed to fetch user data")
     end
-
-    user = find_or_create_user(user_data[:data])
-    unless user.persisted?
-      Rails.logger.error "Validation failed: #{user.errors.full_messages.inspect}"
-      return Result.new(false, nil, nil, nil, "Validation failed: #{user.errors.full_messages.join(', ')}", :unprocessable_entity)
+  
+    Rails.logger.info("User data fetched: #{user_data.parsed_response}")
+  
+    # Find or create user in your app
+    user = find_or_create_user(user_data.parsed_response, access_token)
+    unless user
+      Rails.logger.error("Failed to create user with data: #{user_data.parsed_response}")
+      return Result.new(false, :internal_server_error, "Failed to create user")
     end
-
-    tokens = generate_tokens(user)
-    decoded_access = JwtService.decode_access_token(tokens[:access_token])
-    decoded_refresh = JwtService.decode_refresh_token(tokens[:refresh_token])
-    if decoded_access.nil? || decoded_refresh.nil?
-      Rails.logger.error "Token generation failed - Access: #{tokens[:access_token]}, Refresh: #{tokens[:refresh_token]}"
-      return Result.new(false, nil, nil, nil, "Failed to generate valid tokens", :internal_server_error)
+  
+    Rails.logger.info("User created/found: #{user.email}")
+  
+    # Generate tokens
+    access_token, refresh_token = generate_tokens(user)
+    unless access_token && refresh_token
+      Rails.logger.error("Failed to generate tokens for user: #{user.email}")
+      return Result.new(false, :internal_server_error, "Failed to generate authentication tokens")
     end
-
-    Result.new(true, user, tokens[:access_token], tokens[:refresh_token], nil, :ok)
+  
+    Result.new(true, :ok, nil, user: user, access_token: access_token, refresh_token: refresh_token)
   end
 
   private
 
   def exchange_code_for_token
-    uri = URI(GITHUB_TOKEN_URI)
-    response = Net::HTTP.post_form(uri, {
-      client_id: @client_id,
-      client_secret: @client_secret,
-      code: @code,
-      redirect_uri: 'http://localhost:3000/api/v1/github_auth/callback'
-    })
-
-    body = JSON.parse(response.body)
-    if response.is_a?(Net::HTTPSuccess) && body['access_token']
-      Rails.logger.info "GitHub access token received: #{body['access_token'][0..10]}..."
-      { success: true, access_token: body['access_token'] }
-    else
-      { success: false, error: body['error'] || 'Token exchange failed', status: :unauthorized }
-    end
-  rescue StandardError => e
-    { success: false, error: "Token exchange error: #{e.message}", status: :internal_server_error }
+    HTTParty.post(
+      GITHUB_TOKEN_URI,
+      body: {
+        client_id: ENV["GITHUB_CLIENT_ID"],
+        client_secret: ENV["GITHUB_CLIENT_SECRET"],
+        code: @code,
+        redirect_uri: "http://127.0.0.1:5500/pages/login.html"
+      },
+      headers: { "Accept" => "application/json" }
+    )
   end
 
   def fetch_user_data(access_token)
-    uri = URI(GITHUB_USER_URI)
-    request = Net::HTTP::Get.new(uri)
-    request['Authorization'] = "token #{access_token}"
-    request['Accept'] = 'application/json'
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(request) }
-
-    if response.is_a?(Net::HTTPSuccess)
-      Rails.logger.info "GitHub user data: #{response.body}"
-      { success: true, data: JSON.parse(response.body) }
-    else
-      { success: false, error: 'Failed to fetch user data', status: :unauthorized }
-    end
-  rescue StandardError => e
-    { success: false, error: "User data fetch error: #{e.message}", status: :internal_server_error }
+    HTTParty.get(
+      GITHUB_API_URI,
+      headers: {
+        "Authorization" => "Bearer #{access_token}",
+        "User-Agent" => "Rails GitHub OAuth"
+      }
+    )
   end
 
-  def find_or_create_user(data)
-    user = User.find_by(github_id: data['id']) || User.find_by(email: data['email'])
-    if user
-      user.update(github_id: data['id']) unless user.github_id
-      Rails.logger.info "Updated existing user: #{user.id}"
-    else
-      user = User.new(
-        github_id: data['id'],
-        email: data['email'] || "#{data['login']}@github.com",
-        full_name: data['name'] || data['login'],
-        password: "temp12345"
-      )
-      Rails.logger.info "New user attributes: #{user.attributes.inspect}"
-      user.save!
-      Rails.logger.info "New user created: #{user.id}"
+  def find_or_create_user(user_data, access_token)
+    email = user_data["email"]
+    unless email
+      # If email is not public, fetch it using the emails API
+      email = fetch_user_email(access_token)
+      Rails.logger.info("Fetched email: #{email}")
     end
+    unless email
+      Rails.logger.error("No email available for user: #{user_data['login']}")
+      return nil
+    end
+  
+    user = User.find_or_create_by(email: email) do |u|
+      u.full_name = user_data["name"] || user_data["login"]
+      u.password = SecureRandom.hex(16) # Random password for OAuth users
+      u.github_id = user_data["id"].to_s # Set github_id to the GitHub user ID
+      u.role = "user" # Set default role
+    end
+  
+    unless user.persisted?
+      Rails.logger.error("User validation errors: #{user.errors.full_messages}")
+      return nil
+    end
+  
     user
   end
 
-  def generate_tokens(user)
-    access_token_payload = { user_id: user.id }
-    refresh_token_payload = { user_id: user.id }
-    access_exp = 15.minutes.from_now.to_i
-    refresh_exp = 30.days.from_now.to_i
+  def fetch_user_email(access_token)
+    response = HTTParty.get(
+      "https://api.github.com/user/emails",
+      headers: {
+        "Authorization" => "Bearer #{access_token}",
+        "User-Agent" => "Rails GitHub OAuth"
+      }
+    )
+    if response.success?
+      emails = response.parsed_response
+      primary_email = emails.find { |e| e["primary"] && e["verified"] }
+      primary_email&.dig("email")
+    else
+      Rails.logger.error("Failed to fetch user emails: #{response.code} - #{response.parsed_response}")
+      nil
+    end
+  end
 
-    access_token = JwtService.encode_access_token(access_token_payload, access_exp)
-    refresh_token = JwtService.encode_refresh_token(refresh_token_payload, refresh_exp)
-    Rails.logger.info "Access token expires: #{Time.at(access_exp).utc}, Refresh: #{Time.at(refresh_exp).utc}"
-    { access_token: access_token, refresh_token: refresh_token }
+  def generate_tokens(user)
+    access_token = JwtService.encode_access_token({ user_id: user.id }, 15.minutes.from_now.to_i) # Use JwtService
+    refresh_token = JwtService.encode_refresh_token({ user_id: user.id }, 30.days.from_now.to_i) # Use JwtService
+    [access_token, refresh_token]
+  end
+
+  class Result
+    attr_reader :success, :status, :error, :user, :access_token, :refresh_token
+
+    def initialize(success, status, error = nil, user: nil, access_token: nil, refresh_token: nil)
+      @success = success
+      @status = status
+      @error = error
+      @user = user
+      @access_token = access_token
+      @refresh_token = refresh_token
+    end
   end
 end
