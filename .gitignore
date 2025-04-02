@@ -1,3 +1,38 @@
+# # Ignore bundler config
+# /.bundle
+
+# # Ignore environment files
+# /.env*
+# /.scannerwork/
+# sonar-project.properties
+
+# # Ignore logs and temp files
+# /log/*
+# /tmp/*
+# !/log/.keep
+# !/tmp/.keep
+# /tmp/pids/*
+# !/tmp/pids/
+# !/tmp/pids/.keep
+
+# # Ignore storage and assets
+# /storage/*
+# !/storage/.keep
+# /tmp/storage/*
+# !/tmp/storage/
+# !/tmp/storage/.keep
+# /public/assets
+
+# # Ignore sensitive config
+# /config/master.key
+# /config/databases.yml
+# /Gemfile.lock
+# /db/schema.rb
+
+# # Ignore test artifacts
+# coverage/
+# failures.txt.
+
 # Ignore bundler config
 /.bundle
 
@@ -31,4 +66,3 @@ sonar-project.properties
 
 # Ignore test artifacts
 coverage/
-failures.txt.

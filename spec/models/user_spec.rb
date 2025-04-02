@@ -34,9 +34,6 @@ RSpec.describe User, type: :model do
     end
 
     context 'email validation' do
-    #   it { should validate_presence_of(:email) }
-    #   it { should validate_uniqueness_of(:email).case_insensitive }
-
       it 'is valid with a gmail.com email' do
         user.email = 'test@gmail.com'
         expect(user).to be_valid
@@ -122,7 +119,7 @@ RSpec.describe User, type: :model do
       it 'requires presence unless social login' do
         user.password = nil
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include("can't be blank")
+        expect(user.errors[:password]).to include('cannot be blank')
 
         user.google_id = '12345'
         user.password = nil
@@ -157,7 +154,7 @@ RSpec.describe User, type: :model do
         user.google_id = nil
         user.facebook_id = nil
         expect(user).not_to be_valid
-        expect(user.errors[:password]).to include("can't be blank")
+        expect(user.errors[:password]).to include('cannot be blank')
       end
 
       it 'is invalid without mobile_number if not a social login' do

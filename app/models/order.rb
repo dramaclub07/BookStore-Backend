@@ -9,6 +9,7 @@ class Order < ApplicationRecord
 
   before_validation :calculate_total_price
 
+  private
 
   def calculate_total_price
     self.total_price = quantity * price_at_purchase if price_at_purchase.present? && quantity.present?

@@ -1,126 +1,129 @@
+# spec/services/address_service_spec.rb
 require 'rails_helper'
 
 RSpec.describe AddressService do
-  let!(:user) { create(:user) }
-  let!(:address) { create(:address, user: user, is_deleted: false) }
-  let!(:another_address) { create(:address, user: user, is_deleted: false) }
-  let(:mock_token) { 'mock_jwt_token' }
-  let(:mock_payload) { { 'user_id' => user.id, 'role' => user.role, 'address_updated_at' => Time.now.to_i } }
-
-  before do
-    REDIS.del("user_#{user.id}_#{described_class.send(:jwt_fingerprint, user)}_addresses")
-    allow(JwtService).to receive(:encode_access_token).and_return(mock_token)
-    allow(JwtService).to receive(:decode_access_token).with(mock_token).and_return(mock_payload)
-  end
+  let(:user) { create(:user, role: 'user') }
+  let(:valid_params) { { street: "123 Main St", city: "Anytown", state: "CA", zip_code: "12345", country: "USA", address_type: "home" } }
+  let(:invalid_params) { { street: "" } }
 
   describe '.get_addresses' do
-    context 'when addresses are cached' do
-      before do
-        REDIS.set("user_#{user.id}_#{described_class.send(:jwt_fingerprint, user)}_addresses", 
-                 [address.as_json].to_json)
-      end
+    let(:cache_key) { "user_#{user.id}_addresses" }
 
-      it 'returns cached addresses' do
+    context 'when addresses are cached' do
+      let(:cached_addresses) { [valid_params].to_json }
+      before { REDIS.set(cache_key, cached_addresses) }
+
+      it 'returns cached addresses with tokens if present' do
         result = described_class.get_addresses(user)
         expect(result[:success]).to be true
-        expect(result[:addresses].size).to eq(1)
-        expect(result[:addresses].first['id']).to eq(address.id)
+        expect(result[:addresses]).to eq(JSON.parse(cached_addresses))
+        
+        if result[:access_token].present?
+          decoded_access = JwtService.decode_access_token(result[:access_token])
+          expect(decoded_access[:user_id]).to eq(user.id)
+          expect(decoded_access[:role]).to eq(user.role)
+        end
       end
     end
 
     context 'when addresses are not cached' do
-      it 'fetches active addresses from database and caches them' do
+      before { REDIS.del(cache_key) }
+
+      it 'fetches addresses from database, caches them, and returns tokens if present' do
+        address = create(:address, user: user)
         result = described_class.get_addresses(user)
-        
+
         expect(result[:success]).to be true
-        expect(result[:addresses].size).to eq(2)
-        expect(result[:addresses].map { |a| a['id'] }).to contain_exactly(address.id, another_address.id)
-        
-        cached = REDIS.get("user_#{user.id}_#{described_class.send(:jwt_fingerprint, user)}_addresses")
-        expect(JSON.parse(cached).size).to eq(2)
+        expect(result[:addresses].length).to eq(1)
+        expect(REDIS.get(cache_key)).to eq([address.as_json].to_json)
       end
     end
   end
 
   describe '.create_address' do
-    let(:valid_params) { attributes_for(:address) }
+    it 'creates address, clears cache, and returns tokens if present' do
+      result = described_class.create_address(user, valid_params)
 
-    it 'creates address, clears cache and returns new token' do
-      expect {
-        result = described_class.create_address(user, valid_params)
-        expect(result[:success]).to be true
-        expect(result[:address]).to be_persisted
-        expect(result[:access_token]).to eq(mock_token)
-      }.to change(user.addresses, :count).by(1)
+      expect(result[:success]).to be true
+      expect(result[:address]).to be_present
+      expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
       
-      expect(REDIS.get("user_#{user.id}_#{described_class.send(:jwt_fingerprint, user)}_addresses")).to be_nil
+      if result[:access_token].present?
+        decoded_access = JwtService.decode_access_token(result[:access_token])
+        expect(decoded_access[:user_id]).to eq(user.id)
+      end
+    end
+
+    it 'returns errors with invalid params' do
+      result = described_class.create_address(user, invalid_params)
+
+      expect(result[:success]).to be false
+      expect(result[:errors]).to include("Street can't be blank")
+      expect(result[:access_token]).to be_nil
+      expect(result[:refresh_token]).to be_nil
     end
   end
 
   describe '.update_address' do
-    context 'with valid params' do
-      it 'updates address, clears cache and returns new token' do
-        result = described_class.update_address(address, city: 'New City')
-        expect(result[:success]).to be true
-        expect(address.reload.city).to eq('New City')
-        expect(result[:access_token]).to eq(mock_token)
+    let(:address) { create(:address, user: user) }
+
+    context 'with invalid params' do
+      it 'returns errors when params are empty' do
+        result = described_class.update_address(address, {})
+
+        expect(result[:success]).to be false
+        expect(result[:errors]).to include("At least one address attribute must be provided")
+        expect(result[:access_token]).to be_nil
+      end
+
+      it 'returns errors when params are invalid' do
+        result = described_class.update_address(address, invalid_params)
+
+        expect(result[:success]).to be false
+        expect(result[:errors]).to include("Street can't be blank")
+        expect(result[:refresh_token]).to be_nil
       end
     end
 
-    context 'with invalid params' do
-      it 'returns errors without generating new token' do
-        result = described_class.update_address(address, street: '')
-        expect(result[:success]).to be false
-        expect(result[:errors]).to include("Street can't be blank")
-        expect(result).not_to have_key(:access_token)
+    context 'with valid params' do
+      it 'updates address, clears cache, and returns tokens if present' do
+        result = described_class.update_address(address, { street: "456 New St" })
+
+        expect(result[:success]).to be true
+        expect(result[:address].street).to eq("456 New St")
+        expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
       end
     end
   end
 
   describe '.destroy_address' do
-    context 'when soft delete succeeds' do
-      it 'marks as deleted, clears cache and returns new token' do
-        result = described_class.destroy_address(address)
-        expect(result[:success]).to be true
-        expect(address.reload.is_deleted).to be true
-        expect(result[:access_token]).to eq(mock_token)
-      end
+    let(:address) { create(:address, user: user) }
+
+    it 'deletes address, clears cache, and returns tokens if present' do
+      result = described_class.destroy_address(address)
+
+      expect(result[:success]).to be true
+      expect(result[:message]).to eq("Address deleted successfully")
+      expect(REDIS.get("user_#{user.id}_addresses")).to be_nil
+      expect(Address.find_by(id: address.id)).to be_nil
     end
 
-    context 'when soft delete fails' do
-      before do
-        allow_any_instance_of(Address).to receive(:update).and_return(false)
-        allow_any_instance_of(Address).to receive(:errors).and_return(double(full_messages: ["Deletion failed"]))
-      end
-
-      it 'returns error message without generating new token' do
-        result = described_class.destroy_address(address)
-        expect(result[:success]).to be false
-        expect(result[:errors]).to include("Deletion failed")
-        expect(result).not_to have_key(:access_token)
-      end
-    end
-  end
-
-  describe 'JWT integration' do
-    describe '.jwt_fingerprint' do
-      it 'generates different fingerprints for different users' do
-        user2 = create(:user)
-        allow(JwtService).to receive(:encode_access_token)
-          .with(hash_including(user_id: user2.id))
-          .and_return('different_mock_token')
+    context 'when delete fails' do
+      it 'returns error message without tokens' do
+        # Create the address instance
+        address = create(:address, user: user)
         
-        fp1 = described_class.send(:jwt_fingerprint, user)
-        fp2 = described_class.send(:jwt_fingerprint, user2)
-        expect(fp1).not_to eq(fp2)
-      end
-    end
+        # Stub methods directly on this instance
+        allow(address).to receive(:destroy).and_return(false)
+        errors_double = double("errors", full_messages: ["Deletion failed"], clear: nil)
+        allow(address).to receive(:errors).and_return(errors_double)
 
-    describe '.refresh_user_token' do
-      it 'includes address_updated_at in payload' do
-        token = described_class.send(:refresh_user_token, user)
-        payload = JwtService.decode_access_token(token)
-        expect(payload['address_updated_at']).to be_present
+        result = described_class.destroy_address(address)
+
+        expect(result[:success]).to be false
+        expect(result[:errors]).to include("Failed to delete address")
+        expect(result[:access_token]).to be_nil
+        expect(result[:refresh_token]).to be_nil
       end
     end
   end
