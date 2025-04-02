@@ -1,136 +1,213 @@
-# spec/services/orders_service_spec.rb
 require 'rails_helper'
 
 RSpec.describe OrdersService, type: :service do
   let(:user) { create(:user) }
   let(:book) { create(:book, discounted_price: 200, book_mrp: 250) }
   let(:address) { create(:address, user: user) }
+  let(:cart_item) { create(:cart, user: user, book: book, quantity: 2, is_deleted: false) }
 
-  describe '.fetch_user_orders' do
-    it 'returns all user orders' do
-      create(:order, user: user, book: book, address: address)
-      result = OrdersService.fetch_user_orders(user)
+  describe '.fetch_all_orders' do
+    it 'returns all orders for the user' do
+      order = create(:order, user: user, book: book)
+      result = OrdersService.fetch_all_orders(user)
       expect(result[:success]).to be true
-      expect(result[:orders].length).to eq(1)
-    end
-  end
-
-  describe '.fetch_order' do
-    let(:order) { create(:order, user: user, book: book, address: address) }
-
-    it 'returns the order' do
-      result = OrdersService.fetch_order(user, order.id)
-      expect(result[:success]).to be true
-      expect(result[:order].id).to eq(order.id)
-    end
-
-    it 'returns error for non-existent order' do
-      result = OrdersService.fetch_order(user, 9999)
-      expect(result[:success]).to be false
-      expect(result[:message]).to eq("Order not found")
+      expect(result[:orders]).to eq([order])
     end
   end
 
   describe '.create_order' do
-    before do
-      # Setup cart item for all tests since create_order requires it
-      create(:cart, user: user, book: book, quantity: 2)
-    end
-
-    context 'when all parameters are valid including address_id' do
-      let(:order_params) { { book_id: book.id, quantity: 2, address_id: address.id } }
-
-      it 'creates an order successfully' do
-        result = OrdersService.create_order(user, order_params)
-        expect(result[:success]).to be true
-        expect(result[:message]).to eq("Order placed successfully")
-        expect(result[:orders].first.book_id).to eq(book.id)
-        expect(result[:orders].first.quantity).to eq(2)
-        expect(result[:orders].first.address_id).to eq(address.id)
-        expect(result[:orders].first.total_price).to eq(400)
-      end
-    end
-
-    context 'when book_id is nil or missing' do
-      let(:order_params) { { quantity: 2, address_id: address.id } }
-
+    context 'when address_id is missing' do
+      let(:params) { { book_id: book.id, quantity: 1 } }
       it 'returns an error' do
-        user.carts.destroy_all
-        result = OrdersService.create_order(user, order_params)
+        result = OrdersService.create_order(user, params)
         expect(result[:success]).to be false
-        expect(result[:message]).to eq("Your cart is empty. Add items before placing an order.")
-      end
-    end
-
-    context 'when book does not exist' do
-      let(:order_params) { { book_id: book.id, quantity: 2, address_id: address.id } }
-
-      it 'returns an error' do
-        # Get the cart item and stub its book association to return nil
-        cart_item = user.carts.first
-        allow(cart_item).to receive(:book).and_return(nil)
-        
-        result = OrdersService.create_order(user, order_params)
-        expect(result[:success]).to be false
-        expect(result[:errors]).to include("Book must exist")
+        expect(result[:message]).to eq("Address must be provided")
       end
     end
 
     context 'when address_id is invalid' do
-      let(:order_params) { { book_id: book.id, quantity: 2, address_id: 9999 } }
-
+      let(:params) { { book_id: book.id, quantity: 1, address_id: 9999 } }
       it 'returns an error' do
-        result = OrdersService.create_order(user, order_params)
+        result = OrdersService.create_order(user, params)
         expect(result[:success]).to be false
         expect(result[:message]).to eq("Address not found")
       end
     end
 
-    context 'when quantity is zero or negative' do
-      let(:order_params) { { book_id: book.id, quantity: 0, address_id: address.id } }
+    context 'when cart is empty and order is created directly' do
+      let(:params) { { book_id: book.id, quantity: 1, address_id: address.id } }
+      it 'creates an order successfully' do
+        result = OrdersService.create_order(user, params)
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq("Order placed successfully")
+        expect(result[:orders].length).to eq(1)
+        expect(result[:orders].first.total_price).to eq(200)
+      end
+    end
 
-      it 'fails due to validation' do
-        user.carts.destroy_all
-        create(:cart, user: user, book: book, quantity: 0)
-        result = OrdersService.create_order(user, order_params)
+    context 'with existing cart items' do
+      let(:params) { { book_id: book.id, quantity: 1, address_id: address.id } }
+      it 'creates an order and clears cart' do
+        cart_item
+        expect(user.carts.active.count).to eq(1)
+        result = OrdersService.create_order(user, params)
+        expect(result[:success]).to be true
+        expect(user.carts.active.count).to eq(0)
+        expect(EmailProducer).to have_received(:publish_email).with("order_confirmation_email", hash_including(user_id: user.id))
+      end
+    end
+
+    context 'when order creation fails' do
+      let(:params) { { book_id: book.id, quantity: 0, address_id: address.id } }
+      it 'returns validation errors' do
+        result = OrdersService.create_order(user, params)
         expect(result[:success]).to be false
+        expect(result[:errors]).to be_present
         expect(result[:errors]).to include("Quantity must be greater than 0")
+      end
+    end
+
+    context 'when book_id is invalid' do
+      let(:params) { { book_id: 9999, quantity: 1, address_id: address.id } }
+      it 'returns an error' do
+        result = OrdersService.create_order(user, params)
+        expect(result[:success]).to be false
+        expect(result[:message]).to eq("Book not found")
       end
     end
   end
 
-  describe '.update_order_status' do
-    let(:order) { create(:order, user: user, book: book, address: address, status: "pending") }
-
-    it 'updates the status' do
-      result = OrdersService.update_order_status(user, order.id, "shipped")
-      expect(result[:success]).to be true
-      expect(result[:message]).to eq("Order status updated")
-      expect(result[:order].status).to eq("shipped")
+  describe '.create_order_from_cart' do
+    context 'when cart is empty' do
+      it 'returns an error' do
+        result = OrdersService.create_order_from_cart(user, address.id)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Your cart is empty. Add items before placing an order."])
+      end
     end
 
-    it 'returns error for invalid status' do
-      result = OrdersService.update_order_status(user, order.id, "invalid")
+    context 'when address_id is missing' do
+      it 'returns an error' do
+        cart_item
+        result = OrdersService.create_order_from_cart(user, nil)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Address must be provided"])
+      end
+    end
+
+    context 'when address_id is invalid' do
+      it 'returns an error' do
+        cart_item
+        result = OrdersService.create_order_from_cart(user, 9999)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Address not found"])
+      end
+    end
+
+    context 'with valid cart and address' do
+      it 'creates orders and clears cart' do
+        cart_item
+        expect(user.carts.active.count).to eq(1)
+        result = OrdersService.create_order_from_cart(user, address.id)
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq("Orders created successfully from cart")
+        expect(result[:orders].length).to eq(1)
+        expect(result[:orders].first.total_price).to eq(400)
+        expect(user.carts.active.count).to eq(0)
+        expect(EmailProducer).to have_received(:publish_email).with("order_confirmation_email", hash_including(user_id: user.id))
+      end
+    end
+
+    context 'when order creation fails in transaction' do
+      it 'rolls back and returns errors' do
+        cart_item
+        # Create an invalid order with validation errors
+        invalid_order = Order.new(quantity: 0, book_id: book.id, address_id: address.id, user_id: user.id)
+        invalid_order.valid? # Trigger validation to populate errors
+        allow_any_instance_of(Order).to receive(:save!) do
+          raise ActiveRecord::RecordInvalid.new(invalid_order)
+        end
+        result = OrdersService.create_order_from_cart(user, address.id)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to be_present
+        expect(result[:errors]).to include("Quantity must be greater than 0")
+        expect(user.carts.active.count).to eq(1) # Verify rollback
+      end
+    end
+  end
+
+  describe '.fetch_order' do
+    let(:order) { create(:order, user: user, book: book) }
+    it 'returns the order' do
+      result = OrdersService.fetch_order(user, order.id)
+      expect(result[:success]).to be true
+      expect(result[:order]).to eq(order)
+    end
+
+    it 'returns an error for invalid order id' do
+      result = OrdersService.fetch_order(user, 9999)
       expect(result[:success]).to be false
-      expect(result[:message]).to eq("Invalid status")
+      expect(result[:errors]).to eq(["Order not found"])
+    end
+  end
+
+  describe '.update_order_status' do
+    let(:order) { create(:order, user: user, book: book, status: 'pending') }
+    context 'with valid status' do
+      it 'updates the status' do
+        result = OrdersService.update_order_status(user, order.id, 'shipped')
+        expect(result[:success]).to be true
+        expect(result[:message]).to eq("Order status updated")
+        expect(order.reload.status).to eq('shipped')
+      end
+    end
+
+    context 'with invalid status' do
+      it 'returns an error' do
+        result = OrdersService.update_order_status(user, order.id, 'invalid')
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Invalid status"])
+      end
+    end
+
+    context 'with invalid order id' do
+      it 'returns an error' do
+        result = OrdersService.update_order_status(user, 9999, 'shipped')
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Order not found"])
+      end
     end
   end
 
   describe '.cancel_order' do
-    let(:order) { create(:order, user: user, book: book, address: address, status: "pending") }
-
+    let(:order) { create(:order, user: user, book: book, status: 'pending') }
     it 'cancels the order' do
       result = OrdersService.cancel_order(user, order.id)
       expect(result[:success]).to be true
       expect(result[:message]).to eq("Order cancelled successfully")
-      expect(result[:order].status).to eq("cancelled")
+      expect(order.reload.status).to eq('cancelled')
+      expect(EmailProducer).to have_received(:publish_email).with("cancel_order_email", hash_including(user_id: user.id))
     end
 
-    it 'returns error if already cancelled' do
-      order.update(status: "cancelled")
-      result = OrdersService.cancel_order(user, order.id)
-      expect(result[:success]).to be false
-      expect(result[:message]).to eq("Order is already cancelled")
+    context 'when order is already cancelled' do
+      it 'returns an error' do
+        order.update(status: 'cancelled')
+        result = OrdersService.cancel_order(user, order.id)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Order is already cancelled"])
+      end
     end
+
+    context 'with invalid order id' do
+      it 'returns an error' do
+        result = OrdersService.cancel_order(user, 9999)
+        expect(result[:success]).to be false
+        expect(result[:errors]).to eq(["Order not found"])
+      end
+    end
+  end
+
+  before do
+    allow(EmailProducer).to receive(:publish_email)
   end
 end
