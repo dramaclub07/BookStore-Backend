@@ -50,17 +50,13 @@ RSpec.describe "Api::V1::WishlistsController", type: :request do
     end
 
     context 'when user is not found' do
-      let(:non_existent_user_id) { 9999 }
-      let(:invalid_token) do
-        # Stub User.find during token encoding to avoid RecordNotFound
-        allow(User).to receive(:find).with(non_existent_user_id).and_return(double(role: 'user'))
-        JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i)
-      end
-
+      let(:non_existent_user_id) { 9999999 }
+      let(:invalid_token) { "Bearer eyJhbGciOiJIUzI1NiJ9.#{Base64.urlsafe_encode64({ user_id: non_existent_user_id }.to_json)}.signature" }
+    
       it 'returns unauthorized due to user not found' do
-        # Reset the stub for the actual request to return nil
-        allow(User).to receive(:find).with(non_existent_user_id).and_return(nil)
-        get '/api/v1/wishlists', headers: { 'Authorization' => "Bearer #{invalid_token}" }
+        allow(JwtService).to receive(:decode_access_token).and_return({ user_id: non_existent_user_id })
+        allow(User).to receive(:find).with(non_existent_user_id).and_raise(ActiveRecord::RecordNotFound)
+        get '/api/v1/wishlists', headers: { 'Authorization' => invalid_token }
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
         puts "GET #index Response body: #{response.body}" # Debugging output
@@ -119,17 +115,13 @@ RSpec.describe "Api::V1::WishlistsController", type: :request do
     end
 
     context 'when user is not found' do
-      let(:non_existent_user_id) { 9999 }
-      let(:invalid_token) do
-        # Stub User.find during token encoding to avoid RecordNotFound
-        allow(User).to receive(:find).with(non_existent_user_id).and_return(double(role: 'user'))
-        JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i)
-      end
-
+      let(:non_existent_user_id) { 9999999 }
+      let(:invalid_token) { "Bearer eyJhbGciOiJIUzI1NiJ9.#{Base64.urlsafe_encode64({ user_id: non_existent_user_id }.to_json)}.signature" }
+    
       it 'returns unauthorized due to user not found' do
-        # Reset the stub for the actual request to return nil
-        allow(User).to receive(:find).with(non_existent_user_id).and_return(nil)
-        post '/api/v1/wishlists', params: { book_id: book.id }, headers: { 'Authorization' => "Bearer #{invalid_token}" }
+        allow(JwtService).to receive(:decode_access_token).and_return({ user_id: non_existent_user_id })
+        allow(User).to receive(:find).with(non_existent_user_id).and_raise(ActiveRecord::RecordNotFound)
+        post '/api/v1/wishlists', params: { book_id: book.id }, headers: { 'Authorization' => invalid_token }
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
         puts "POST #toggle Response body: #{response.body}" # Debugging output
