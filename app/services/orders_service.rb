@@ -105,6 +105,13 @@ class OrdersService
     else
       { success: false, errors: order.errors.full_messages }
     end
+
+    # Clear all cart items after successful order creation
+    carts_items.destroy_all
+
+    # Send email for the last order (or adjust to send for all orders if needed)
+    EmailProducer.publish_email("order_confirmation_email", { user_id: user.id, order_id: orders.last.id })
+    { success: true, message: "Order placed successfully", orders: orders }
   end
 
   def self.create_orders_from_cart(user, carts_items, address)
