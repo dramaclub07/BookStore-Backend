@@ -1,6 +1,7 @@
+# spec/integration/wishlists_spec.rb
 require 'rails_helper'
 
-RSpec.describe Api::V1::WishlistsController, type: :request do
+RSpec.describe "Api::V1::WishlistsController", type: :request do
   let(:user) { create(:user) }
   let(:book) { create(:book) }
   let(:token) { JwtService.encode_access_token(user_id: user.id, exp: 1.hour.from_now.to_i) }
@@ -49,10 +50,16 @@ RSpec.describe Api::V1::WishlistsController, type: :request do
     end
 
     context 'when user is not found' do
-      let(:non_existent_user_id) { (User.maximum(:id) || 0) + 1 }
-      let(:invalid_token) { JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i) }
+      let(:non_existent_user_id) { 9999 }
+      let(:invalid_token) do
+        # Stub User.find during token encoding to avoid RecordNotFound
+        allow(User).to receive(:find).with(non_existent_user_id).and_return(double(role: 'user'))
+        JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i)
+      end
 
       it 'returns unauthorized due to user not found' do
+        # Reset the stub for the actual request to return nil
+        allow(User).to receive(:find).with(non_existent_user_id).and_return(nil)
         get '/api/v1/wishlists', headers: { 'Authorization' => "Bearer #{invalid_token}" }
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
@@ -112,10 +119,16 @@ RSpec.describe Api::V1::WishlistsController, type: :request do
     end
 
     context 'when user is not found' do
-      let(:non_existent_user_id) { (User.maximum(:id) || 0) + 1 }
-      let(:invalid_token) { JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i) }
+      let(:non_existent_user_id) { 9999 }
+      let(:invalid_token) do
+        # Stub User.find during token encoding to avoid RecordNotFound
+        allow(User).to receive(:find).with(non_existent_user_id).and_return(double(role: 'user'))
+        JwtService.encode_access_token(user_id: non_existent_user_id, exp: 1.hour.from_now.to_i)
+      end
 
       it 'returns unauthorized due to user not found' do
+        # Reset the stub for the actual request to return nil
+        allow(User).to receive(:find).with(non_existent_user_id).and_return(nil)
         post '/api/v1/wishlists', params: { book_id: book.id }, headers: { 'Authorization' => "Bearer #{invalid_token}" }
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
