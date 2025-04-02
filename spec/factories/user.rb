@@ -3,7 +3,7 @@ FactoryBot.define do
     full_name { Faker::Name.name }
     sequence(:email) { |n| "user#{n}@gmail.com" } # Already unique, good
     password { "Password@123" }
-    sequence(:mobile_number) { |n| "9#{format('%09d', n)}" } # Unique: 9000000001, etc.
+    sequence(:mobile_number) { |n| "9#{format('%09d', n)}" }
 
     trait :with_facebook do
       facebook_id { Faker::Number.number(digits: 15) } # Adjusted to match schema

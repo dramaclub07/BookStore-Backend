@@ -29,8 +29,8 @@ RSpec.describe Book, type: :model do
       end
 
       it 'strips whitespace from book_name' do
-        book.book_name = 'Test Book'
-        book.validate
+        book = build(:book, book_name: '  Test Book  ', author_name: 'John Doe', book_mrp: 100)
+        book.valid? # Explicitly trigger validation and callbacks
         expect(book.book_name).to eq('Test Book')
       end
     end
@@ -51,8 +51,8 @@ RSpec.describe Book, type: :model do
       end
 
       it 'strips whitespace from author_name' do
-        book.author_name = 'John Doe'
-        book.validate
+        book = build(:book, book_name: 'Test Book', author_name: '  John Doe  ', book_mrp: 100)
+        book.valid? # Explicitly trigger validation and callbacks
         expect(book.author_name).to eq('John Doe')
       end
     end

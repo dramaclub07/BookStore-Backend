@@ -95,3 +95,5 @@ gem 'bunny'
 group :test do
   gem 'webmock'
 end
+
+gem 'httparty'
