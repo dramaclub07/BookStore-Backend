@@ -182,41 +182,5 @@ RSpec.describe Api::V1::UsersController, type: :request do
     end
   end
 
-  # describe 'PUT /api/v1/users/profile' do
-  #   let(:unique_email) { "updated_#{Time.now.to_i}_#{rand(1000)}@gmail.com" }
-  #   let(:unique_mobile) { "9#{format('%09d', rand(0..999999999))}" }
-  #   let(:update_params) { { 
-  #     user: { 
-  #       full_name: 'Updated User',
-  #       email: unique_email,
-  #       mobile_number: unique_mobile
-  #     } 
-  #   } }
 
-  #   context 'when user is authenticated' do
-  #     it 'updates profile without password change' do
-  #       # Ensure the test database is clean
-  #       User.where.not(id: user.id).destroy_all
-
-  #       # Verify initial user state
-  #       puts "Initial user: #{user.attributes.inspect}"
-  #       puts "Initial password digest: #{user.password_digest}"
-  #       raise "Password digest missing" unless user.password_digest.present?
-  #       puts "Update params: #{update_params.inspect}"
-
-  #       put '/api/v1/users/profile', params: update_params, headers: headers
-
-  #       puts "Response status: #{response.status}"
-  #       puts "Response body: #{response.body}" unless response.successful?
-
-  #       expect(response).to have_http_status(:ok)
-  #       json_response = JSON.parse(response.body)
-  #       expect(json_response['success']).to be true
-  #       expect(json_response['message']).to eq('Profile updated successfully')
-  #       expect(user.reload.full_name).to eq('Updated User')
-  #       expect(user.email).to eq(unique_email)
-  #       expect(user.mobile_number).to eq(unique_mobile)
-  #     end
-  #   end
-  # end
 end

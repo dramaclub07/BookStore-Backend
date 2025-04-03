@@ -26,11 +26,11 @@ module Api
         if result[:success]
           render json: result, status: :ok
         else
-          Rails.logger.error "Wishlist toggle failed: #{result[:message]}"
+      
           render json: result, status: :unprocessable_entity
         end
       rescue StandardError => e
-        Rails.logger.error "Wishlist toggle error: #{e.message}\n#{e.backtrace.join("\n")}"
+        
         render json: { success: false, message: "Server error: #{e.message}" }, status: :internal_server_error
       end
     end

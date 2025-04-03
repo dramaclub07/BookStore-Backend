@@ -9,10 +9,9 @@ class Api::V1::UsersController < ApplicationController
   
     if request.put?
       profile_attributes = profile_params.except(:current_password, :new_password).compact_blank
-      Rails.logger.debug "Current user before update: #{@current_user.attributes.inspect}"
-      Rails.logger.debug "Profile attributes to update: #{profile_attributes.inspect}"
+      
       if @current_user.update(profile_attributes)
-        Rails.logger.debug "User updated successfully: #{@current_user.attributes.inspect}"
+        
         render json: { 
           success: true,
           message: "Profile updated successfully",
@@ -22,7 +21,7 @@ class Api::V1::UsersController < ApplicationController
           role: @current_user.role
         }, status: :ok
       else
-        Rails.logger.debug "Update failed with errors: #{@current_user.errors.full_messages.inspect}"
+      
         render json: { 
           success: false,
           errors: @current_user.errors.full_messages 
@@ -38,7 +37,7 @@ class Api::V1::UsersController < ApplicationController
       }, status: :ok
     end
   rescue StandardError => e
-    Rails.logger.error "Profile update error: #{e.message}\n#{e.backtrace.join("\n")}"
+
     render json: { success: false, error: "Server error: #{e.message}" }, status: :internal_server_error
   end
 
