@@ -33,7 +33,7 @@ class GithubAuthService
       return Result.new(false, :internal_server_error, "Failed to create user")
     end
 
-    Rails.logger.info("User created/found: #{user.email}")
+    Rails.logger.info("User created/found: #{user.email} (ID: #{user.id})")
 
     # Generate tokens
     access_token, refresh_token = generate_tokens(user)
@@ -80,36 +80,43 @@ class GithubAuthService
     # Fetch email if not present in user_data
     email = user_data["email"] || fetch_user_email(access_token)
     email ||= "#{github_id}@github-no-email.com" # Fallback if no email is available
+    Rails.logger.info("Initial email: #{email}")
 
-    # Find existing user by github_id or initialize a new one
-    user = User.where(github_id: github_id).first_or_initialize do |u|
-      u.full_name = user_data["name"] || user_data["login"]
-      u.password = SecureRandom.hex(16) # Random password for OAuth users
-      u.role = "user" # Set default role
+    # Find or create user by github_id
+    user = User.where(github_id: github_id).first_or_initialize
+
+    if user.new_record?
+      Rails.logger.info("Creating new user with github_id: #{github_id}")
+      user.github_id = github_id # Explicitly set github_id
+      user.email = generate_unique_email(email, github_id)
+      user.full_name = user_data["name"] || user_data["login"] || "GitHub User"
+      user.password = SecureRandom.hex(16) # Random password for OAuth users
+      user.role = "user" # Set default role
+    else
+      Rails.logger.info("Found existing user with github_id: #{github_id}, email: #{user.email}")
+      # Update full_name if changed
+      new_full_name = user_data["name"] || user_data["login"] || "GitHub User"
+      user.full_name = new_full_name if user.full_name != new_full_name
     end
 
-    # Set email and handle conflicts
-    if user.new_record?
-      user.email = email
-      if User.exists?(email: email)
-        existing_user = User.find_by(email: email)
-        if existing_user.github_id.nil?
-          # Link GitHub account to existing user if no github_id is set
-          existing_user.update(github_id: github_id, full_name: user_data["name"] || user_data["login"])
-          return existing_user
-        else
-          # Use a unique email to avoid conflict
-          user.email = "#{github_id}+#{email}"
+    # Attempt to save the user with validation bypass if necessary
+    Rails.logger.info("Attempting to save user: #{user.attributes}")
+    unless user.save
+      Rails.logger.error("Failed to save user: #{user.errors.full_messages}")
+      # If email is the only issue, force a unique email and retry
+      if user.errors[:email].present?
+        user.email = generate_unique_email(email, github_id + "-retry")
+        Rails.logger.info("Retrying with forced unique email: #{user.email}")
+        unless user.save
+          Rails.logger.error("Retry failed: #{user.errors.full_messages}")
+          return nil
         end
+      else
+        return nil
       end
     end
 
-    # Save the user and handle validation errors
-    unless user.save
-      Rails.logger.error("User validation errors: #{user.errors.full_messages}")
-      return nil
-    end
-
+    Rails.logger.info("User saved successfully: #{user.email} (ID: #{user.id})")
     user
   end
 
@@ -124,11 +131,26 @@ class GithubAuthService
     if response.success?
       emails = response.parsed_response
       primary_email = emails.find { |e| e["primary"] && e["verified"] }
-      primary_email&.dig("email")
+      email = primary_email&.dig("email")
+      Rails.logger.info("Fetched email from GitHub: #{email}")
+      email
     else
       Rails.logger.error("Failed to fetch user emails: #{response.code} - #{response.parsed_response}")
       nil
     end
+  end
+
+  def generate_unique_email(base_email, github_id)
+    email = base_email
+    counter = 1
+    Rails.logger.info("Generating unique email starting with: #{email}")
+    while User.exists?(email: email) && !User.exists?(github_id: github_id, email: email)
+      email = "#{base_email.split('@')[0]}+#{github_id}-#{counter}@#{base_email.split('@')[1]}"
+      Rails.logger.info("Email conflict detected, trying: #{email}")
+      counter += 1
+    end
+    Rails.logger.info("Unique email generated: #{email}")
+    email
   end
 
   def generate_tokens(user)
