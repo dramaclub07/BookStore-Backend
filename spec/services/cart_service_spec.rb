@@ -64,17 +64,17 @@ RSpec.describe CartService, type: :service do
     end
   end
 
-  describe '#remove_cart_item' do # Updated from toggle_cart_item
+  describe '#toggle_cart_item' do # Updated from toggle_cart_item
     let!(:cart) { create(:cart, user: user, book: book, quantity: 1, is_deleted: false) }
 
     it 'returns error for non-existent item' do
-      result = service.remove_cart_item(999)
+      result = service.toggle_cart_item(999)
       expect(result[:success]).to be false
       expect(result[:message]).to eq('Item not found in cart')
     end
 
     it 'marks the item as deleted' do # Updated from "toggles is_deleted flag"
-      result = service.remove_cart_item(book.id)
+      result = service.toggle_cart_item(book.id)
       expect(result[:success]).to be true
       expect(result[:message]).to eq('Item removed from cart.')
       expect(cart.reload.is_deleted).to be true

@@ -44,10 +44,10 @@ Rails.application.routes.draw do
       post "wishlists", to: "wishlists#toggle"
 
       get "addresses", to: "addresses#index"
-      post "addresses/create", to: "addresses#create"
+      post "addresses/create", to: "addresses#create" #should be addresses only.
       get "addresses/:id", to: "addresses#show"
-      patch "addresses/:id", to: "addresses#update"
-      delete "addresses/:id", to: "addresses#destroy"
+      patch "addresses/:id", to: "addresses#update"  #empty addresses as its patch?
+      delete "addresses/:id", to: "addresses#destroy" #empty as well
 
       # Order Management Routes (Only for Logged-in Users)
       get "orders", to: "orders#index"
