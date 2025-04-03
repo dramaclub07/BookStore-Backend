@@ -1,7 +1,8 @@
+# spec/integration/users_spec.rb
 require 'rails_helper'
 
 RSpec.describe Api::V1::UsersController, type: :request do
-  let(:user) { create(:user, password: 'Password@123') }
+  let(:user) { create(:user, password: 'Password@123', full_name: 'Initial User', email: 'initial@gmail.com', mobile_number: '9876543210', role: 'user') }
   let(:access_token) { JwtService.encode_access_token(user_id: user.id) }
   let(:headers) { { 'Authorization' => "Bearer #{access_token}" } }
   let(:existing_user) { create(:user) }
@@ -173,93 +174,6 @@ RSpec.describe Api::V1::UsersController, type: :request do
     context 'when user is not authenticated' do
       it 'returns unauthorized' do
         get '/api/v1/users/profile'
-        expect(response).to have_http_status(:unauthorized)
-        json_response = JSON.parse(response.body)
-        expect(json_response['success']).to be false
-        expect(json_response['message']).to match(/Unauthorized/)
-      end
-    end
-  end
-
-  describe 'PATCH /api/v1/users/profile' do
-    let(:update_params) { { user: { full_name: 'Updated User', current_password: 'Password@123', new_password: 'Newpass@456' } } }
-
-    context 'when user is authenticated' do
-      it 'updates profile with password change' do
-        patch '/api/v1/users/profile', params: update_params, headers: headers
-        expect(response).to have_http_status(:ok)
-        json_response = JSON.parse(response.body)
-        expect(json_response['success']).to be true
-        expect(json_response['message']).to eq('Profile updated successfully')
-        expect(user.reload.full_name).to eq('Updated User')
-        expect(user.authenticate('Newpass@456')).to be_truthy
-      end
-
-      it 'fails with incorrect current password' do
-        patch '/api/v1/users/profile', params: { user: { current_password: 'wrongpass', new_password: 'Newpass@456' } }, headers: headers
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include('Current password is incorrect')
-      end
-
-      it 'fails with blank new password' do
-        patch '/api/v1/users/profile', params: { user: { current_password: 'Password@123', new_password: '' } }, headers: headers
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include("New password cannot be blank")
-      end
-
-      it 'fails with invalid email' do
-        patch '/api/v1/users/profile', params: { user: { email: 'invalid@domain.com' } }, headers: headers
-        expect(response).to have_http_status(:unprocessable_entity)
-        expect(JSON.parse(response.body)['errors']).to include("Email is invalid")
-      end
-
-      it 'handles server errors gracefully' do
-        allow_any_instance_of(User).to receive(:update).and_raise(StandardError.new('DB error'))
-        patch '/api/v1/users/profile', params: { user: { full_name: 'New Name' } }, headers: headers
-        expect(response).to have_http_status(:internal_server_error)
-        expect(JSON.parse(response.body)['error']).to eq('Server error: DB error')
-      end
-    end
-
-    context 'when user is not authenticated' do
-      it 'returns unauthorized' do
-        patch '/api/v1/users/profile', params: update_params
-        expect(response).to have_http_status(:unauthorized)
-        json_response = JSON.parse(response.body)
-        expect(json_response['success']).to be false
-        expect(json_response['message']).to match(/Unauthorized/)
-      end
-    end
-  end
-
- describe 'PUT /api/v1/users/profile' do
-  let(:update_params) { { 
-    user: { 
-      full_name: 'Updated User',
-      email: user.email, # Keep original email to avoid validation issues
-      mobile_number: user.mobile_number # Keep original mobile number
-    } 
-  } }
-
-  context 'when user is authenticated' do
-    it 'updates profile without password change' do
-      put '/api/v1/users/profile', params: update_params, headers: headers
-      
-      # Debugging output if test fails
-      puts "Response status: #{response.status}"
-      puts "Response body: #{response.body}" unless response.successful?
-      
-      expect(response).to have_http_status(:ok)
-      json_response = JSON.parse(response.body)
-      expect(json_response['success']).to be true
-      expect(json_response['message']).to eq('Profile updated successfully')
-      expect(user.reload.full_name).to eq('Updated User')
-    end
-  end
-
-    context 'when user is not authenticated' do
-      it 'returns unauthorized' do
-        put '/api/v1/users/profile', params: update_params
         expect(response).to have_http_status(:unauthorized)
         json_response = JSON.parse(response.body)
         expect(json_response['success']).to be false

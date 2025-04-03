@@ -1,56 +1,48 @@
-require 'net/http'
-require 'json'
-
 class GithubAuthService
-  Result = Struct.new(:success, :user, :access_token, :refresh_token, :error, :status, keyword_init: true)
-
-  GITHUB_AUTH_URI = 'https://github.com/login/oauth/authorize'.freeze
-  GITHUB_TOKEN_URI = 'https://github.com/login/oauth/access_token'.freeze
-  GITHUB_USER_URI = 'https://api.github.com/user'.freeze
-  GITHUB_USER_EMAILS_URI = 'https://api.github.com/user/emails'.freeze
-
-  class AuthenticationError < StandardError; end
-  class TokenExchangeError < AuthenticationError; end
-  class UserDataFetchError < AuthenticationError; end
-  class UserCreationError < AuthenticationError; end
-  class TokenGenerationError < AuthenticationError; end
+  GITHUB_TOKEN_URI = "https://github.com/login/oauth/access_token".freeze
+  GITHUB_API_URI = "https://api.github.com/user".freeze
 
   def initialize(code)
-    @code = code.to_s.strip
-    @client_id = ENV.fetch('GITHUB_CLIENT_ID') { raise "GITHUB_CLIENT_ID not set" }
-    @client_secret = ENV.fetch('GITHUB_CLIENT_SECRET') { raise "GITHUB_CLIENT_SECRET not set" }
-    @redirect_uri = ENV.fetch('GITHUB_CALLBACK_URL', 'http://localhost:3000/api/v1/github_auth/callback')
-    Rails.logger.debug "GitHub Auth init - client_id: #{@client_id}, redirect_uri: #{@redirect_uri}"
+    @code = code
   end
 
   def authenticate
-    validate_code_presence
+    # Exchange code for access token
     token_response = exchange_code_for_token
-    user_data = fetch_user_data(token_response[:access_token])
-    user = find_or_create_user(user_data[:data]) # FIXED: Pass the inner hash
-    tokens = generate_tokens(user)
+    unless token_response.success?
+      Rails.logger.error("Failed to obtain access token: #{token_response.code} - #{token_response.parsed_response}")
+      return Result.new(false, :unauthorized, "Failed to obtain access token")
+    end
 
-    Result.new(
-      success: true,
-      user: user,
-      access_token: tokens[:access_token],
-      refresh_token: tokens[:refresh_token],
-      status: :ok
-    )
-  rescue AuthenticationError => e
-    log_error(e)
-    Result.new(
-      success: false,
-      error: e.message,
-      status: :unauthorized
-    )
-  rescue StandardError => e
-    log_error(e, "Unexpected error during GitHub authentication")
-    Result.new(
-      success: false,
-      error: 'Internal authentication error',
-      status: :internal_server_error
-    )
+    access_token = token_response.parsed_response["access_token"]
+    Rails.logger.info("Access token obtained: #{access_token}")
+
+    # Fetch user data from GitHub
+    user_data = fetch_user_data(access_token)
+    unless user_data.success?
+      Rails.logger.error("Failed to fetch user data: #{user_data.code} - #{user_data.parsed_response}")
+      return Result.new(false, :unauthorized, "Failed to fetch user data")
+    end
+
+    Rails.logger.info("User data fetched: #{user_data.parsed_response}")
+
+    # Find or create user in your app using github_id
+    user = find_or_create_user(user_data.parsed_response, access_token)
+    unless user
+      Rails.logger.error("Failed to create user with data: #{user_data.parsed_response}")
+      return Result.new(false, :internal_server_error, "Failed to create user")
+    end
+
+    Rails.logger.info("User created/found: #{user.email}")
+
+    # Generate tokens
+    access_token, refresh_token = generate_tokens(user)
+    unless access_token && refresh_token
+      Rails.logger.error("Failed to generate tokens for user: #{user.email}")
+      return Result.new(false, :internal_server_error, "Failed to generate authentication tokens")
+    end
+
+    Result.new(true, :ok, nil, user: user, access_token: access_token, refresh_token: refresh_token)
   end
 
   private
@@ -61,144 +53,105 @@ class GithubAuthService
   end
 
   def exchange_code_for_token
-    uri = URI(GITHUB_TOKEN_URI)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    request = Net::HTTP::Post.new(uri.request_uri)
-    request['Accept'] = 'application/json'
-    request.set_form_data({
-      client_id: @client_id,
-      client_secret: @client_secret,
-      code: @code,
-      redirect_uri: @redirect_uri
-    })
-
-    response = http.request(request)
-    Rails.logger.debug "GitHub token response: #{response.body}"
-    handle_token_response(response)
-  rescue Timeout::Error, Errno::ECONNRESET, Errno::EHOSTUNREACH => e
-    raise TokenExchangeError, "GitHub connection failed: #{e.message}"
-  end
-
-  def handle_token_response(response)
-    body = parse_json_response(response.body)
-
-    if response.is_a?(Net::HTTPSuccess)
-      access_token = body['access_token']
-      raise TokenExchangeError, "Missing access token in response" unless access_token
-
-      Rails.logger.info "GitHub access token received successfully"
-      { success: true, access_token: access_token }
-    else
-      error_message = body['error_description'] || body['error'] || "Token exchange failed with status #{response.code}"
-      log_error("GitHub token exchange failed", error_message)
-      raise TokenExchangeError, error_message
-    end
+    HTTParty.post(
+      GITHUB_TOKEN_URI,
+      body: {
+        client_id: ENV["GITHUB_CLIENT_ID"],
+        client_secret: ENV["GITHUB_CLIENT_SECRET"],
+        code: @code,
+        redirect_uri: "http://127.0.0.1:5500/pages/login.html"
+      },
+      headers: { "Accept" => "application/json" }
+    )
   end
 
   def fetch_user_data(access_token)
-    user_info = fetch_from_github(GITHUB_USER_URI, access_token)
-    user_emails = fetch_from_github(GITHUB_USER_EMAILS_URI, access_token)
-
-    primary_email = find_primary_email(user_emails)
-    user_info['verified_email'] = primary_email || user_info['email']
-    Rails.logger.info "GitHub user data: #{user_info.inspect}, emails: #{user_emails.inspect}"
-    { success: true, data: user_info }
-  rescue StandardError => e
-    raise UserDataFetchError, "Failed to fetch user data: #{e.message}"
-  end
-
-  def fetch_from_github(url, access_token)
-    uri = URI(url)
-    request = Net::HTTP::Get.new(uri)
-    request['Authorization'] = "token #{access_token}"
-    request['Accept'] = 'application/vnd.github.v3+json'
-
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 10) do |http|
-      http.request(request)
-    end
-
-    unless response.is_a?(Net::HTTPSuccess)
-      raise UserDataFetchError, "GitHub API request failed with status #{response.code}"
-    end
-
-    parse_json_response(response.body)
-  end
-
-  def find_primary_email(emails)
-    emails.find { |email| email['primary'] && email['verified'] }&.fetch('email', nil)
-  end
-
-  def find_or_create_user(data)
-    email = data['verified_email']
-    github_id = data['id']
-    Rails.logger.info "Authenticating GitHub user - email: #{email}, github_id: #{github_id}"
-
-    unless email.present?
-      Rails.logger.error "No verified email provided by GitHub: #{data.inspect}"
-      raise UserCreationError, "GitHub did not provide a verified email"
-    end
-
-    user = User.find_by(email: email)
-    if user
-      Rails.logger.info "Found existing user with email #{email} (id: #{user.id}), linking github_id: #{github_id}"
-      user.update(github_id: github_id) if user.github_id.nil?
-      return user
-    end
-
-    Rails.logger.info "No user found with email #{email}, creating new user with github_id: #{github_id}"
-    create_new_user(data)
-  rescue ActiveRecord::RecordInvalid => e
-    Rails.logger.error "Validation error: #{e.record.errors.full_messages}"
-    raise UserCreationError, "Failed to create user: #{e.record.errors.full_messages.join(', ')}"
-  rescue ActiveRecord::RecordNotUnique => e
-    Rails.logger.error "Duplicate email error: #{email}"
-    raise UserCreationError, "Email '#{email}' is already taken and cannot be linked"
-  end
-
-  def create_new_user(data)
-    user = User.new(
-      github_id: data['id'],
-      email: data['verified_email'],
-      full_name: data['name'] || data['login'],
-      role: 'user'
+    HTTParty.get(
+      GITHUB_API_URI,
+      headers: {
+        "Authorization" => "Bearer #{access_token}",
+        "User-Agent" => "Rails GitHub OAuth"
+      }
     )
-    user.save!(validate: false)
-    Rails.logger.info "Created new GitHub user: #{user.attributes.inspect}"
-    UserMailer.welcome_github_user(user).deliver_later if defined?(UserMailer)
+  end
+
+  def find_or_create_user(user_data, access_token)
+    github_id = user_data["id"].to_s
+    unless github_id
+      Rails.logger.error("No GitHub ID available in user data: #{user_data}")
+      return nil
+    end
+
+    # Fetch email if not present in user_data
+    email = user_data["email"] || fetch_user_email(access_token)
+    email ||= "#{github_id}@github-no-email.com" # Fallback if no email is available
+
+    # Find existing user by github_id or initialize a new one
+    user = User.where(github_id: github_id).first_or_initialize do |u|
+      u.full_name = user_data["name"] || user_data["login"]
+      u.password = SecureRandom.hex(16) # Random password for OAuth users
+      u.role = "user" # Set default role
+    end
+
+    # Set email and handle conflicts
+    if user.new_record?
+      user.email = email
+      if User.exists?(email: email)
+        existing_user = User.find_by(email: email)
+        if existing_user.github_id.nil?
+          # Link GitHub account to existing user if no github_id is set
+          existing_user.update(github_id: github_id, full_name: user_data["name"] || user_data["login"])
+          return existing_user
+        else
+          # Use a unique email to avoid conflict
+          user.email = "#{github_id}+#{email}"
+        end
+      end
+    end
+
+    # Save the user and handle validation errors
+    unless user.save
+      Rails.logger.error("User validation errors: #{user.errors.full_messages}")
+      return nil
+    end
+
     user
   end
 
+  def fetch_user_email(access_token)
+    response = HTTParty.get(
+      "https://api.github.com/user/emails",
+      headers: {
+        "Authorization" => "Bearer #{access_token}",
+        "User-Agent" => "Rails GitHub OAuth"
+      }
+    )
+    if response.success?
+      emails = response.parsed_response
+      primary_email = emails.find { |e| e["primary"] && e["verified"] }
+      primary_email&.dig("email")
+    else
+      Rails.logger.error("Failed to fetch user emails: #{response.code} - #{response.parsed_response}")
+      nil
+    end
+  end
+
   def generate_tokens(user)
-    access_token = JwtService.encode_access_token(
-      user_id: user.id,
-      jti: SecureRandom.uuid,
-      exp: 15.minutes.from_now.to_i
-    )
-
-    refresh_token = JwtService.encode_refresh_token(
-      user_id: user.id,
-      jti: SecureRandom.uuid,
-      exp: 30.days.from_now.to_i
-    )
-
-    { access_token: access_token, refresh_token: refresh_token }
-  rescue StandardError => e
-    raise TokenGenerationError, "Token generation failed: #{e.message}"
+    access_token = JwtService.encode_access_token({ user_id: user.id }, 15.minutes.from_now.to_i)
+    refresh_token = JwtService.encode_refresh_token({ user_id: user.id }, 30.days.from_now.to_i)
+    [access_token, refresh_token]
   end
 
-  def parse_json_response(body)
-    return {} if body.nil? || body.empty?
-    JSON.parse(body)
-  rescue JSON::ParserError => e
-    Rails.logger.error "Failed to parse GitHub response: #{body.inspect}. Error: #{e.message}"
-    raise AuthenticationError, "Invalid JSON response from GitHub"
-  end
+  class Result
+    attr_reader :success, :status, :error, :user, :access_token, :refresh_token
 
-  def log_error(error, context = nil)
-    message = context ? "#{context}: #{error.message}" : error.message
-    Rails.logger.error(message)
-    Rails.logger.error(error.backtrace.join("\n")) if error.backtrace
-    Sentry.capture_exception(error) if defined?(Sentry)
+    def initialize(success, status, error = nil, user: nil, access_token: nil, refresh_token: nil)
+      @success = success
+      @status = status
+      @error = error
+      @user = user
+      @access_token = access_token
+      @refresh_token = refresh_token
+    end
   end
 end
