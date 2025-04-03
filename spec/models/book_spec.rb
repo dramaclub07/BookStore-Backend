@@ -172,7 +172,7 @@ RSpec.describe Book, type: :model do
       end
 
       it 'returns the average rating rounded to 1 decimal place' do
-        expect(book_with_reviews.rating).to eq(4.0) # (4 + 5 + 3) / 3 = 4.0
+        expect(book_with_reviews.rating).to eq(4.0) 
       end
     end
   end

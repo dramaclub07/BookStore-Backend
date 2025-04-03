@@ -7,7 +7,7 @@ module Api
         unless params[:code].present?
           return render json: { error: "GitHub code is required" }, status: :bad_request
         end
-
+      
         result = GithubAuthService.new(params[:code]).authenticate
         if result.success
           render json: {

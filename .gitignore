@@ -66,4 +66,3 @@ sonar-project.properties
 
 # Ignore test artifacts
 coverage/
-failures.txt.
