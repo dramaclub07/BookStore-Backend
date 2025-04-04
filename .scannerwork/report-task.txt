@@ -1,6 +1,0 @@
-projectKey=BookStore_PriyanshuSingh
-serverUrl=http://localhost:9000
-serverVersion=25.3.0.104237
-dashboardUrl=http://localhost:9000/dashboard?id=BookStore_PriyanshuSingh
-ceTaskId=133cc453-53e1-4ebc-a532-5a8c07c563ea
-ceTaskUrl=http://localhost:9000/api/ce/task?id=133cc453-53e1-4ebc-a532-5a8c07c563ea
