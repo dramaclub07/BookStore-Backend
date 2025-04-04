@@ -11,7 +11,6 @@ development:
   username: postgres
   password: <%= ENV["POSTGRES_PASSWORD"] %>
 
-
 test:
   <<: *default
   database: bookstore_test_database
@@ -25,5 +24,8 @@ production:
     <<: *default
     url: <%= ENV["DATABASE_URL"] %>
   cache:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+  queue:
     <<: *default
     url: <%= ENV["DATABASE_URL"] %>
