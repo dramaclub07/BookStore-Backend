@@ -1,7 +1,7 @@
 require 'bunny'
 
 begin
-  $bunny = Bunny.new(host: "localhost", automatically_recover: true)
+  $bunny = Bunny.new(ENV["RABBITMQ_URL"], automatically_recover: true)
   $bunny.start
   $channel = $bunny.create_channel
   $exchange = $channel.direct("email_exchange", durable: true)
