@@ -3,42 +3,27 @@ default: &default
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
-
 development:
   <<: *default
-  url: <%= ENV["DATABASE_URL"] %>
-  # database: bookstore_db_0t0c
-  # host: dpg-cvn132ruibrs73b6qon0-a
-  # port: 5432
-  # username: bookstore_db_0t0c_user
-  # password:  <%= ENV["POSTGRES_PASSWORD"] %>
+  database: bookstore_development_database
+  host: localhost
+  port: 5432
+  username: postgres
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
 
-# test:
-#   <<: *default
-#   url: <%= ENV["DATABASE_URL"] %>
-#   database:  bookstore_test_database
-#   username: postgres
-#   password:  <%= ENV["POSTGRES_PASSWORD"] %>
-#   host: localhost
-#   port: 5432
+test:
+  <<: *default
+  database: bookstore_test_database
+  host: localhost
+  port: 5432
+  username: postgres
+  password: <%= ENV["POSTGRES_PASSWORD"] %>
 
-
-# production:
-  # primary: &primary_production
-  #   <<: *default
-  #   database: backend_production
-  #   username: backend
-  #   password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
-  # cache:
-  #   <<: *primary_production
-  #   database: backend_production_cache
-  #   migrations_paths: db/cache_migrate
-  # queue:
-  #   <<: *primary_production
-  #   database: backend_production_queue
-  #   migrations_paths: db/queue_migrate
-  # cable:
-  #   <<: *primary_production
-  #   database: backend_production_cable
-  #   migrations_paths: db/cable_migrate
+production:
+  primary:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+  cache:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
