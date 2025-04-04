@@ -1,7 +1,11 @@
 require 'bunny'
 
 begin
-  $bunny = Bunny.new(ENV["RABBITMQ_URL"], automatically_recover: true)
+  $bunny = Bunny.new(
+    ENV["RABBITMQ_URL"],
+    automatically_recover: true,
+    verify_peer: true # Enable peer verification for production
+  )
   $bunny.start
   $channel = $bunny.create_channel
   $exchange = $channel.direct("email_exchange", durable: true)
