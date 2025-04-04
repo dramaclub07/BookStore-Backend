@@ -163,9 +163,6 @@ RSpec.describe User, type: :model do
         expect(google_user).to be_valid
       end
 
-      it 'is valid without password and mobile_number for Facebook login' do
-        expect(facebook_user).to be_valid
-      end
 
       it 'is valid without password and mobile_number for GitHub login' do
         expect(github_user).to be_valid

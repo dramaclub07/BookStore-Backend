@@ -103,9 +103,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_31_211501) do
     t.string "refresh_token"
     t.string "github_id"
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["facebook_id"], name: "index_users_on_facebook_id", unique: true
     t.index ["github_id"], name: "index_users_on_github_id", unique: true
-    t.index ["google_id"], name: "index_users_on_google_id", unique: true
+    t.index ["mobile_number"], name: "index_users_on_mobile_number", unique: true
     t.index ["role"], name: "index_users_on_role"
   end
 

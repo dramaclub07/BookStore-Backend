@@ -20,10 +20,8 @@ class AddressService
     address = user.addresses.new(params)
     if address.save
       REDIS.del("user_#{user.id}_addresses")
-      Rails.logger.info("Address created successfully: #{address.inspect}")
       { success: true, address: address }
     else
-      Rails.logger.error("Failed to create address: #{address.errors.full_messages.join(', ')}")
       { success: false, errors: address.errors.full_messages }
     end
   end
@@ -35,10 +33,8 @@ class AddressService
 
     if address.update(params)
       REDIS.del("user_#{address.user_id}_addresses")
-      Rails.logger.info("Address updated successfully: #{address.inspect}")
       { success: true, address: address }
     else
-      Rails.logger.error("Failed to update address: #{address.errors.full_messages.join(', ')}")
       { success: false, errors: address.errors.full_messages }
     end
   end
@@ -46,10 +42,8 @@ class AddressService
   def self.destroy_address(address)
     if address.destroy
       REDIS.del("user_#{address.user_id}_addresses")
-      Rails.logger.info("Address deleted successfully: #{address.id}")
       { success: true, message: "Address deleted successfully" }
     else
-      Rails.logger.error("Failed to delete address: #{address.errors.full_messages.join(', ')}")
       { success: false, errors: ["Failed to delete address"] }
     end
   end

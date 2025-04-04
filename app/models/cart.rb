@@ -15,7 +15,6 @@ class Cart < ApplicationRecord
 
     if book.quantity < (self.quantity || 0)  # ✅ Ensuring self.quantity is not nil
       errors.add(:quantity, "exceeds available stock. Item will be available shortly.")
-      Rails.logger.debug "Stock validation failed: #{errors.full_messages.join(", ")}"
     end
   end
 end

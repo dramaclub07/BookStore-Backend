@@ -5,8 +5,6 @@ begin
   $bunny.start
   $channel = $bunny.create_channel
   $exchange = $channel.direct("email_exchange", durable: true)
-  puts "Connected to RabbitMQ!"
 rescue Bunny::TCPConnectionFailed => e
   puts "Error connecting to RabbitMQ: #{e.message}"
-  Rails.logger.error "RabbitMQ connection failed: #{e.message}"
 end

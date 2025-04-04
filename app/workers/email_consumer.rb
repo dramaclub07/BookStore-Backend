@@ -20,7 +20,6 @@ class EmailConsumer
     reset_queue = $channel.queue("reset_email_queue", durable: true)
     reset_queue.bind($exchange, routing_key: "reset_confirmation_email")
 
-    puts "Waiting for email messages. Press CTRL+C to exit."
 
     [otp_queue, welcome_queue, order_queue, cancel_queue, reset_queue].each do |queue|
       Thread.new do
@@ -42,7 +41,6 @@ class EmailConsumer
     rescue Interrupt
       $channel.close
       $bunny.close
-      puts "Shutting down email consumer..."
     end
   end
 
@@ -63,13 +61,9 @@ class EmailConsumer
     when "reset_confirmation_email"
       UserMailer.reset_confirmation_email(user).deliver_now
     else
-      puts "Unknown email type: #{routing_key}"
-    end
+  end
 
-    puts "Processed email: #{routing_key} for user #{user.id}"
   rescue StandardError => e
-    puts "Error processing email: #{e.message}"
-    Rails.logger.error "Email processing failed: #{e.message}"
     raise
   end
 end

@@ -13,12 +13,9 @@ class BooksService
     redis_key = "books_page_#{page}_sort_#{sort_by}_per_#{per_page}" # Include per_page in key for consistency
 
     if force_refresh || REDIS.get(redis_key).nil?
-      Rails.logger.info "Fetching latest books from Database for page #{page} with sort #{sort_by}"
       
-      # Base query with is_deleted and out_of_stock filters
       query = Book.where(is_deleted: false, out_of_stock: false)
 
-      # Apply sorting
       case sort_by
       when 'price_low_high'
         query = query.order(discounted_price: :asc)
@@ -51,7 +48,6 @@ class BooksService
       REDIS.set(redis_key, books_data.to_json)
       REDIS.expire(redis_key, 1.hour.to_i)
     else
-      Rails.logger.info "Fetching books from Redis for page #{page} with sort #{sort_by}"
       books_data = JSON.parse(REDIS.get(redis_key), symbolize_names: true)
     end
 
@@ -137,6 +133,5 @@ class BooksService
   def self.clear_related_cache
     keys = REDIS.keys("books_page_*")
     keys.each { |key| REDIS.del(key) }
-    Rails.logger.info "Cleared all books cache from Redis"
   end
 end

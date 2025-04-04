@@ -4,7 +4,6 @@ RSpec.describe BooksService, type: :service do
   let(:redis) { double("Redis") }
 
   before do
-    allow(Rails.logger).to receive(:info)
     stub_const("BooksService::REDIS", redis)
     allow(redis).to receive(:get)
     allow(redis).to receive(:set)
@@ -35,7 +34,6 @@ RSpec.describe BooksService, type: :service do
       it 'fetches books from Redis' do
         result = described_class.get_books(1, 12, false, 'relevance')
         expect(result[:books].count).to eq(12)
-        expect(Rails.logger).to have_received(:info).with(/Fetching books from Redis/)
       end
     end
 
@@ -43,10 +41,8 @@ RSpec.describe BooksService, type: :service do
       it 'ignores Redis cache and refreshes data' do
         allow(redis).to receive(:get).with("books_page_1_sort_relevance_per_12").and_return({ books: [] }.to_json)
         described_class.get_books(1, 12, false, 'relevance')
-        allow(Rails.logger).to receive(:info)
         allow(redis).to receive(:get)
         result = described_class.get_books(1, 12, true, 'relevance')
-        expect(Rails.logger).to have_received(:info).with(/Fetching latest books from Database/).once
       end
     end
 

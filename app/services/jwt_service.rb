@@ -20,10 +20,8 @@ class JwtService
     decoded_token = JWT.decode(token, SECRET_KEY, true, algorithms: ['HS256'])[0]
     decoded_token.symbolize_keys
   rescue JWT::ExpiredSignature
-    Rails.logger.warn "Access Token has expired"
     nil
   rescue JWT::DecodeError => e
-    Rails.logger.warn "Access Token Decode Error: #{e.message}"
     nil
   end
 
@@ -31,10 +29,8 @@ class JwtService
     decoded_token = JWT.decode(token, REFRESH_SECRET_KEY, true, algorithms: ['HS256'])[0]
     decoded_token.symbolize_keys
   rescue JWT::ExpiredSignature
-    Rails.logger.warn "Refresh Token has expired"
     nil
-  rescue JWT::DecodeError => e
-    Rails.logger.warn "Refresh Token Decode Error: #{e.message}"
+  rescue JWT::DecodeError 
     nil
   end
 end

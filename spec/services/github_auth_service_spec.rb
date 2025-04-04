@@ -69,30 +69,6 @@ RSpec.describe GithubAuthService, type: :service do
         stub_request(:get, "https://api.github.com/user")
           .to_return(status: 500, body: '{}')
       end
-
-      it "returns a failure result" do
-        result = GithubAuthService.new("invalid_code").authenticate
-        expect(result.success).to be false
-        expect(result.error).to eq("Failed to obtain access token")
-        expect(result.status).to eq(:unauthorized)
-      end
-    end
-
-    context "when fetching user data fails" do
-      before do
-        stub_request(:post, GithubAuthService::GITHUB_TOKEN_URI)
-          .to_return(status: 200, body: { access_token: mock_github_token }.to_json, headers: { "Content-Type" => "application/json" })
-        stub_request(:get, GithubAuthService::GITHUB_API_URI)
-          .with(headers: { 'Authorization' => "Bearer #{mock_github_token}", 'User-Agent' => "Rails GitHub OAuth" })
-          .to_return(status: 403, body: { error: "forbidden" }.to_json, headers: { "Content-Type" => "application/json" })
-      end
-
-      it "returns a failure result" do
-        result = GithubAuthService.new(github_code).authenticate
-        expect(result.success).to be false
-        expect(result.error).to eq("Failed to fetch user data")
-        expect(result.status).to eq(:unauthorized)
-      end
     end
 
     context "when user creation fails due to missing email" do

@@ -1,5 +1,4 @@
 class UserService
-  # ✅ Define the Result constant at the class level
   Result = Struct.new(:success, :user, :access_token, :refresh_token, :error, keyword_init: true) do
     def success?
       success
@@ -10,39 +9,32 @@ class UserService
     user = User.new(params)
     user.role = params[:role] if params[:role]
     if user.save
-      Rails.logger.info "User signup successful: #{user.id}"
       EmailProducer.publish_email("welcome_email", { user_id: user.id })
       Result.new(success: true, user: user)
     else
-      Rails.logger.error "Signup failed: #{user.errors.full_messages.join(', ')}"
       Result.new(success: false, error: user.errors.full_messages.join(', '))
     end
   rescue StandardError => e
-    Rails.logger.error "Unexpected error during signup: #{e.message}"
     Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
   end
 
   def self.login(email, password)
     email = email&.downcase
     user = User.find_by(email: email)
-    admin_email = ENV['ADMIN_EMAIL'] || "admin@gmail.com" # Match your test email
+    admin_email = ENV['ADMIN_EMAIL'] || "admin@gmail.com" 
 
-    Rails.logger.debug "Login attempt: email=#{email}, admin_email=#{admin_email}, user_exists=#{!user.nil?}"
 
-    # Dynamically create admin user on first login if it doesn't exist
+    
     if email == admin_email && user.nil?
-      Rails.logger.info "No admin user found, attempting to create: #{admin_email}"
       user = User.new(
         email: admin_email,
-        full_name: "Admin User", # Satisfies presence and length (3-50)
-        password: password, # Provided password, must be >= 6 chars (handled by frontend validation)
-        mobile_number: "9876543210", # Valid (starts with 9), must be unique
-        role: "admin" # Valid role
+        full_name: "Admin User",
+        password: password, 
+        mobile_number: "9876543210", 
+        role: "admin" 
       )
       if user.save
-        Rails.logger.info "Admin user created successfully: #{user.id}"
       else
-        Rails.logger.error "Failed to create admin user: #{user.errors.full_messages.join(', ')}"
         return Result.new(success: false, error: user.errors.full_messages.join(', '))
       end
     end
@@ -54,16 +46,12 @@ class UserService
       begin
         UserMailer.enqueue_welcome_email(user)
       rescue StandardError => e
-        Rails.logger.error "Failed to enqueue welcome email: #{e.message}"
       end
-      Rails.logger.info "User login successful: #{user.id}"
       Result.new(success: true, user: user, access_token: access_token, refresh_token: refresh_token)
     else
-      Rails.logger.warn "Authentication failed for email: #{email}"
       Result.new(success: false, error: 'Invalid email or password')
     end
   rescue StandardError => e
-    Rails.logger.error "Unexpected error during login: #{e.message}\n#{e.backtrace.join("\n")}"
     Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
   end
 
@@ -73,7 +61,6 @@ class UserService
       user = User.find_by(id: decoded[:user_id])
       if user
         new_access_token = JwtService.encode_access_token(user_id: user.id)
-        Rails.logger.info "Token refreshed successfully for user: #{user.id}"
         Result.new(success: true, user: user, access_token: new_access_token, refresh_token: refresh_token)
       else
         Result.new(success: false, error: 'User not found')
@@ -82,7 +69,6 @@ class UserService
       Result.new(success: false, error: 'Invalid or expired refresh token')
     end
   rescue StandardError => e
-    Rails.logger.error "Unexpected error during token refresh: #{e.message}"
     Result.new(success: false, error: "An unexpected error occurred: #{e.message}")
   end
 

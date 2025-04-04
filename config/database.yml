@@ -6,20 +6,22 @@ default: &default
 
 development:
   <<: *default
-  database: bookstore_development_database
-  host: localhost
-  port: 5432
-  username: postgres
-  password: <%= ENV["POSTGRES_PASSWORD"] %>
+  url: <%= ENV["DATABASE_URL"] %>
+  # database: bookstore_db_0t0c
+  # host: dpg-cvn132ruibrs73b6qon0-a
+  # port: 5432
+  # username: bookstore_db_0t0c_user
+  # password:  <%= ENV["POSTGRES_PASSWORD"] %>
 
 
-test:
-  <<: *default
-  database:  bookstore_test_database
-  username: postgres
-  password:  <%= ENV["POSTGRES_PASSWORD"] %>
-  host: localhost
-  port: 5432
+# test:
+#   <<: *default
+#   url: <%= ENV["DATABASE_URL"] %>
+#   database:  bookstore_test_database
+#   username: postgres
+#   password:  <%= ENV["POSTGRES_PASSWORD"] %>
+#   host: localhost
+#   port: 5432
 
 
 # production:

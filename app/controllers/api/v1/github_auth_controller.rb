@@ -18,16 +18,13 @@ module Api
             expires_in: 15 * 60 # 15 minutes
           }, status: :ok
         else
-          Rails.logger.error "GitHub authentication failed: #{result.error}"
           render json: { 
             error: result.error || 'Authentication failed'
           }, status: result.status || :unauthorized
         end
       rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "User validation failed: #{e.record.errors.full_messages.join(', ')}"
         render json: { error: 'User validation failed: ' + e.record.errors.full_messages.join(', ') }, status: :unprocessable_entity
       rescue StandardError => e
-        Rails.logger.error "Unexpected GitHub OAuth error: #{e.message}\n#{e.backtrace.join("\n")}"
         render json: { error: 'Internal authentication error' }, status: :internal_server_error
       end
     end
