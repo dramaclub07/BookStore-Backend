@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  
+
   root to: redirect("/api-docs")
 
   mount Rswag::Ui::Engine => "/api-docs"
@@ -24,7 +24,7 @@ Rails.application.routes.draw do
       get "books/search", to: "books#search"
       get "books/search_suggestions", to: "books#search_suggestions"
       get "books", to: "books#index"
-      get "books/available", to: "books#available"  # new route, accept chnages in controller and service, katoch make out of stock now
+      get "books/available", to: "books#available"  
       get "books/:id", to: "books#show"
       put "books/:id", to: "books#update"
       delete "books/:id", to: "books#destroy"
@@ -46,12 +46,11 @@ Rails.application.routes.draw do
       post "wishlists", to: "wishlists#toggle"
 
       get "addresses", to: "addresses#index"
-      post "addresses/create", to: "addresses#create" #should be addresses only.
+      post "addresses/create", to: "addresses#create" 
       get "addresses/:id", to: "addresses#show"
-      patch "addresses/:id", to: "addresses#update"  #empty addresses as its patch?
-      delete "addresses/:id", to: "addresses#destroy" #empty as well
+      patch "addresses/:id", to: "addresses#update"  
+      delete "addresses/:id", to: "addresses#destroy" 
 
-      # Order Management Routes (Only for Logged-in Users)
       get "orders", to: "orders#index"
       post "orders", to: "orders#create"
       get "orders/:id", to: "orders#show"
