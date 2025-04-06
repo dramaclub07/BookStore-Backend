@@ -7,6 +7,8 @@ Rails.application.configure do
   config.enable_reloading = true
   config.eager_load = false
 
+  # config.secret_key_base = ENV["SECRET_KEY_BASE"] || Rails.application.credentials.secret_key_base
+
   config.hosts << "localhost" # Simplified host config
 
   config.server_timing = true
