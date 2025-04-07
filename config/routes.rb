@@ -17,7 +17,7 @@ Rails.application.routes.draw do
       put "users/profile", to: "users#update_profile"  # Update user profile
 
       post "google_auth", to: "google_auth#create"
-      post 'github_auth/login', to: 'github_auth#login'
+      post "github_auth/login", to: 'github_auth#login'
       
 
       post "books", to: "books#create"

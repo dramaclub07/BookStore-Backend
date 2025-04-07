@@ -3,11 +3,11 @@ class BooksService
   require 'redis'
 
   # Initialize Redis globally (use ENV variables in production)
-  REDIS = Redis.new(
-    host: ENV['REDIS_HOST'] || 'localhost',
-    port: ENV['REDIS_PORT'] || 6379,
-    password: ENV['REDIS_PASSWORD']
-  )
+REDIS = if ENV['REDIS_URL']
+            Redis.new(url: ENV['REDIS_URL'])
+          else
+            Redis.new(host: 'localhost', port: 6379)
+          end
 
   def self.get_books(page, per_page, force_refresh = false, sort_by = 'relevance')
     redis_key = "books_page_#{page}_sort_#{sort_by}_per_#{per_page}" # Include per_page in key for consistency
