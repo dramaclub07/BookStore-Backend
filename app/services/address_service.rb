@@ -16,16 +16,6 @@ class AddressService
     { success: true, addresses: addresses }
   end
 
-  # def self.create_address(user, params)
-  #   address = user.addresses.new(params)
-  #   if address.save
-  #     REDIS.del("user_#{user.id}_addresses")
-  #     { success: true, address: address }
-  #   else
-  #     { success: false, errors: address.errors.full_messages }
-  #   end
-  # end
-  # app/services/address_service.rb
 def self.create_address(user, params)
   address = user.addresses.new(params)
   if address.save

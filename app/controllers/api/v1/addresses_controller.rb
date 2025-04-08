@@ -12,17 +12,6 @@ module Api
           render json: { success: false, error: result[:error] }, status: :unprocessable_entity
         end
       end
-
-      # def create
-      #   begin
-      #     result = AddressService.create_address(@current_user, address_params)
-      #     status = result[:success] ? :created : :unprocessable_entity
-      #     render json: result, status: status
-      #   rescue ActiveRecord::RecordInvalid => e
-      #     render json: { success: false, errors: e.record.errors.full_messages }, status: :unprocessable_entity
-      #   end
-      # end
-      # app/controllers/api/v1/addresses_controller.rb
 def create
   begin
     result = AddressService.create_address(@current_user, address_params)
