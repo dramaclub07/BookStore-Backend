@@ -32,6 +32,7 @@ def create
     Rails.logger.error("Error creating address: #{e.message}")
     render json: { success: false, errors: ["Failed to create address due to a server error"] }, status: :internal_server_error
   end
+end
 
       def show
         if @address
