@@ -13,15 +13,25 @@ module Api
         end
       end
 
-      def create
-        begin
-          result = AddressService.create_address(@current_user, address_params)
-          status = result[:success] ? :created : :unprocessable_entity
-          render json: result, status: status
-        rescue ActiveRecord::RecordInvalid => e
-          render json: { success: false, errors: e.record.errors.full_messages }, status: :unprocessable_entity
-        end
-      end
+      # def create
+      #   begin
+      #     result = AddressService.create_address(@current_user, address_params)
+      #     status = result[:success] ? :created : :unprocessable_entity
+      #     render json: result, status: status
+      #   rescue ActiveRecord::RecordInvalid => e
+      #     render json: { success: false, errors: e.record.errors.full_messages }, status: :unprocessable_entity
+      #   end
+      # end
+      # app/controllers/api/v1/addresses_controller.rb
+def create
+  begin
+    result = AddressService.create_address(@current_user, address_params)
+    status = result[:success] ? :created : :unprocessable_entity
+    render json: result, status: status
+  rescue StandardError => e
+    Rails.logger.error("Error creating address: #{e.message}")
+    render json: { success: false, errors: ["Failed to create address due to a server error"] }, status: :internal_server_error
+  end
 
       def show
         if @address

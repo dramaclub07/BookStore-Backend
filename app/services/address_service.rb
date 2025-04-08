@@ -16,15 +16,30 @@ class AddressService
     { success: true, addresses: addresses }
   end
 
-  def self.create_address(user, params)
-    address = user.addresses.new(params)
-    if address.save
-      REDIS.del("user_#{user.id}_addresses")
-      { success: true, address: address }
+  # def self.create_address(user, params)
+  #   address = user.addresses.new(params)
+  #   if address.save
+  #     REDIS.del("user_#{user.id}_addresses")
+  #     { success: true, address: address }
+  #   else
+  #     { success: false, errors: address.errors.full_messages }
+  #   end
+  # end
+  # app/services/address_service.rb
+def self.create_address(user, params)
+  address = user.addresses.new(params)
+  if address.save
+    if REDIS
+      REDIS.del("user_#{user.id}_addresses") rescue Rails.logger.error("Failed to invalidate Redis cache: #{$!.message}")
     else
-      { success: false, errors: address.errors.full_messages }
+      Rails.logger.warn("Redis is not available, skipping cache invalidation for user_#{user.id}_addresses")
     end
+    { success: true, address: address }
+  else
+    { success: false, errors: address.errors.full_messages }
   end
+end
+  
 
   def self.update_address(address, params)
     if params.blank? || params.to_h.empty?
