@@ -52,7 +52,7 @@ class GithubAuthService
         client_id: ENV["GITHUB_CLIENT_ID"],
         client_secret: ENV["GITHUB_CLIENT_SECRET"],
         code: @code,
-        redirect_uri: "http://127.0.0.1:5500/pages/login.html"
+        redirect_uri: "https://book-store-frontend-three-azure.vercel.app/"
       },
       headers: { "Accept" => "application/json" }
     )
