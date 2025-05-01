@@ -4,7 +4,7 @@ info:
   description: API documentation for user authentication, book management, and reviews
   version: 1.0.0
 servers:
-  - url: http://localhost:3000/api/v1
+  - url: https://bookstore-backend-p7e1.onrender.com/api/v1
     description: Local server
 
 components:
